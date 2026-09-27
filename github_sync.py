@@ -1,8 +1,6 @@
 """
 ============================================================
-   GITHUB SYNC MODULE - v64
-   Data repo: jedop62502-hue/Data-base-
-   Code repo: jedop62502-hue/Reaction-Bot (Railway deploys from here)
+   GITHUB SYNC MODULE - v64 (Data-base- repo)
 ============================================================
 """
 import os
@@ -12,12 +10,9 @@ import time
 import requests
 from datetime import datetime
 
-# ── ENV vars (Railway) — NO token hardcoded ──
 GITHUB_TOKEN    = os.getenv("GITHUB_TOKEN", "")
-
-# ✅ Ab DATA alag repo mein jayega
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "jedop62502-hue")
-GITHUB_REPO     = os.getenv("GITHUB_REPO", "Data-base-")   # ← NAYA REPO
+GITHUB_REPO     = os.getenv("GITHUB_REPO", "Data-base-")
 GITHUB_BRANCH   = os.getenv("GITHUB_BRANCH", "main")
 GITHUB_DB_PATH  = os.getenv("GITHUB_DB_PATH", "data/ghost_users.db")
 
@@ -56,7 +51,7 @@ def is_enabled():
 def download_db():
     global _last_sha
     if not is_enabled():
-        return False, "Sync disabled (no GITHUB_TOKEN)"
+        return False, "Sync disabled"
     try:
         r = requests.get(API_URL, headers=_headers(),
                          params={"ref": GITHUB_BRANCH}, timeout=20)
