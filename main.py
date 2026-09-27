@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT - v55 FINAL ADVANCE
-   Full Fixed | Backup Working | Plan Durations | Language Fix
+   GHOST REACTION BOT - v56
+   Bot Pool Fix | Language Buttons Fix | Plan Durations
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -207,6 +207,9 @@ BATCH_SIZE = MAX_ADMINS - RESERVED_SLOTS
 WATCHER_CHECK_INTERVAL = 300
 AUTO_WATCH_ENABLED = True
 
+# ── Bot busy timeout (auto-recovery) ──
+BOT_BUSY_TIMEOUT = 3  # minutes
+
 PLAN_LIMITS = {"free": 5, "basic": 20, "pro": 50, "premium": 200}
 PLAN_NAMES = {
     "free": "🆓 Free", "basic": "🥉 Basic",
@@ -247,6 +250,148 @@ admin_client = None
 backup_client = None
 
 
+# ==================== LANGUAGE SYSTEM (Extended) ====================
+LANG_STRINGS = {
+    "en": {
+        "welcome": "Welcome Back",
+        "send_reactions": "Send Reactions",
+        "auto_watch": "Auto-Watch",
+        "templates": "Templates",
+        "referral": "Referral",
+        "upgrade": "Upgrade Plan",
+        "notifications": "Notifications",
+        "language": "Language",
+        "info": "Info",
+        "support": "Customer Support",
+        "owner_panel": "Owner Panel",
+        "home": "Main Menu",
+        "back": "Back",
+        "cancel": "Cancel",
+        "channel": "Channel",
+        "group": "Group",
+        "default_emoji": "Default",
+        "custom_emoji": "Custom",
+        "emoji_packs": "Emoji Packs",
+        "send": "Send",
+        "choose_language": "Choose Language",
+        "language_changed": "Language Changed",
+        "your_limit": "Your limit",
+        "per_post": "per post",
+        "plan": "Plan",
+        "free_plan": "Free Plan",
+        "my_watches": "My Watches",
+        "add_watch": "Add Watch",
+        "contact_owner": "Contact Owner",
+        "retry": "Retry",
+        "how_many": "How many reactions?",
+        "emoji_mode": "Choose emoji mode",
+        "post_link": "Send post link",
+        "chat_link": "Send chat link",
+        "count_per_post": "Count per post",
+        "chat_type": "Chat type?",
+        "my_link": "My Link",
+        "stats": "Stats",
+        "leaderboard": "Leaderboard",
+    },
+    "ur": {
+        "welcome": "خوش آمدید",
+        "send_reactions": "ری ایکشن بھیجیں",
+        "auto_watch": "آٹو واچ",
+        "templates": "ٹیمپلیٹس",
+        "referral": "ریفرل",
+        "upgrade": "پلان اپ گریڈ",
+        "notifications": "اطلاعات",
+        "language": "زبان",
+        "info": "معلومات",
+        "support": "کسٹمر سپورٹ",
+        "owner_panel": "اونر پینل",
+        "home": "مین مینو",
+        "back": "واپس",
+        "cancel": "کینسل",
+        "channel": "چینل",
+        "group": "گروپ",
+        "default_emoji": "ڈیفالٹ",
+        "custom_emoji": "کسٹم",
+        "emoji_packs": "ایموجی پیکس",
+        "send": "بھیجیں",
+        "choose_language": "زبان منتخب کریں",
+        "language_changed": "زبان تبدیل ہو گئی",
+        "your_limit": "آپ کی حد",
+        "per_post": "فی پوسٹ",
+        "plan": "پلان",
+        "free_plan": "مفت پلان",
+        "my_watches": "میری واچز",
+        "add_watch": "واچ شامل کریں",
+        "contact_owner": "اونر سے رابطہ",
+        "retry": "دوبارہ کوشش",
+        "how_many": "کتنے ری ایکشن؟",
+        "emoji_mode": "ایموجی موڈ منتخب کریں",
+        "post_link": "پوسٹ لنک بھیجیں",
+        "chat_link": "چیٹ لنک بھیجیں",
+        "count_per_post": "فی پوسٹ گنتی",
+        "chat_type": "چیٹ کی قسم؟",
+        "my_link": "میرا لنک",
+        "stats": "اعداد و شمار",
+        "leaderboard": "لیڈر بورڈ",
+    },
+    "hi": {
+        "welcome": "वापसी पर स्वागत",
+        "send_reactions": "रिएक्शन भेजें",
+        "auto_watch": "ऑटो-वॉच",
+        "templates": "टेम्पलेट्स",
+        "referral": "रेफरल",
+        "upgrade": "प्लान अपग्रेड",
+        "notifications": "सूचनाएं",
+        "language": "भाषा",
+        "info": "जानकारी",
+        "support": "ग्राहक सहायता",
+        "owner_panel": "ओनर पैनल",
+        "home": "मुख्य मेनू",
+        "back": "वापस",
+        "cancel": "रद्द करें",
+        "channel": "चैनल",
+        "group": "ग्रुप",
+        "default_emoji": "डिफ़ॉल्ट",
+        "custom_emoji": "कस्टम",
+        "emoji_packs": "इमोजी पैक",
+        "send": "भेजें",
+        "choose_language": "भाषा चुनें",
+        "language_changed": "भाषा बदल गई",
+        "your_limit": "आपकी सीमा",
+        "per_post": "प्रति पोस्ट",
+        "plan": "प्लान",
+        "free_plan": "फ्री प्लान",
+        "my_watches": "मेरी वॉच",
+        "add_watch": "वॉच जोड़ें",
+        "contact_owner": "मालिक से संपर्क",
+        "retry": "पुनः प्रयास",
+        "how_many": "कितने रिएक्शन?",
+        "emoji_mode": "इमोजी मोड चुनें",
+        "post_link": "पोस्ट लिंक भेजें",
+        "chat_link": "चैट लिंक भेजें",
+        "count_per_post": "प्रति पोस्ट संख्या",
+        "chat_type": "चैट टाइप?",
+        "my_link": "मेरा लिंक",
+        "stats": "आंकड़े",
+        "leaderboard": "लीडरबोर्ड",
+    },
+}
+
+
+def L(uid, key):
+    """Get translated string for a user."""
+    if not feat_multilang():
+        return LANG_STRINGS["en"].get(key, key)
+    try:
+        u = db_get_user_full(uid)
+        lang = "en"
+        if u and len(u) > 18 and u[18]:
+            lang = u[18]
+        return LANG_STRINGS.get(lang, LANG_STRINGS["en"]).get(key, key)
+    except Exception:
+        return LANG_STRINGS["en"].get(key, key)
+
+
 # ==================== ANIMATIONS ====================
 DIV = "━━━━━━━━━━━━━━━━━━━━━━━━━"
 STAR_LINE = "✦ ─────────── ✦ ─────────── ✦"
@@ -268,7 +413,8 @@ def D(msg, level="info"):
     icons = {"info": "ℹ️ ", "ok": "✅", "fail": "❌", "warn": "⚠️ ", "step": "▶️ ",
              "dbg": "🐛", "flood": "🌊", "rot": "🔄", "keep": "🔒",
              "cycle": "🔁", "new": "🆕", "lock": "🔐", "watch": "📡", "cache": "💾",
-             "ref": "🎁", "plan": "💰", "lang": "🌍", "backup": "🛡️", "paid": "💎"}
+             "ref": "🎁", "plan": "💰", "lang": "🌍", "backup": "🛡️", "paid": "💎",
+             "pool": "🎯"}
     print(f"[{ts}] {icons.get(level, '•')} {msg}", flush=True)
 
 
@@ -526,7 +672,7 @@ def db_init():
         ("paid_autowatch", "1"),
         ("paid_custom_emoji", "1"),
         ("paid_templates", "1"),
-        ("paid_multilang", "1"),
+        ("paid_multilang", "0"),
         ("paid_referral", "0"),
         ("paid_balance", "1"),
         ("paid_channel", "0"),
@@ -1341,49 +1487,7 @@ def btn(text, data=None, url=None, style=None):
     return b
 
 
-# ==================== LANGUAGE SYSTEM ====================
-LANG_STRINGS = {
-    "en": {
-        "welcome": "Welcome Back", "send_reactions": "Send Reactions",
-        "auto_watch": "Auto-Watch", "templates": "Templates",
-        "referral": "Referral", "upgrade": "Upgrade Plan",
-        "notifications": "Notifications", "language": "Language",
-        "info": "Info", "support": "Customer Support",
-        "owner_panel": "Owner Panel", "home": "Main Menu", "back": "Back",
-    },
-    "ur": {
-        "welcome": "خوش آمدید", "send_reactions": "ری ایکشن بھیجیں",
-        "auto_watch": "آٹو واچ", "templates": "ٹیمپلیٹس",
-        "referral": "ریفرل", "upgrade": "پلان اپ گریڈ",
-        "notifications": "اطلاعات", "language": "زبان",
-        "info": "معلومات", "support": "کسٹمر سپورٹ",
-        "owner_panel": "اونر پینل", "home": "مین مینو", "back": "واپس",
-    },
-    "hi": {
-        "welcome": "वापसी पर स्वागत", "send_reactions": "रिएक्शन भेजें",
-        "auto_watch": "ऑटो-वॉच", "templates": "टेम्पलेट्स",
-        "referral": "रेफरल", "upgrade": "प्लान अपग्रेड",
-        "notifications": "सूचनाएं", "language": "भाषा",
-        "info": "जानकारी", "support": "ग्राहक सहायता",
-        "owner_panel": "ओनर पैनल", "home": "मुख्य मेनू", "back": "वापस",
-    },
-}
-
-
-def L(uid, key):
-    if not feat_multilang():
-        return LANG_STRINGS["en"].get(key, key)
-    try:
-        u = db_get_user_full(uid)
-        lang = "en"
-        if u and len(u) > 18 and u[18]:
-            lang = u[18]
-        return LANG_STRINGS.get(lang, LANG_STRINGS["en"]).get(key, key)
-    except Exception:
-        return LANG_STRINGS["en"].get(key, key)
-
-
-# ==================== FLOOD / POOL ====================
+# ==================== BOT POOL (FIXED) ====================
 def is_bot_flooded(token):
     until = FLOOD_UNTIL.get(token)
     if until is None:
@@ -1398,22 +1502,42 @@ def mark_bot_flooded(token, seconds):
     FLOOD_UNTIL[token] = datetime.now() + timedelta(seconds=seconds)
 
 
+def cleanup_bot_pool():
+    """Remove stale busy entries from bot pool."""
+    now = datetime.now()
+    stale = []
+    for tok, info in list(BOT_POOL.items()):
+        busy_until = info.get("busy_until")
+        if busy_until and busy_until < now:
+            stale.append(tok)
+    for tok in stale:
+        BOT_POOL.pop(tok, None)
+    if stale:
+        D(f"Cleaned {len(stale)} stale bots from pool", "pool")
+
+
 async def acquire_bots(count, uid):
     global BOT_POOL
     async with BOT_POOL_LOCK:
+        # Cleanup stale entries first
+        cleanup_bot_pool()
+        
         bots = db_list_bots()
         now = datetime.now()
         free = []
         for tok, uname, bid, added in bots:
             if is_permanent_admin(uname):
                 continue
+            # Skip flooded bots
+            if is_bot_flooded(tok):
+                continue
             info = BOT_POOL.get(tok)
             busy_until = info.get("busy_until") if info else None
             if busy_until is None or now >= busy_until:
-                if not is_bot_flooded(tok):
-                    free.append((tok, uname))
+                free.append((tok, uname))
             if len(free) >= count:
                 break
+        
         if len(free) < count:
             wait_times = []
             for tok, uname, bid, added in bots:
@@ -1428,12 +1552,15 @@ async def acquire_bots(count, uid):
                 wait_times.sort()
                 return None, int(wait_times[0]) + 2
             return None, 30
+        
         for tok, uname in free:
             BOT_POOL[tok] = {
                 "username": uname,
-                "busy_until": now + timedelta(minutes=10),
+                "busy_until": now + timedelta(minutes=BOT_BUSY_TIMEOUT),
                 "last_used": now,
             }
+        
+        D(f"Acquired {len(free)} bots for uid={uid}", "pool")
         return free, 0
 
 
@@ -1446,6 +1573,7 @@ async def release_bots(bot_list):
             if info:
                 info["busy_until"] = now
                 info["last_used"] = now
+        D(f"Released {len(bot_list)} bots", "pool")
 
 
 # ==================== CHECKS ====================
@@ -1784,7 +1912,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             if event:
                 await safe_edit(event,
                     get_admin_needed_message(chat_title),
-                    buttons=kb_owner_needed())
+                    buttons=kb_owner_needed(uid))
             if uid in USER_STATES:
                 USER_STATES[uid] = {}
             return
@@ -1809,33 +1937,50 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
 
     reactions_done = 0
     phase1_ok = 0
+    phase1_acquired = []
 
+    # ═══════════════════════════════════════════════════════════
+    # PHASE 1 with try/finally
+    # ═══════════════════════════════════════════════════════════
     if phase1_use:
-        if event:
-            await safe_edit(event, f"💫 Phase 1: {len(phase1_use)} bots...")
-        for tok, uname in phase1_use:
-            BOT_POOL.setdefault(tok, {})
-            BOT_POOL[tok]["busy_until"] = datetime.now() + timedelta(minutes=30)
-            BOT_POOL[tok]["username"] = uname
-        ok1, skip1, pop1, fl1 = await send_reactions(
-            real_id, msg_id, phase1_use, chat_title, post_link, uid,
-            len(phase1_use), emoji_mode=emoji_mode, custom_emojis=custom_emojis)
-        phase1_ok = ok1
-        reactions_done += ok1
+        try:
+            if event:
+                await safe_edit(event, f"💫 Phase 1: {len(phase1_use)} bots...")
+            for tok, uname in phase1_use:
+                BOT_POOL.setdefault(tok, {})
+                BOT_POOL[tok]["busy_until"] = datetime.now() + timedelta(minutes=BOT_BUSY_TIMEOUT)
+                BOT_POOL[tok]["username"] = uname
+                phase1_acquired.append((tok, uname))
+            
+            ok1, skip1, pop1, fl1 = await send_reactions(
+                real_id, msg_id, phase1_use, chat_title, post_link, uid,
+                len(phase1_use), emoji_mode=emoji_mode, custom_emojis=custom_emojis)
+            phase1_ok = ok1
+            reactions_done += ok1
 
-        for uname, bid in existing_admins:
-            if is_permanent_admin(uname):
-                continue
-            try:
-                await asyncio.wait_for(
-                    remove_admin_rights(entity, bid, uname),
-                    timeout=PER_BOT_TIMEOUT)
-                await asyncio.sleep(0.5)
-            except Exception:
-                pass
-        await release_bots(phase1_use)
+            for uname, bid in existing_admins:
+                if is_permanent_admin(uname):
+                    continue
+                try:
+                    await asyncio.wait_for(
+                        remove_admin_rights(entity, bid, uname),
+                        timeout=PER_BOT_TIMEOUT)
+                    await asyncio.sleep(0.5)
+                except Exception:
+                    pass
+        except Exception as e:
+            D_err(e, "phase1")
+        finally:
+            # ALWAYS release phase1 bots
+            if phase1_acquired:
+                await release_bots(phase1_acquired)
 
+    # ═══════════════════════════════════════════════════════════
+    # PHASE 2: Add new bots
+    # ═══════════════════════════════════════════════════════════
     remaining = want - reactions_done
+    phase2_acquired = []
+
     if remaining > 0:
         if event:
             await safe_edit(event, f"🤖 Phase 2: Adding {remaining} bots...")
@@ -1846,58 +1991,70 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             acquired, wait_sec = await acquire_bots(need, uid)
             if acquired is None:
                 if event:
-                    await safe_edit(event, "⏳ No free bots.")
+                    await safe_edit(event,
+                        f"⏳ **No free bots**\n{DIV}\n\n"
+                        f"Sab bots filhal busy hain.\n"
+                        f"⏱️ Wait ~{wait_sec}s and retry.",
+                        buttons=kb_back(uid))
                 if uid in USER_STATES and event:
                     USER_STATES[uid] = {}
                 return
+
+        phase2_acquired = list(acquired)
         to_add = acquired[:remaining]
         promoted = []
-        for i, (tok, uname) in enumerate(to_add, 1):
-            try:
-                ok, rmsg = await asyncio.wait_for(
-                    add_one_bot(entity, tok, actual_type, cache_key),
-                    timeout=PER_BOT_TIMEOUT)
-                if ok:
-                    promoted.append((tok, uname))
-                else:
-                    if rmsg == "too_many_admins":
-                        break
-            except Exception:
-                pass
-            await asyncio.sleep(0.8)
-
-        non_promoted = [(t, u) for t, u in acquired if (t, u) not in promoted]
-        if non_promoted:
-            await release_bots(non_promoted)
-
-        if promoted:
-            if event:
-                await safe_edit(event, f"💫 Reacting with {len(promoted)}...")
-            ok_c, skip_c, pop_c, fl_c = await send_reactions(
-                real_id, msg_id, promoted, chat_title, post_link, uid,
-                len(promoted), emoji_mode=emoji_mode, custom_emojis=custom_emojis)
-            reactions_done += ok_c
-
-            for tok, uname in promoted:
-                if is_permanent_admin(uname):
-                    continue
+        try:
+            for i, (tok, uname) in enumerate(to_add, 1):
                 try:
-                    u_entity = await safe_get_entity(
-                        uname, cache_key=f"bot:{uname}",
-                        cache_store=BOT_ENTITY_CACHE)
-                    await asyncio.wait_for(
-                        remove_admin_rights(entity, u_entity.id, uname),
+                    ok, rmsg = await asyncio.wait_for(
+                        add_one_bot(entity, tok, actual_type, cache_key),
                         timeout=PER_BOT_TIMEOUT)
-                    await asyncio.sleep(0.4)
+                    if ok:
+                        promoted.append((tok, uname))
+                    else:
+                        if rmsg == "too_many_admins":
+                            break
                 except Exception:
                     pass
-            await release_bots(promoted)
+                await asyncio.sleep(0.8)
+
+            non_promoted = [(t, u) for t, u in acquired if (t, u) not in promoted]
+            if non_promoted:
+                await release_bots(non_promoted)
+
+            if promoted:
+                if event:
+                    await safe_edit(event, f"💫 Reacting with {len(promoted)}...")
+                ok_c, skip_c, pop_c, fl_c = await send_reactions(
+                    real_id, msg_id, promoted, chat_title, post_link, uid,
+                    len(promoted), emoji_mode=emoji_mode, custom_emojis=custom_emojis)
+                reactions_done += ok_c
+
+                for tok, uname in promoted:
+                    if is_permanent_admin(uname):
+                        continue
+                    try:
+                        u_entity = await safe_get_entity(
+                            uname, cache_key=f"bot:{uname}",
+                            cache_store=BOT_ENTITY_CACHE)
+                        await asyncio.wait_for(
+                            remove_admin_rights(entity, u_entity.id, uname),
+                            timeout=PER_BOT_TIMEOUT)
+                        await asyncio.sleep(0.4)
+                    except Exception:
+                        pass
+        except Exception as e:
+            D_err(e, "phase2")
+        finally:
+            # ALWAYS release phase2 bots
+            if phase2_acquired:
+                await release_bots(phase2_acquired)
 
     if event:
         txt = (f"{SPARKLE} ✅ **COMPLETE** {SPARKLE}\n{DIV}\n\n"
                f"📢 {chat_title}\n📩 #{msg_id}\n"
                f"🎯 {count} | 💫 **{reactions_done}**")
-        await safe_edit(event, txt, buttons=kb_back())
+        await safe_edit(event, txt, buttons=kb_back(uid))
 
     if uid in USER_STATES and event:
         USER_STATES[uid] = {}
@@ -2020,7 +2177,7 @@ async def broadcast_message(text=None, photo_url=None):
     return ok_n, fail_n, total
 
 
-# ==================== KEYBOARDS ====================
+# ==================== KEYBOARDS (TRANSLATED) ====================
 def kb_join():
     return [
         [btn("📢 Join Channel", url=FORCE_CHANNEL_URL, style="primary")],
@@ -2033,27 +2190,28 @@ def kb_request_access():
 
 
 def kb_welcome(uid=None):
+    """Main menu — TRANSLATED buttons."""
     rows = [
-        [btn("💫 Send Reactions", data=b"react_flow", style="success")],
-        [btn("📡 Auto-Watch 💎", data=b"watch_flow", style="primary")],
-        [btn("📝 Templates 💎", data=b"templates_menu", style="primary"),
-         btn("🎁 Referral", data=b"referral_menu", style="success")],
-        [btn("💰 Upgrade Plan", data=b"plans_menu", style="success"),
-         btn("🔔 Notifications", data=b"notif_menu", style="primary")],
-        [btn("🌍 Language 💎", data=b"lang_menu", style="primary"),
-         btn("ℹ️ Info", data=b"info", style="primary")],
-        [btn("💬 Customer Support", data=b"support", style="primary")],
+        [btn(f"💫 {L(uid, 'send_reactions')}", data=b"react_flow", style="success")],
+        [btn(f"📡 {L(uid, 'auto_watch')} 💎", data=b"watch_flow", style="primary")],
+        [btn(f"📝 {L(uid, 'templates')} 💎", data=b"templates_menu", style="primary"),
+         btn(f"🎁 {L(uid, 'referral')}", data=b"referral_menu", style="success")],
+        [btn(f"💰 {L(uid, 'upgrade')}", data=b"plans_menu", style="success"),
+         btn(f"🔔 {L(uid, 'notifications')}", data=b"notif_menu", style="primary")],
+        [btn(f"🌍 {L(uid, 'language')}", data=b"lang_menu", style="primary"),
+         btn(f"ℹ️ {L(uid, 'info')}", data=b"info", style="primary")],
+        [btn(f"💬 {L(uid, 'support')}", data=b"support", style="primary")],
     ]
     if uid == OWNER_ID:
-        rows.append([btn("👑 Owner Panel", data=b"owner_panel", style="danger")])
+        rows.append([btn(f"👑 {L(uid, 'owner_panel')}", data=b"owner_panel", style="danger")])
     return rows
 
 
-def kb_owner_needed():
+def kb_owner_needed(uid=None):
     return [
-        [btn("👑 Contact Owner", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
-        [btn("🔄 Retry", data=b"react_flow", style="success")],
-        [btn("🏠 Home", data=b"home", style="primary")],
+        [btn(f"👑 {L(uid, 'contact_owner')}", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
+        [btn(f"🔄 {L(uid, 'retry')}", data=b"react_flow", style="success")],
+        [btn(f"🏠 {L(uid, 'home')}", data=b"home", style="primary")],
     ]
 
 
@@ -2064,16 +2222,16 @@ def kb_support():
     ]
 
 
-def kb_chat_type():
+def kb_chat_type(uid=None):
     return [
-        [btn("📢 Channel", data=b"chattype:channel", style="primary")],
-        [btn("👥 Group", data=b"chattype:group", style="success")],
-        [btn("🔙 Cancel", data=b"home", style="danger")],
+        [btn(f"📢 {L(uid, 'channel')}", data=b"chattype:channel", style="primary")],
+        [btn(f"👥 {L(uid, 'group')}", data=b"chattype:group", style="success")],
+        [btn(f"🔙 {L(uid, 'cancel')}", data=b"home", style="danger")],
     ]
 
 
-def kb_reaction_count(uid):
-    limit = get_user_limit(uid)
+def kb_reaction_count(uid=None):
+    limit = get_user_limit(uid) if uid else DEFAULT_FREE_COUNT
     total_visible = db_count_visible_bots()
     total_all = db_count_bots()
     if uid == OWNER_ID:
@@ -2101,21 +2259,21 @@ def kb_reaction_count(uid):
     return rows
 
 
-def kb_emoji_choice():
+def kb_emoji_choice(uid=None):
     return [
-        [btn("🎯 Default (❤️ 👍 🔥)", data=b"emoji:default", style="success")],
-        [btn("✏️ Custom 💎", data=b"emoji:custom", style="primary")],
-        [btn("🎨 Emoji Packs 💎", data=b"emoji:packs", style="primary")],
-        [btn("📝 Templates 💎", data=b"emoji:templates", style="primary")],
-        [btn("🔙 Back", data=b"home", style="danger")],
+        [btn(f"🎯 {L(uid, 'default_emoji')} (❤️ 👍 🔥)", data=b"emoji:default", style="success")],
+        [btn(f"✏️ {L(uid, 'custom_emoji')} 💎", data=b"emoji:custom", style="primary")],
+        [btn(f"🎨 {L(uid, 'emoji_packs')} 💎", data=b"emoji:packs", style="primary")],
+        [btn(f"📝 {L(uid, 'templates')} 💎", data=b"emoji:templates", style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"home", style="danger")],
     ]
 
 
-def kb_watch_menu():
+def kb_watch_menu(uid=None):
     return [
-        [btn("➕ Add Watch", data=b"watch:add", style="success")],
-        [btn("📋 My Watches", data=b"watch:list", style="primary")],
-        [btn("🔙 Back", data=b"home", style="primary")],
+        [btn(f"➕ {L(uid, 'add_watch')}", data=b"watch:add", style="success")],
+        [btn(f"📋 {L(uid, 'my_watches')}", data=b"watch:list", style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")],
     ]
 
 
@@ -2125,40 +2283,38 @@ def kb_templates_menu(uid):
     for t in templates[:5]:
         rows.append([btn(f"📝 {t[1]}", data=f"tpl:use:{t[0]}".encode(), style="primary"),
                      btn("🗑️", data=f"tpl:del:{t[0]}".encode(), style="danger")])
-    rows.append([btn("🔙 Back", data=b"home", style="primary")])
+    rows.append([btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")])
     return rows
 
 
 def kb_referral_menu(uid):
     return [
-        [btn("🔗 My Link", data=b"ref:link", style="success")],
-        [btn("📊 Stats", data=b"ref:stats", style="primary")],
-        [btn("🏆 Leaderboard", data=b"ref:leaderboard", style="primary")],
-        [btn("🔙 Back", data=b"home", style="primary")],
+        [btn(f"🔗 {L(uid, 'my_link')}", data=b"ref:link", style="success")],
+        [btn(f"📊 {L(uid, 'stats')}", data=b"ref:stats", style="primary")],
+        [btn(f"🏆 {L(uid, 'leaderboard')}", data=b"ref:leaderboard", style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")],
     ]
 
 
-def kb_plans_menu():
-    """Show plan selection (Step 1)."""
+def kb_plans_menu(uid=None):
     rows = []
     for key in ["basic", "pro", "premium"]:
         limit = PLAN_LIMITS[key]
         rows.append([btn(f"{PLAN_NAMES[key]} — {limit}/post",
                         data=f"plan:{key}".encode(), style="primary")])
-    rows.append([btn("🆓 Free Plan", data=b"plan:free", style="success")])
-    rows.append([btn("🔙 Back", data=b"home", style="primary")])
+    rows.append([btn(f"🆓 {L(uid, 'free_plan')}", data=b"plan:free", style="success")])
+    rows.append([btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")])
     return rows
 
 
-def kb_plan_durations(plan):
-    """Show duration options for a plan (Step 2)."""
+def kb_plan_durations(plan, uid=None):
     rows = []
     for days, label in DURATIONS.items():
         price = get_plan_price(plan, days)
         rows.append([btn(f"📅 {label} — {price}⭐",
                         data=f"pland:{plan}:{days}".encode(),
                         style="success" if days == 30 else "primary")])
-    rows.append([btn("🔙 Back", data=b"plans_menu", style="primary")])
+    rows.append([btn(f"🔙 {L(uid, 'back')}", data=f"plan:{plan}".encode(), style="primary")])
     return rows
 
 
@@ -2170,36 +2326,36 @@ def kb_lang_menu(uid):
         marker = "✅ " if code == current else ""
         rows.append([btn(f"{marker}{name}", data=f"lang:{code}".encode(),
                         style="success" if code == current else "primary")])
-    rows.append([btn("🔙 Back", data=b"home", style="primary")])
+    rows.append([btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")])
     return rows
 
 
-def kb_notif_menu():
+def kb_notif_menu(uid=None):
     return [
         [btn("📬 My Notifications", data=b"notif:list", style="primary")],
         [btn("✅ Mark All Read", data=b"notif:read", style="success")],
-        [btn("🔙 Back", data=b"home", style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")],
     ]
 
 
-def kb_emoji_packs():
+def kb_emoji_packs(uid=None):
     rows = []
     for key, emojis in EMOJI_PACKS.items():
         rows.append([btn(f"🎨 {key.title()} — {' '.join(emojis[:3])}",
                         data=f"pack:{key}".encode(), style="primary")])
-    rows.append([btn("🔙 Back", data=b"emoji:custom", style="danger")])
+    rows.append([btn(f"🔙 {L(uid, 'back')}", data=b"emoji:custom", style="danger")])
     return rows
 
 
-def kb_contact_owner():
+def kb_contact_owner(uid=None):
     return [
-        [btn("👑 Contact Owner", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
-        [btn("🔙 Back", data=b"react_flow", style="primary")],
+        [btn(f"👑 {L(uid, 'contact_owner')}", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"react_flow", style="primary")],
     ]
 
 
-def kb_back():
-    return [[btn("🔙 Back", data=b"home", style="primary")]]
+def kb_back(uid=None):
+    return [[btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")]]
 
 
 def kb_owner():
@@ -2219,6 +2375,7 @@ def kb_owner():
          btn("🎁 Referrals", data=b"op:referrals", style="success")],
         [btn("🔐 2FA", data=b"op:2fa", style="danger"),
          btn("🌐 Sessions", data=b"op:sessions", style="primary")],
+        [btn("🧹 Reset Bot Pool", data=b"op:reset_pool", style="danger")],
         [btn("➕ Add User", data=b"op:adduser", style="success"),
          btn("⏳ Pending", data=b"op:pending", style="danger")],
         [btn("✅ Approved", data=b"op:approved", style="success"),
@@ -2247,7 +2404,6 @@ def kb_features():
 
 
 def kb_plan_prices():
-    """Plan price editor menu."""
     rows = []
     for plan in ["basic", "pro", "premium"]:
         rows.append([btn(f"💰 {PLAN_NAMES[plan]}", data=f"pp:plan:{plan}".encode(),
@@ -2257,7 +2413,6 @@ def kb_plan_prices():
 
 
 def kb_plan_prices_durations(plan):
-    """Show durations to edit prices."""
     rows = []
     for days, label in DURATIONS.items():
         price = get_plan_price(plan, days)
@@ -2316,7 +2471,6 @@ def kb_user_manage(uid):
 
 
 def kb_user_plan_durations(target_uid):
-    """Show plan+duration options for direct activation."""
     rows = []
     for plan in ["basic", "pro", "premium"]:
         for days in [1, 7, 15, 30]:
@@ -2340,7 +2494,7 @@ def get_admin_needed_message(chat_title):
         f"2️⃣ Tap name → Administrators\n"
         f"3️⃣ Add Admin → **@{OWNER_USERNAME}**\n"
         f"4️⃣ Enable ALL:\n"
-        f"   ⭐ Add New Admins (critical)\n"
+        f"   ⭐ Add New Admins\n"
         f"   ⭐ Post Messages\n"
         f"   ⭐ Delete Messages\n"
         f"   ⭐ Invite Users\n"
@@ -2359,17 +2513,16 @@ def get_welcome_message(first_name, uid, auto_approved=True):
     return (
         f"{STAR_LINE}\n{SPARKLE} ✅ **{L(uid, 'welcome').upper()}** ✅ {SPARKLE}\n"
         f"{STAR_LINE}\n\n"
-        f"👋 Hi **{first_name}**! Kaise ho bhai? 😊\n\n"
+        f"👋 Hi **{first_name}**!\n\n"
         f"{DIV}\n"
-        f"💰 Plan: **{plan_name}**\n"
-        f"🎁 Limit: **{limit} per post**\n"
+        f"💰 {L(uid, 'plan')}: **{plan_name}**\n"
+        f"🎁 {L(uid, 'your_limit')}: **{limit}** {L(uid, 'per_post')}\n"
         f"💎 Balance: **{fb}**\n"
         f"📡 Auto-Watch: **{'✅' if aw else '🔒'}**\n"
         f"🔓 Approved: **{'YES ✅' if auto_approved else 'NO ⏳'}**\n"
         f"{DIV}\n\n"
         f"⚠️ Pehle owner ko admin banao chat mein!\n"
-        f"👑 @{OWNER_USERNAME}\n\n"
-        f"💎 = Paid feature"
+        f"👑 @{OWNER_USERNAME}"
     )
 
 
@@ -2377,9 +2530,9 @@ def get_approved_notify_message(first_name):
     return (
         f"{STAR_LINE}\n{SPARKLE} 🎉 **APPROVED** 🎉 {SPARKLE}\n{STAR_LINE}\n\n"
         f"👋 Hi **{first_name}**!\n"
-        f"✅ Access granted ho gaya bhai!\n\n"
+        f"✅ Access granted!\n\n"
         f"🎁 {DEFAULT_FREE_COUNT} reactions per post\n"
-        f"🚀 /start dabao aur shuru karo!"
+        f"🚀 /start to begin!"
     )
 
 
@@ -2418,7 +2571,6 @@ async def on_start(event):
         referrer_id = db_find_user_by_ref_code(ref_code)
         if referrer_id and referrer_id != uid:
             db_add_referral(referrer_id, uid)
-            D(f"Referral: {referrer_id} → {uid}", "ref")
 
     if db_is_banned(uid):
         await event.reply("🚫 **BANNED.**")
@@ -2440,13 +2592,10 @@ async def on_start(event):
     if feat_referral():
         referrer = db_validate_referral(uid)
         if referrer:
-            D(f"Referral validated: {uid} → {referrer}", "ref")
             try:
                 await bot.send_message(referrer,
                     f"🎁 **REFERRAL VALIDATED!**\n{DIV}\n\n"
-                    f"👤 Friend ne channel join kar liya!\n"
-                    f"💎 **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** free balance added\n\n"
-                    f"👉 Check your balance!")
+                    f"💎 **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** free balance added")
             except Exception:
                 pass
 
@@ -2455,8 +2604,7 @@ async def on_start(event):
             f"{STAR_LINE}\n👑 **OWNER**\n{STAR_LINE}\n\n"
             f"🤖 Bots: **{db_count_visible_bots()}**\n"
             f"👥 Users: **{db_total_users()}**\n"
-            f"📡 Watchers: **{len(db_list_watchers())}**\n"
-            f"💰 Plans: **{'ON' if feat_plans() else 'OFF'}**",
+            f"📡 Watchers: **{len(db_list_watchers())}**",
             buttons=kb_welcome(uid))
         return
 
@@ -2589,13 +2737,13 @@ async def on_cb(event):
                 f"ℹ️ **YOUR INFO**\n{DIV}\n\n"
                 f"🆔 `{uid}`\n"
                 f"📛 {user[1] if user else '—'}\n"
-                f"💰 Plan: **{PLAN_NAMES.get(plan, PLAN_NAMES['free'])}**\n"
+                f"💰 {L(uid, 'plan')}: **{PLAN_NAMES.get(plan, PLAN_NAMES['free'])}**\n"
                 f"📅 Expires: **{exp[:10] if exp != 'N/A' else 'N/A'}**\n"
-                f"🎁 Limit: **{limit} per post**\n"
+                f"🎁 {L(uid, 'your_limit')}: **{limit}** {L(uid, 'per_post')}\n"
                 f"💎 Balance: **{fb}**\n"
                 f"📡 Auto-Watch: **{'✅' if aw else '🔒'}**\n"
                 f"🎁 Referrals: **{ref_count}** ({ref_earned} earned)",
-                buttons=kb_back())
+                buttons=kb_back(uid))
             return
 
         # Templates
@@ -2606,18 +2754,17 @@ async def on_cb(event):
             if not can_use_feature(uid, "templates"):
                 await event.answer("💎 PAID feature!", alert=True)
                 await safe_edit(event,
-                    f"💎 **TEMPLATES — PAID**\n{DIV}\n\n"
-                    f"Yeh paid feature hai bhai.\n\n"
-                    f"💰 Upgrade karo!",
-                    buttons=kb_plans_menu())
+                    f"💎 **{L(uid, 'templates').upper()} — PAID**\n{DIV}\n\n"
+                    f"Yeh paid feature hai bhai.\n\n💰 Upgrade karo!",
+                    buttons=kb_plans_menu(uid))
                 return
-            await safe_edit(event, f"📝 **TEMPLATES**\n{DIV}",
+            await safe_edit(event, f"📝 **{L(uid, 'templates').upper()}**\n{DIV}",
                 buttons=kb_templates_menu(uid))
             return
 
         if data == "tpl:new":
             USER_STATES[uid] = {"step": "tpl_wait_name"}
-            await safe_edit(event, "📝 Template ka naam bhejo:", buttons=kb_back())
+            await safe_edit(event, "📝 Template ka naam bhejo:", buttons=kb_back(uid))
             return
 
         if data.startswith("tpl:use:"):
@@ -2637,7 +2784,7 @@ async def on_cb(event):
                         await safe_edit(event,
                             f"✅ Template **{t[1]}** loaded!\n\n"
                             f"{' '.join(emojis)}",
-                            buttons=kb_back())
+                            buttons=kb_back(uid))
                     return
             await event.answer("❌ Not found", alert=True)
             return
@@ -2660,8 +2807,7 @@ async def on_cb(event):
             await safe_edit(event,
                 f"🎁 **REFERRAL SYSTEM**\n{DIV}\n\n"
                 f"Dost ko bulao aur free reactions kamao!\n\n"
-                f"💰 Per valid friend: **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** free\n"
-                f"✅ Valid = friend channel join kare",
+                f"💰 Per valid friend: **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** free",
                 buttons=kb_referral_menu(uid))
             return
 
@@ -2683,8 +2829,7 @@ async def on_cb(event):
                 f"🔗 **YOUR REFERRAL LINK**\n{DIV}\n\n"
                 f"`{link}`\n\n"
                 f"📤 Share karo dosto ke saath!\n"
-                f"💰 You get **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** free\n"
-                f"when friend joins force channel!",
+                f"💰 You get **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** free!",
                 buttons=kb_referral_menu(uid))
             return
 
@@ -2714,17 +2859,16 @@ async def on_cb(event):
             await safe_edit(event, txt, buttons=kb_referral_menu(uid))
             return
 
-        # Plans - Step 1: show plans
+        # Plans
         if data == "plans_menu":
             if not feat_plans():
                 await event.answer("❌ Disabled", alert=True)
                 return
             await safe_edit(event,
-                f"💰 **PLANS**\n{DIV}\n\n"
+                f"💰 **{L(uid, 'upgrade').upper()}**\n{DIV}\n\n"
                 f"Choose a plan to see pricing:\n\n"
-                f"📅 Available durations:\n"
-                f"   1 Day / 7 Days / 15 Days / 30 Days",
-                buttons=kb_plans_menu())
+                f"📅 Available: 1 Day / 7 Days / 15 Days / 30 Days",
+                buttons=kb_plans_menu(uid))
             return
 
         if data.startswith("plan:"):
@@ -2734,8 +2878,7 @@ async def on_cb(event):
                 await event.answer("✅ Free plan active", alert=True)
                 await safe_edit(event,
                     f"{SPARKLE} ✅ **FREE PLAN** {SPARKLE}\n{DIV}\n\n"
-                    f"🎁 Limit: **5 per post**\n"
-                    f"✅ Activated!",
+                    f"🎁 Limit: **5 per post**\n✅ Activated!",
                     buttons=kb_welcome(uid))
                 return
             if plan_key not in PLAN_LIMITS:
@@ -2744,10 +2887,9 @@ async def on_cb(event):
                 f"{PLAN_NAMES[plan_key]}\n{DIV}\n\n"
                 f"🎁 Limit: **{PLAN_LIMITS[plan_key]} per post**\n\n"
                 f"📅 **Choose duration:**",
-                buttons=kb_plan_durations(plan_key))
+                buttons=kb_plan_durations(plan_key, uid))
             return
 
-        # Step 2: User chooses duration
         if data.startswith("pland:"):
             parts = data.split(":")
             plan_key = parts[1]
@@ -2761,17 +2903,14 @@ async def on_cb(event):
                 f"📅 Duration: **{DURATIONS[days]}**\n"
                 f"🎁 Limit: **{PLAN_LIMITS[plan_key]} per post**\n"
                 f"💰 Price: **{price}⭐**\n\n"
-                f"💬 Contact owner to purchase:\n"
-                f"👑 @{OWNER_USERNAME}\n\n"
-                f"📤 Send payment proof to owner and he will\n"
-                f"activate your plan manually.",
+                f"💬 Contact owner:\n👑 @{OWNER_USERNAME}",
                 buttons=[
                     [btn("💬 Contact Owner", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
                     [btn("🔙 Back", data=f"plan:{plan_key}".encode(), style="primary")],
                 ])
             return
 
-        # Language
+        # Language — FIXED
         if data == "lang_menu":
             if not feat_multilang():
                 await event.answer("❌ Disabled", alert=True)
@@ -2779,7 +2918,7 @@ async def on_cb(event):
             if not can_use_feature(uid, "multilang"):
                 await event.answer("💎 PAID feature!", alert=True)
                 return
-            await safe_edit(event, f"🌍 **CHOOSE LANGUAGE**\n{DIV}",
+            await safe_edit(event, f"🌍 **{L(uid, 'choose_language').upper()}**\n{DIV}",
                 buttons=kb_lang_menu(uid))
             return
 
@@ -2790,8 +2929,9 @@ async def on_cb(event):
             db_set_user_lang(uid, code)
             await event.answer(f"✅ {LANGUAGES[code]}", alert=True)
             await safe_edit(event,
-                f"✅ Language changed to **{LANGUAGES[code]}**\n\n"
-                f"🏠 Returning to main menu...",
+                f"✅ **{L(uid, 'language_changed')}**\n\n"
+                f"🌍 Language: **{LANGUAGES[code]}**\n\n"
+                f"🏠 Main menu has been updated!",
                 buttons=kb_welcome(uid))
             return
 
@@ -2800,8 +2940,8 @@ async def on_cb(event):
             if not feat_notifications():
                 await event.answer("❌ Disabled", alert=True)
                 return
-            await safe_edit(event, f"🔔 **NOTIFICATIONS**\n{DIV}",
-                buttons=kb_notif_menu())
+            await safe_edit(event, f"🔔 **{L(uid, 'notifications').upper()}**\n{DIV}",
+                buttons=kb_notif_menu(uid))
             return
 
         if data == "notif:list":
@@ -2812,26 +2952,26 @@ async def on_cb(event):
             for n in notifs:
                 icon = "📭" if n[2] else "📬"
                 txt += f"{icon} {n[1]}\n   _{n[3][:16]}_\n\n"
-            await safe_edit(event, txt[:4000], buttons=kb_notif_menu())
+            await safe_edit(event, txt[:4000], buttons=kb_notif_menu(uid))
             return
 
         if data == "notif:read":
             db_mark_notifications_read(uid)
             await event.answer("✅ Marked read", alert=True)
-            await safe_edit(event, "✅ All read", buttons=kb_notif_menu())
+            await safe_edit(event, "✅ All read", buttons=kb_notif_menu(uid))
             return
 
         # Manual Reactions
         if data == "react_flow":
             if not feat_manual():
-                await event.answer("❌ Manual disabled.", alert=True)
+                await event.answer("❌ Disabled.", alert=True)
                 return
             if not can_use_feature(uid, "manual"):
                 await event.answer("💎 PAID feature!", alert=True)
                 return
             USER_STATES[uid] = {"step": "wait_chat_type"}
-            await safe_edit(event, "💫 **SEND REACTIONS**\n\nChat type?",
-                            buttons=kb_chat_type())
+            await safe_edit(event, f"💫 **{L(uid, 'send_reactions').upper()}**\n\n{L(uid, 'chat_type')}",
+                            buttons=kb_chat_type(uid))
             return
 
         if data == "chattype:channel":
@@ -2839,7 +2979,7 @@ async def on_cb(event):
                 await event.answer("❌ Not allowed.", alert=True)
                 return
             USER_STATES[uid] = {"step": "wait_channel", "chat_type": "channel"}
-            await safe_edit(event, "📢 Send channel link:", buttons=kb_back())
+            await safe_edit(event, f"📢 {L(uid, 'chat_link')}:", buttons=kb_back(uid))
             return
 
         if data == "chattype:group":
@@ -2847,7 +2987,7 @@ async def on_cb(event):
                 await event.answer("❌ Not allowed.", alert=True)
                 return
             USER_STATES[uid] = {"step": "wait_channel", "chat_type": "group"}
-            await safe_edit(event, "👥 Send group link:", buttons=kb_back())
+            await safe_edit(event, f"👥 {L(uid, 'chat_link')}:", buttons=kb_back(uid))
             return
 
         if data == "emoji:default":
@@ -2866,16 +3006,16 @@ async def on_cb(event):
             state = USER_STATES.get(uid, {})
             state["step"] = "wait_custom_emoji"
             USER_STATES[uid] = state
-            await safe_edit(event, "✏️ Send emojis (space/comma):",
-                            buttons=kb_back())
+            await safe_edit(event, f"✏️ {L(uid, 'custom_emoji')} — send emojis:",
+                            buttons=kb_back(uid))
             return
 
         if data == "emoji:packs":
             if not feat_custom_emoji() or not can_use_feature(uid, "custom_emoji"):
                 await event.answer("💎 PAID feature!", alert=True)
                 return
-            await safe_edit(event, f"🎨 **EMOJI PACKS**\n{DIV}",
-                            buttons=kb_emoji_packs())
+            await safe_edit(event, f"🎨 **{L(uid, 'emoji_packs').upper()}**\n{DIV}",
+                            buttons=kb_emoji_packs(uid))
             return
 
         if data.startswith("pack:"):
@@ -2894,11 +3034,11 @@ async def on_cb(event):
                 await safe_edit(event,
                     f"✅ **{pkey.title()}** pack loaded!\n\n"
                     f"{' '.join(emojis)}",
-                    buttons=kb_back())
+                    buttons=kb_back(uid))
             return
 
         if data == "emoji:templates":
-            await safe_edit(event, f"📝 **TEMPLATES**\n{DIV}",
+            await safe_edit(event, f"📝 **{L(uid, 'templates').upper()}**\n{DIV}",
                             buttons=kb_templates_menu(uid))
             return
 
@@ -2911,8 +3051,8 @@ async def on_cb(event):
             state["reaction_count"] = count
             USER_STATES[uid] = state
             await event.answer(f"✅ ALL {count}", alert=True)
-            await safe_edit(event, f"🎯 Count: **{count}**\n\nEmoji?",
-                            buttons=kb_emoji_choice())
+            await safe_edit(event, f"🎯 Count: **{count}**\n\n{L(uid, 'emoji_mode')}:",
+                            buttons=kb_emoji_choice(uid))
             return
 
         if data.startswith("rc:"):
@@ -2931,15 +3071,15 @@ async def on_cb(event):
             state = USER_STATES.get(uid, {})
             state["reaction_count"] = actual_count
             USER_STATES[uid] = state
-            await safe_edit(event, f"🎯 Count: **{actual_count}**\n\nEmoji?",
-                            buttons=kb_emoji_choice())
+            await safe_edit(event, f"🎯 Count: **{actual_count}**\n\n{L(uid, 'emoji_mode')}:",
+                            buttons=kb_emoji_choice(uid))
             return
 
         if data == "rc_more":
             limit = get_user_limit(uid)
             await event.answer(f"💎 More than {limit}", alert=True)
-            await safe_edit(event, f"💎 More than {limit}\n\nUpgrade plan:",
-                            buttons=kb_plans_menu())
+            await safe_edit(event, f"💎 More than {limit}\n\n{L(uid, 'upgrade')}:",
+                            buttons=kb_plans_menu(uid))
             return
 
         # Auto-Watch
@@ -2950,41 +3090,40 @@ async def on_cb(event):
             if not can_use_feature(uid, "autowatch"):
                 await event.answer("💎 PAID feature!", alert=True)
                 await safe_edit(event,
-                    f"💎 **AUTO-WATCH — PAID**\n{DIV}\n\n"
-                    f"Auto-reactions har nayi post pe!\n\n"
-                    f"💰 Upgrade karo:\n"
-                    f"👑 @{OWNER_USERNAME}",
-                    buttons=kb_plans_menu())
+                    f"💎 **{L(uid, 'auto_watch').upper()} — PAID**\n{DIV}\n\n"
+                    f"💰 Upgrade karo:\n👑 @{OWNER_USERNAME}",
+                    buttons=kb_plans_menu(uid))
                 return
-            await safe_edit(event, "📡 **AUTO-WATCH**", buttons=kb_watch_menu())
+            await safe_edit(event, f"📡 **{L(uid, 'auto_watch').upper()}**",
+                            buttons=kb_watch_menu(uid))
             return
 
         if data == "watch:add":
             USER_STATES[uid] = {"step": "watch_wait_chat_type"}
-            await safe_edit(event, "📡 Chat type?",
+            await safe_edit(event, f"📡 {L(uid, 'chat_type')}",
                 buttons=[
-                    [btn("📢 Channel", data=b"watch:chattype:channel", style="primary")],
-                    [btn("👥 Group", data=b"watch:chattype:group", style="success")],
-                    [btn("🔙 Cancel", data=b"watch_flow", style="danger")],
+                    [btn(f"📢 {L(uid, 'channel')}", data=b"watch:chattype:channel", style="primary")],
+                    [btn(f"👥 {L(uid, 'group')}", data=b"watch:chattype:group", style="success")],
+                    [btn(f"🔙 {L(uid, 'cancel')}", data=b"watch_flow", style="danger")],
                 ])
             return
 
         if data == "watch:chattype:channel":
             USER_STATES[uid] = {"step": "watch_wait_link", "chat_type": "channel"}
-            await safe_edit(event, "📢 Send channel link:", buttons=kb_back())
+            await safe_edit(event, f"📢 {L(uid, 'chat_link')}:", buttons=kb_back(uid))
             return
 
         if data == "watch:chattype:group":
             USER_STATES[uid] = {"step": "watch_wait_link", "chat_type": "group"}
-            await safe_edit(event, "👥 Send group link:", buttons=kb_back())
+            await safe_edit(event, f"👥 {L(uid, 'chat_link')}:", buttons=kb_back(uid))
             return
 
         if data == "watch:list":
             watchers = db_list_watchers(uid if uid != OWNER_ID else None)
             if not watchers:
-                await safe_edit(event, "📋 No watchers.", buttons=kb_watch_menu())
+                await safe_edit(event, f"📋 No watchers.", buttons=kb_watch_menu(uid))
                 return
-            txt = f"📋 **WATCHERS ({len(watchers)})**\n{DIV}\n\n"
+            txt = f"📋 **{L(uid, 'my_watches').upper()} ({len(watchers)})**\n{DIV}\n\n"
             rows = []
             for w in watchers[:10]:
                 (wid, wuid, cid, ctitle, clink, ctype, rcount,
@@ -2995,7 +3134,7 @@ async def on_cb(event):
                     rows.append([btn(f"⚙️ #{wid} {ctitle[:15]}",
                                      data=f"watch:manage:{wid}".encode(),
                                      style="primary")])
-            rows.append([btn("🔙 Back", data=b"watch_flow", style="primary")])
+            rows.append([btn(f"🔙 {L(uid, 'back')}", data=b"watch_flow", style="primary")])
             await safe_edit(event, txt[:4000], buttons=rows)
             return
 
@@ -3018,7 +3157,7 @@ async def on_cb(event):
                 [btn("✏️ Count", data=f"watch:edit_count:{wid}".encode(), style="primary")],
                 [btn("✏️ Emoji", data=f"watch:edit_emoji:{wid}".encode(), style="primary")],
                 [btn("🗑️ Delete", data=f"watch:delete:{wid}".encode(), style="danger")],
-                [btn("🔙 Back", data=b"watch:list", style="primary")],
+                [btn(f"🔙 {L(uid, 'back')}", data=b"watch:list", style="primary")],
             ]
             await safe_edit(event, txt, buttons=rows)
             return
@@ -3043,7 +3182,7 @@ async def on_cb(event):
                 [btn("✏️ Count", data=f"watch:edit_count:{wid}".encode(), style="primary")],
                 [btn("✏️ Emoji", data=f"watch:edit_emoji:{wid}".encode(), style="primary")],
                 [btn("🗑️ Delete", data=f"watch:delete:{wid}".encode(), style="danger")],
-                [btn("🔙 Back", data=b"watch:list", style="primary")],
+                [btn(f"🔙 {L(uid, 'back')}", data=b"watch:list", style="primary")],
             ]
             await safe_edit(event, txt, buttons=rows)
             return
@@ -3051,16 +3190,17 @@ async def on_cb(event):
         if data.startswith("watch:edit_count:"):
             wid = int(data.split(":")[2])
             USER_STATES[uid] = {"step": "watch_edit_count", "wid": wid}
-            await safe_edit(event, "✏️ Send new count (1-200):", buttons=kb_back())
+            await safe_edit(event, f"✏️ {L(uid, 'count_per_post')} (1-200):",
+                            buttons=kb_back(uid))
             return
 
         if data.startswith("watch:edit_emoji:"):
             wid = int(data.split(":")[2])
-            await safe_edit(event, "✏️ Emoji mode?",
+            await safe_edit(event, f"✏️ {L(uid, 'emoji_mode')}:",
                 buttons=[
-                    [btn("🎯 Default", data=f"watch:emoji:default:{wid}".encode(), style="success")],
-                    [btn("✏️ Custom", data=f"watch:emoji:custom:{wid}".encode(), style="primary")],
-                    [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="danger")],
+                    [btn(f"🎯 {L(uid, 'default_emoji')}", data=f"watch:emoji:default:{wid}".encode(), style="success")],
+                    [btn(f"✏️ {L(uid, 'custom_emoji')}", data=f"watch:emoji:custom:{wid}".encode(), style="primary")],
+                    [btn(f"🔙 {L(uid, 'back')}", data=f"watch:manage:{wid}".encode(), style="danger")],
                 ])
             return
 
@@ -3069,13 +3209,13 @@ async def on_cb(event):
             db_update_watcher(wid, emoji_mode="default", custom_emojis=None)
             await event.answer("✅", alert=True)
             await safe_edit(event, "✅ Updated!",
-                buttons=[[btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="primary")]])
+                buttons=[[btn(f"🔙 {L(uid, 'back')}", data=f"watch:manage:{wid}".encode(), style="primary")]])
             return
 
         if data.startswith("watch:emoji:custom:"):
             wid = int(data.split(":")[3])
             USER_STATES[uid] = {"step": "watch_edit_emoji", "wid": wid}
-            await safe_edit(event, "✏️ Send emojis:", buttons=kb_back())
+            await safe_edit(event, "✏️ Send emojis:", buttons=kb_back(uid))
             return
 
         if data.startswith("watch:delete:"):
@@ -3085,7 +3225,7 @@ async def on_cb(event):
                 return
             db_delete_watcher(wid)
             await event.answer("🗑️ Deleted", alert=True)
-            await safe_edit(event, "✅ Deleted", buttons=kb_watch_menu())
+            await safe_edit(event, "✅ Deleted", buttons=kb_watch_menu(uid))
             return
 
         # ═══════ OWNER PANEL ═══════
@@ -3102,6 +3242,21 @@ async def on_cb(event):
                 f"📡 Watchers: **{len(db_list_watchers())}**\n"
                 f"🔓 Auto: **{'✅' if is_auto_approve() else '❌'}**\n"
                 f"🎁 Free: **{get_free_count()}**",
+                buttons=kb_owner())
+            return
+
+        # ═══ RESET BOT POOL ═══
+        if data == "op:reset_pool":
+            if uid != OWNER_ID:
+                return
+            BOT_POOL.clear()
+            FLOOD_UNTIL.clear()
+            await event.answer("✅ Pool cleared!", alert=True)
+            await safe_edit(event,
+                f"🧹 **BOT POOL RESET**\n{DIV}\n\n"
+                f"✅ Sab bots ko free kar diya gaya!\n"
+                f"✅ Flood wait clear!\n\n"
+                f"Ab fresh tasks chalayen.",
                 buttons=kb_owner())
             return
 
@@ -3164,7 +3319,7 @@ async def on_cb(event):
                 f"📅 Duration: **{DURATIONS[days]}**\n"
                 f"💵 Current: **{current}⭐**\n\n"
                 f"Send new price (number only):",
-                buttons=kb_back())
+                buttons=kb_back(uid))
             return
 
         # ═══════ PAID FEATURES CONTROL ═══════
@@ -3250,9 +3405,7 @@ async def on_cb(event):
             backup_ok = backup_client is not None
             txt = (f"🌐 **SESSIONS**\n{DIV}\n\n"
                    f"🟢 Primary: **Active**\n"
-                   f"🛡️ Backup: **{'✅ Ready' if backup_ok else '❌ Not available'}**\n\n"
-                   f"Primary session used for all operations.\n"
-                   f"Backup used when primary hits flood.")
+                   f"🛡️ Backup: **{'✅ Ready' if backup_ok else '❌ Not available'}**")
             await safe_edit(event, txt, buttons=kb_owner())
             return
 
@@ -3291,6 +3444,10 @@ async def on_cb(event):
                 txt += f"{status} **{i}.** @{r[1]}\n"
             if len(bots) > 30:
                 txt += f"\n... +{len(bots)-30}"
+            busy_count = sum(1 for t, i in BOT_POOL.items()
+                            if i.get("busy_until") and i["busy_until"] > now)
+            flooded_count = sum(1 for t in FLOOD_UNTIL if FLOOD_UNTIL[t] > now)
+            txt += f"\n\n🔴 Busy: **{busy_count}**  🌊 Flooded: **{flooded_count}**"
             await safe_edit(event, txt[:4000], buttons=kb_owner())
             return
 
@@ -3408,7 +3565,6 @@ async def on_cb(event):
             else:
                 db_set_user_plan(target, plan_key, days)
             await event.answer(f"✅ {plan_key} {days}d activated", alert=True)
-            # Notify user
             try:
                 if plan_key == "free":
                     notif = f"🆓 **FREE PLAN activated**\n🎁 5 per post"
@@ -3553,7 +3709,7 @@ async def on_cb(event):
             state = USER_STATES.get(uid, {})
             state["step"] = "watch_wait_custom_emoji"
             USER_STATES[uid] = state
-            await safe_edit(event, "✏️ Send emojis:", buttons=kb_back())
+            await safe_edit(event, "✏️ Send emojis:", buttons=kb_back(uid))
             return
 
     except Exception as e:
@@ -3741,8 +3897,8 @@ async def on_msg(event):
             state["channel_link"] = event.text.strip()
             state["step"] = "wait_post"
             USER_STATES[uid] = state
-            await event.reply("✅ Chat saved.\n\nSend post link:",
-                              buttons=kb_back())
+            await event.reply(f"✅ Chat saved.\n\n{L(uid, 'post_link')}:",
+                              buttons=kb_back(uid))
             return
 
         if step == "wait_post":
@@ -3753,8 +3909,8 @@ async def on_msg(event):
             visible = db_count_visible_bots()
             header = (f"👑 OWNER — {visible} bots"
                       if uid == OWNER_ID
-                      else f"🎁 Limit: **{limit} per post**")
-            await event.reply(f"✅ Post saved.\n\nHow many?\n\n{header}",
+                      else f"🎁 {L(uid, 'your_limit')}: **{limit}** {L(uid, 'per_post')}")
+            await event.reply(f"✅ Post saved.\n\n{L(uid, 'how_many')}\n\n{header}",
                             buttons=kb_reaction_count(uid))
             return
 
@@ -3766,7 +3922,7 @@ async def on_msg(event):
                 if p and p in ALL_REACTIONS and p not in emojis:
                     emojis.append(p)
             if not emojis:
-                await event.reply("❌ No valid emojis.", buttons=kb_back())
+                await event.reply("❌ No valid emojis.", buttons=kb_back(uid))
                 return
             state["custom_emojis"] = emojis[:30]
             state["emoji_mode"] = "custom"
@@ -3780,8 +3936,8 @@ async def on_msg(event):
             state["watch_chat_type"] = state.get("chat_type", "channel")
             state["step"] = "watch_wait_count"
             USER_STATES[uid] = state
-            await event.reply("✅ Link saved.\n\nCount per post (1-50):",
-                              buttons=kb_back())
+            await event.reply(f"✅ Link saved.\n\n{L(uid, 'count_per_post')} (1-50):",
+                              buttons=kb_back(uid))
             return
 
         if step == "watch_wait_count":
@@ -3792,11 +3948,11 @@ async def on_msg(event):
             state["watch_count"] = min(int(text), 50)
             state["step"] = "watch_wait_emoji"
             USER_STATES[uid] = state
-            await event.reply(f"✅ Count: {state['watch_count']}\n\nEmoji mode?",
+            await event.reply(f"✅ Count: {state['watch_count']}\n\n{L(uid, 'emoji_mode')}:",
                 buttons=[
-                    [btn("🎯 Default", data=b"watch_emoji:default", style="success")],
-                    [btn("✏️ Custom", data=b"watch_emoji:custom", style="primary")],
-                    [btn("🔙 Cancel", data=b"watch_flow", style="danger")],
+                    [btn(f"🎯 {L(uid, 'default_emoji')}", data=b"watch_emoji:default", style="success")],
+                    [btn(f"✏️ {L(uid, 'custom_emoji')}", data=b"watch_emoji:custom", style="primary")],
+                    [btn(f"🔙 {L(uid, 'cancel')}", data=b"watch_flow", style="danger")],
                 ])
             return
 
@@ -3820,7 +3976,7 @@ async def on_msg(event):
             db_update_watcher(wid, reaction_count=min(int(text), 200))
             del USER_STATES[uid]
             await event.reply("✅ Updated!", buttons=[
-                [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="primary")]])
+                [btn(f"🔙 {L(uid, 'back')}", data=f"watch:manage:{wid}".encode(), style="primary")]])
             return
 
         if step == "watch_edit_emoji":
@@ -3834,7 +3990,7 @@ async def on_msg(event):
                               custom_emojis=",".join(emojis[:30]))
             del USER_STATES[uid]
             await event.reply("✅ Updated!", buttons=[
-                [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="primary")]])
+                [btn(f"🔙 {L(uid, 'back')}", data=f"watch:manage:{wid}".encode(), style="primary")]])
             return
 
     except Exception as e:
@@ -3892,8 +4048,8 @@ async def _finalize_watch_add(event, uid):
         f"📢 {chat_title}\n🎯 {count}/post\n✏️ {mode}\n"
         f"📊 From: **#{last_id}**\n\n🟢 **ACTIVE!**",
         buttons=[
-            [btn("📋 My Watches", data=b"watch:list", style="primary")],
-            [btn("🏠 Home", data=b"home", style="success")]])
+            [btn(f"📋 {L(uid, 'my_watches')}", data=b"watch:list", style="primary")],
+            [btn(f"🏠 {L(uid, 'home')}", data=b"home", style="success")]])
     if uid in USER_STATES:
         USER_STATES[uid] = {}
 
@@ -3904,7 +4060,7 @@ async def _run_reactions(event, uid):
     if TASK_RUNNING:
         await safe_edit(event,
             f"⏳ **Please Wait**\n{DIV}\n\nAnother task running.",
-            buttons=kb_back())
+            buttons=kb_back(uid))
         if uid in USER_STATES:
             USER_STATES[uid] = {}
         return
@@ -3944,14 +4100,12 @@ async def main():
     global admin_client, backup_client
     db_init()
 
-    # Primary session
     admin_client = TelegramClient(StringSession(ADMIN_SESSION), API_ID, API_HASH)
     await admin_client.start()
     if not await admin_client.is_user_authorized():
         print("❌ Primary session invalid.")
         return
 
-    # Backup session (safe loading)
     if BACKUP_SESSION_1 and len(BACKUP_SESSION_1) > 250:
         try:
             backup_client = TelegramClient(
@@ -3969,18 +4123,17 @@ async def main():
             D(f"⚠️ Backup failed: {str(e)[:80]}", "warn")
     else:
         backup_client = None
-        if BACKUP_SESSION_1:
-            D("⚠️ Backup session too short — ignoring", "warn")
 
     me = await admin_client.get_me()
     bots, added = sync_bots()
 
-    D_sep("GHOST REACTION BOT — v55 FINAL")
+    D_sep("GHOST REACTION BOT — v56")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
     D(f"Bots: {db_count_visible_bots()} / {db_count_bots()}", "ok")
     D(f"Colors: {'✅' if HAS_BUTTON_STYLE else '❌'}", "info")
     D(f"Backup: {'✅ Ready' if backup_client else '❌ None'}", "backup")
     D(f"Task lock: ENABLED", "lock")
+    D(f"Bot pool timeout: {BOT_BUSY_TIMEOUT} min", "pool")
     D(f"Entity cache: ENABLED", "cache")
     D(f"Watcher: {WATCHER_CHECK_INTERVAL}s", "watch")
     D(f"Plan durations: 1/7/15/30 days", "plan")
