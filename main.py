@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT - v45
-   Railway-Ready | Button Colors Safe | Full English
+   GHOST REACTION BOT - v46
+   Button Colors WORKING | Full English | Railway-Ready
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -34,13 +34,16 @@ from telethon.tl.types import (
     ChannelParticipantsAdmins,
 )
 
-# ── Try to import KeyboardButtonStyle (available in newer Telethon) ──
+# ── KEY FIX: KeyboardButtonStyle import (Telethon 1.37+) ──
 try:
     from telethon.tl.types import KeyboardButtonStyle
     HAS_BUTTON_STYLE = True
+    print("[STARTUP] ✅ KeyboardButtonStyle available — colors will work!")
 except ImportError:
     KeyboardButtonStyle = None
     HAS_BUTTON_STYLE = False
+    print("[STARTUP] ⚠️ KeyboardButtonStyle NOT available — colors skipped")
+    print("[STARTUP] Update Telethon: pip install 'telethon>=1.37.0'")
 
 from telethon.errors import FloodWaitError
 from telethon.errors.rpcerrorlist import (
@@ -191,7 +194,6 @@ OWNER_DISPLAY = "👑 Rehan (@Anonymous_User_37)\n🆔 `8762845215`"
 FORCE_CHANNEL = "@MR_GHOST_OFFICIAL"
 FORCE_CHANNEL_URL = "https://t.me/MR_GHOST_OFFICIAL"
 
-# ── Use /app/data if mounted, else local ──
 DB_FILE = "/app/data/ghost_users.db" if os.path.isdir("/app/data") else "ghost_users.db"
 
 DEFAULT_REACTIONS = ["❤️", "👍", "🔥"]
@@ -238,7 +240,6 @@ LOADING_FRAMES = [
 ]
 
 
-# ==================== DEBUG ====================
 def D(msg, level="info"):
     ts = datetime.now().strftime("%H:%M:%S")
     icons = {"info": "ℹ️ ", "ok": "✅", "fail": "❌", "warn": "⚠️ ", "step": "▶️ ",
@@ -259,7 +260,6 @@ def D_err(e, ctx=""):
     print(f"{'─' * 60}\n", flush=True)
 
 
-# ==================== SAFE EDIT ====================
 async def safe_edit(event, text, buttons=None, alert=None):
     try:
         if alert:
@@ -304,7 +304,6 @@ async def animate_loading(event, base_text, seconds=2.0):
         await asyncio.sleep(0.2)
 
 
-# ==================== HELPERS ====================
 def to_bot_api_chat_id(chat_id):
     s = str(chat_id)
     if s.startswith("-100"):
@@ -334,7 +333,8 @@ def is_permanent_admin(username):
 
 # ==================== DATABASE ====================
 def db_init():
-    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True) if "/" in DB_FILE else None
+    if "/" in DB_FILE:
+        os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -755,18 +755,18 @@ bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
 USER_STATES = {}
 
 
-# ==================== BUTTON (Color-Safe) ====================
+# ==================== BUTTON (COLOR SUPPORT) ====================
 def btn(text, data=None, url=None, style=None):
     """
-    Create a button. Applies colors if KeyboardButtonStyle is available.
-    Gracefully skips styling if not supported.
+    Create a button with optional color.
+    Colors: 'primary' (blue), 'success' (green), 'danger' (red)
+    Works only if Telethon 1.37+ is installed.
     """
     if url:
         b = Button.url(text, url)
     else:
         b = Button.inline(text, data)
 
-    # Apply colors only if the class exists
     if style and HAS_BUTTON_STYLE and KeyboardButtonStyle is not None:
         try:
             if style == "primary":
@@ -775,8 +775,8 @@ def btn(text, data=None, url=None, style=None):
                 b.style = KeyboardButtonStyle(bg_success=True)
             elif style == "danger":
                 b.style = KeyboardButtonStyle(bg_danger=True)
-        except Exception:
-            pass  # silently skip if styling fails
+        except Exception as e:
+            D(f"Button style fail ({style}): {str(e)[:60]}", "warn")
 
     return b
 
@@ -907,10 +907,8 @@ async def get_current_admin_bots(entity):
     return admin_bots
 
 
-# ==================== REMOVE ADMIN (NO KICK) ====================
 async def remove_admin_rights(entity, user_id, username):
     if is_permanent_admin(username):
-        D(f"  [SKIP] Permanent admin protected", "keep")
         return True
     try:
         empty_rights = ChatAdminRights(
@@ -948,7 +946,6 @@ async def remove_admin_rights(entity, user_id, username):
         return False
 
 
-# ==================== MAKE BOT ADMIN ====================
 async def make_bot_admin(entity, bot_entity, actual_type):
     if actual_type == "channel":
         rights = ChatAdminRights(
@@ -1030,7 +1027,6 @@ async def add_one_bot(entity, bot_token, actual_type, cache_key):
         return ok, reason
 
 
-# ==================== ENSURE OWNER ADMIN ====================
 async def ensure_owner_admin(entity, cache_key):
     if cache_key:
         if ADMIN_CACHE.get(cache_key, {}).get("owner_done"):
@@ -1077,7 +1073,6 @@ async def ensure_owner_admin(entity, cache_key):
     return False, "owner fail"
 
 
-# ==================== SEND REACTIONS ====================
 async def send_reactions(chat_id, msg_id, bot_list, chat_title, post_link,
                          uid, count, emoji_mode="default", custom_emojis=None):
     if count > len(bot_list):
@@ -1150,7 +1145,6 @@ async def send_reactions(chat_id, msg_id, bot_list, chat_title, post_link,
     return ok, skip, pop, flood_waits
 
 
-# ==================== MULTI-CYCLE ROTATING ====================
 async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                                      emoji_mode="default", custom_emojis=None):
     D_sep(f"MULTI-CYCLE uid={uid} count={count} mode={emoji_mode}")
@@ -1217,7 +1211,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         await safe_edit(event, f"❌ **OWNER SETUP FAILED**\n\n`{reason_owner}`")
         return
 
-    # PHASE 1
     existing_admins = await get_current_admin_bots(entity)
     db_bots = db_list_bots()
     username_to_token = {uname: tok for tok, uname, bid, added in db_bots}
@@ -1370,7 +1363,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         USER_STATES[uid] = {}
 
 
-# ==================== BROADCAST ====================
 async def get_admin_chats():
     chats = []
     try:
@@ -1545,7 +1537,6 @@ def kb_approval_actions(target_uid):
     ]
 
 
-# ==================== ADMIN NEEDED MESSAGE ====================
 def get_admin_needed_message(chat_title):
     return (
         f"{STAR_LINE}\n"
@@ -1634,7 +1625,6 @@ def get_approved_notify_message(first_name):
     )
 
 
-# ==================== /start ====================
 @bot.on(events.NewMessage(pattern="/start"))
 async def on_start(event):
     if event.is_channel:
@@ -1736,7 +1726,6 @@ async def on_start(event):
     )
 
 
-# ==================== CALLBACK ====================
 @bot.on(events.CallbackQuery)
 async def on_cb(event):
     try:
@@ -1972,7 +1961,6 @@ async def on_cb(event):
                             buttons=kb_contact_owner())
             return
 
-        # OWNER PANEL
         if data == "owner_panel":
             if uid != OWNER_ID:
                 return
@@ -2124,7 +2112,6 @@ async def on_cb(event):
             pass
 
 
-# ==================== RUN REACTIONS HELPER ====================
 async def _run_reactions(event, uid):
     state = USER_STATES.get(uid, {})
     chat_link = state.get("channel_link")
@@ -2143,7 +2130,6 @@ async def _run_reactions(event, uid):
     )
 
 
-# ==================== MESSAGE HANDLER ====================
 @bot.on(events.NewMessage)
 async def on_msg(event):
     try:
@@ -2285,7 +2271,6 @@ async def on_msg(event):
         D_err(e, "on_msg")
 
 
-# ==================== MAIN ====================
 async def main():
     db_init()
     await admin_client.start()
@@ -2296,11 +2281,11 @@ async def main():
     me = await admin_client.get_me()
     bots, added = sync_bots()
 
-    D_sep("GHOST REACTION BOT — v45")
+    D_sep("GHOST REACTION BOT — v46")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
     D(f"Bots (visible): {db_count_visible_bots()}", "ok")
     D(f"Bots (total incl. hidden): {db_count_bots()}", "ok")
-    D(f"Button style support: {'YES' if HAS_BUTTON_STYLE else 'NO (colors skipped)'}", "info")
+    D(f"Button color support: {'✅ YES' if HAS_BUTTON_STYLE else '❌ NO (colors skipped)'}", "info")
     D(f"DB file: {DB_FILE}", "info")
     D(f"Batch size: {BATCH_SIZE}", "cycle")
     D(f"Force channel: {FORCE_CHANNEL}", "info")
