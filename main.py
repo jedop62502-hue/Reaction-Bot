@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT - v46
-   Button Colors WORKING | Full English | Railway-Ready
+   GHOST REACTION BOT - v47
+   Task Lock | Exact Count | Full English | Button Colors
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -34,7 +34,7 @@ from telethon.tl.types import (
     ChannelParticipantsAdmins,
 )
 
-# ── KEY FIX: KeyboardButtonStyle import (Telethon 1.37+) ──
+# ── Try to import KeyboardButtonStyle (Telethon 1.37+) ──
 try:
     from telethon.tl.types import KeyboardButtonStyle
     HAS_BUTTON_STYLE = True
@@ -219,6 +219,12 @@ FLOOD_UNTIL = {}
 ADMIN_CACHE = {}
 ADMIN_CHECK_ENABLED = True
 
+# ══════════════════════════════════════════════════════════
+# GLOBAL TASK LOCK — Ek waqt mein sirf EK task chale
+# ══════════════════════════════════════════════════════════
+TASK_RUNNING = False
+TASK_OWNER_UID = None
+
 
 # ==================== ANIMATIONS ====================
 DIV = "━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -244,7 +250,7 @@ def D(msg, level="info"):
     ts = datetime.now().strftime("%H:%M:%S")
     icons = {"info": "ℹ️ ", "ok": "✅", "fail": "❌", "warn": "⚠️ ", "step": "▶️ ",
              "dbg": "🐛", "edit": "✏️ ", "flood": "🌊", "rot": "🔄", "keep": "🔒",
-             "cycle": "🔁", "new": "🆕"}
+             "cycle": "🔁", "new": "🆕", "lock": "🔐"}
     print(f"[{ts}] {icons.get(level, '•')} {msg}", flush=True)
 
 
@@ -757,11 +763,6 @@ USER_STATES = {}
 
 # ==================== BUTTON (COLOR SUPPORT) ====================
 def btn(text, data=None, url=None, style=None):
-    """
-    Create a button with optional color.
-    Colors: 'primary' (blue), 'success' (green), 'danger' (red)
-    Works only if Telethon 1.37+ is installed.
-    """
     if url:
         b = Button.url(text, url)
     else:
@@ -804,6 +805,9 @@ async def acquire_bots(count, uid):
         now = datetime.now()
         free = []
         for tok, uname, bid, added in bots:
+            # Skip permanent (hidden) bots
+            if is_permanent_admin(uname):
+                continue
             info = BOT_POOL.get(tok)
             busy_until = info.get("busy_until") if info else None
             if busy_until is None or now >= busy_until:
@@ -811,9 +815,12 @@ async def acquire_bots(count, uid):
                     free.append((tok, uname))
             if len(free) >= count:
                 break
+
         if len(free) < count:
             wait_times = []
             for tok, uname, bid, added in bots:
+                if is_permanent_admin(uname):
+                    continue
                 info = BOT_POOL.get(tok)
                 if info and info.get("busy_until") and info["busy_until"] > now:
                     wait_times.append((info["busy_until"] - now).total_seconds())
@@ -823,6 +830,7 @@ async def acquire_bots(count, uid):
                 wait_times.sort()
                 return None, int(wait_times[0]) + 2
             return None, 30
+
         for tok, uname in free:
             BOT_POOL[tok] = {
                 "username": uname,
@@ -909,6 +917,7 @@ async def get_current_admin_bots(entity):
 
 async def remove_admin_rights(entity, user_id, username):
     if is_permanent_admin(username):
+        D(f"  [SKIP] Permanent admin protected", "keep")
         return True
     try:
         empty_rights = ChatAdminRights(
@@ -1145,9 +1154,20 @@ async def send_reactions(chat_id, msg_id, bot_list, chat_title, post_link,
     return ok, skip, pop, flood_waits
 
 
+# ==================== PROCESS REACTIONS (FIXED v47) ====================
 async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                                      emoji_mode="default", custom_emojis=None):
-    D_sep(f"MULTI-CYCLE uid={uid} count={count} mode={emoji_mode}")
+    """
+    FIXED LOGIC:
+      1. Check existing admin bots (skip permanent)
+      2. React with them (up to `count`)
+      3. Remove admin rights from them
+      4. If more needed: add EXACTLY (count - already_done) new bots
+      5. React with them
+      6. Remove admin rights
+      7. NEVER add more than `count` bots total
+    """
+    D_sep(f"PROCESS uid={uid} count={count} mode={emoji_mode}")
 
     chat_ref, invite_hash = parse_channel_link(chat_link)
     post_ref, msg_id = parse_post_link(post_link)
@@ -1160,8 +1180,11 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     total_bots = db_count_bots()
     want = min(count, total_bots)
 
+    D(f"Want: {want} reactions (requested={count}, total_bots={total_bots})", "rot")
+
     await safe_edit(event, f"{SPARKLE} **Processing...**\n\n🔍 Resolving chat...")
 
+    # ── Resolve chat ──
     try:
         if invite_hash and not post_ref:
             try:
@@ -1184,6 +1207,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     else:
         actual_type = chat_type
 
+    # ── Verify post ──
     try:
         post_msg = await admin_client.get_messages(entity, ids=msg_id)
         if post_msg is None:
@@ -1192,6 +1216,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     except Exception:
         pass
 
+    # ── Admin check ──
     if ADMIN_CHECK_ENABLED and uid != OWNER_ID:
         await animate_loading(event, "🔍 **Checking owner admin status...**", 1.5)
         owner_is_admin = await check_owner_admin(entity)
@@ -1211,43 +1236,53 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         await safe_edit(event, f"❌ **OWNER SETUP FAILED**\n\n`{reason_owner}`")
         return
 
+    # ═══════════════════════════════════════════════════════════
+    # PHASE 1: React with existing admin bots (up to `want`)
+    # ═══════════════════════════════════════════════════════════
     existing_admins = await get_current_admin_bots(entity)
     db_bots = db_list_bots()
     username_to_token = {uname: tok for tok, uname, bid, added in db_bots}
+
+    # Filter out permanent bots + only those we know
     phase1_pairs = []
     for uname, bid in existing_admins:
+        if is_permanent_admin(uname):
+            continue
         if uname in username_to_token:
             phase1_pairs.append((username_to_token[uname], uname))
-    phase1_count = min(want, len(phase1_pairs))
+
+    phase1_use = phase1_pairs[:want]  # ← EXACT count
+    D(f"Phase 1: using {len(phase1_use)} existing admins", "rot")
 
     reactions_done = 0
     phase1_ok = 0
-    used_tokens = set()
 
-    if phase1_count > 0:
+    if phase1_use:
         await safe_edit(event,
                         f"{SPARKLE} **Phase 1** {SPARKLE}\n"
                         f"{DIV}\n\n"
-                        f"💫 Reacting with existing admins ({phase1_count})...")
-        random.shuffle(phase1_pairs)
-        for tok, uname in phase1_pairs:
-            BOT_POOL.setdefault(tok, {})["busy_until"] = datetime.now() + timedelta(minutes=30)
+                        f"💫 Reacting with {len(phase1_use)} existing admins...")
+
+        # Mark them busy
+        for tok, uname in phase1_use:
+            BOT_POOL.setdefault(tok, {})
+            BOT_POOL[tok]["busy_until"] = datetime.now() + timedelta(minutes=30)
             BOT_POOL[tok]["username"] = uname
+
         ok1, skip1, pop1, fl1 = await send_reactions(
-            real_id, msg_id, phase1_pairs[:phase1_count], chat_title,
-            post_link, uid, phase1_count,
+            real_id, msg_id, phase1_use, chat_title, post_link, uid,
+            len(phase1_use),
             emoji_mode=emoji_mode, custom_emojis=custom_emojis
         )
         phase1_ok = ok1
         reactions_done += ok1
-        for tok, _ in phase1_pairs[:phase1_count]:
-            used_tokens.add(tok)
+        D(f"Phase 1 done: ok={ok1} skip={skip1}", "rot")
 
-    if len(existing_admins) > 0:
+        # Remove admin rights from phase1 (skip permanent)
         await safe_edit(event,
                         f"🔄 **Phase 2**\n"
                         f"{DIV}\n\n"
-                        f"🧹 Clearing admin slots...")
+                        f"🧹 Removing admin rights...")
         for uname, bid in existing_admins:
             if is_permanent_admin(uname):
                 continue
@@ -1256,40 +1291,46 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                     remove_admin_rights(entity, bid, uname),
                     timeout=PER_BOT_TIMEOUT
                 )
-                await asyncio.sleep(0.6)
+                await asyncio.sleep(0.5)
             except Exception:
                 pass
 
-    cycle_num = 0
-    max_cycles = 10
-    cycle_summaries = []
+        # Release phase1 bots
+        await release_bots(phase1_use)
 
-    while reactions_done < want and cycle_num < max_cycles:
-        cycle_num += 1
-        remaining = want - reactions_done
-        batch = min(remaining, BATCH_SIZE)
+    # ═══════════════════════════════════════════════════════════
+    # PHASE 3: Add new bots (EXACTLY what's needed, not more)
+    # ═══════════════════════════════════════════════════════════
+    remaining = want - reactions_done
+    D(f"Remaining after phase 1: {remaining}", "rot")
 
+    if remaining > 0:
         await safe_edit(event,
-                        f"🔁 **Cycle {cycle_num}** 🔁\n"
+                        f"🤖 **Phase 3**\n"
                         f"{DIV}\n\n"
-                        f"✅ Done: **{reactions_done}/{want}**\n"
-                        f"⏳ Adding **{batch}** bots...")
+                        f"Adding **{remaining}** new bots...")
 
-        need = batch + len(used_tokens) + 5
+        # Acquire ONLY what we need (+ small buffer for failures)
+        need = remaining + 3
         acquired, wait_sec = await acquire_bots(need, uid)
         if acquired is None:
             await asyncio.sleep(wait_sec)
             acquired, wait_sec = await acquire_bots(need, uid)
             if acquired is None:
-                break
+                await safe_edit(event,
+                                f"⏳ **No free bots**\n\nPlease wait and try again.",
+                                buttons=kb_back())
+                if uid in USER_STATES:
+                    USER_STATES[uid] = {}
+                return
 
-        batch_bots = [(t, u) for t, u in acquired if t not in used_tokens][:batch]
-        if not batch_bots:
-            await release_bots(acquired)
-            break
+        # Take only `remaining` bots
+        to_add = acquired[:remaining]
+        D(f"Will add {len(to_add)} bots (need {remaining})", "rot")
 
         promoted = []
-        for i, (tok, uname) in enumerate(batch_bots, 1):
+        for i, (tok, uname) in enumerate(to_add, 1):
+            D(f"  Promoting {i}/{len(to_add)}: @{uname}", "step")
             try:
                 ok, rmsg = await asyncio.wait_for(
                     add_one_bot(entity, tok, actual_type, cache_key),
@@ -1297,50 +1338,57 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 )
                 if ok:
                     promoted.append((tok, uname))
-                    used_tokens.add(tok)
                 else:
+                    D(f"  ❌ @{uname}: {rmsg}", "fail")
                     if rmsg == "too_many_admins":
+                        D(f"  ⚠️ Channel admin limit — stopping", "warn")
                         break
-            except Exception:
-                pass
-            await asyncio.sleep(1.0)
+            except asyncio.TimeoutError:
+                D(f"  ❌ @{uname}: TIMEOUT", "fail")
+            except Exception as e:
+                D_err(e, f"add {uname}")
+            await asyncio.sleep(0.8)
 
+        # Release non-promoted
         non_promoted = [(t, u) for t, u in acquired if (t, u) not in promoted]
         if non_promoted:
             await release_bots(non_promoted)
-        if not promoted:
-            break
 
-        await safe_edit(event,
-                        f"💫 **Cycle {cycle_num}**\n"
-                        f"{DIV}\n\n"
-                        f"Reacting with **{len(promoted)}** bots...")
+        # React with promoted bots
+        if promoted:
+            await safe_edit(event,
+                            f"💫 **Phase 3b**\n"
+                            f"{DIV}\n\n"
+                            f"Reacting with **{len(promoted)}** bots...")
 
-        ok_c, skip_c, pop_c, fl_c = await send_reactions(
-            real_id, msg_id, promoted, chat_title, post_link, uid,
-            len(promoted), emoji_mode=emoji_mode, custom_emojis=custom_emojis
-        )
-        reactions_done += ok_c
-        cycle_summaries.append((cycle_num, ok_c, skip_c, len(promoted)))
+            ok_c, skip_c, pop_c, fl_c = await send_reactions(
+                real_id, msg_id, promoted, chat_title, post_link, uid,
+                len(promoted),
+                emoji_mode=emoji_mode, custom_emojis=custom_emojis
+            )
+            reactions_done += ok_c
+            D(f"Phase 3 done: ok={ok_c} skip={skip_c}", "rot")
 
-        await safe_edit(event,
-                        f"🧹 **Cycle {cycle_num}**\n"
-                        f"{DIV}\n\n"
-                        f"Cleaning admin slots...")
-        for tok, uname in promoted:
-            if is_permanent_admin(uname):
-                continue
-            try:
-                u_entity = await admin_client.get_entity(uname)
-                await asyncio.wait_for(
-                    remove_admin_rights(entity, u_entity.id, uname),
-                    timeout=PER_BOT_TIMEOUT
-                )
-                await asyncio.sleep(0.5)
-            except Exception:
-                pass
-        await release_bots(promoted)
+            # Remove admin rights
+            await safe_edit(event,
+                            f"🧹 **Phase 4**\n"
+                            f"{DIV}\n\n"
+                            f"Cleaning admin rights...")
+            for tok, uname in promoted:
+                if is_permanent_admin(uname):
+                    continue
+                try:
+                    u_entity = await admin_client.get_entity(uname)
+                    await asyncio.wait_for(
+                        remove_admin_rights(entity, u_entity.id, uname),
+                        timeout=PER_BOT_TIMEOUT
+                    )
+                    await asyncio.sleep(0.4)
+                except Exception:
+                    pass
+            await release_bots(promoted)
 
+    # ── Summary ──
     lines = [
         f"{SPARKLE} ✅ **REACTIONS COMPLETE** ✅ {SPARKLE}",
         f"{DIV}",
@@ -1348,13 +1396,12 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         f"📩 Post: **#{msg_id}**",
         f"🎯 Requested: **{count}**",
         f"💫 Total Success: **{reactions_done}**",
-        f"🔁 Cycles: **{cycle_num}**",
         f"{DIV}",
     ]
     if phase1_ok > 0:
-        lines.append(f"Phase 1: **{phase1_ok}**")
-    for cn, okc, skc, tot in cycle_summaries:
-        lines.append(f"Cycle {cn}: **{okc}** ok / {tot} used")
+        lines.append(f"Phase 1 (existing admins): **{phase1_ok}**")
+    if remaining > 0:
+        lines.append(f"Phase 3 (new bots): **{reactions_done - phase1_ok}**")
     lines.append(f"{DIV}")
     lines.append(f"✅ Admin rights cleaned (bots stay as members)")
 
@@ -1363,6 +1410,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         USER_STATES[uid] = {}
 
 
+# ==================== BROADCAST ====================
 async def get_admin_chats():
     chats = []
     try:
@@ -1625,6 +1673,7 @@ def get_approved_notify_message(first_name):
     )
 
 
+# ==================== /start ====================
 @bot.on(events.NewMessage(pattern="/start"))
 async def on_start(event):
     if event.is_channel:
@@ -1726,6 +1775,7 @@ async def on_start(event):
     )
 
 
+# ==================== CALLBACK ====================
 @bot.on(events.CallbackQuery)
 async def on_cb(event):
     try:
@@ -2112,7 +2162,25 @@ async def on_cb(event):
             pass
 
 
+# ==================== RUN REACTIONS (with TASK LOCK) ====================
 async def _run_reactions(event, uid):
+    global TASK_RUNNING, TASK_OWNER_UID
+
+    # ── Check if another task is running ──
+    if TASK_RUNNING:
+        D(f"TASK BUSY — uid={uid} blocked (owner={TASK_OWNER_UID})", "lock")
+        await safe_edit(
+            event,
+            f"⏳ **Please Wait**\n"
+            f"{DIV}\n\n"
+            f"Another reaction task is currently running.\n\n"
+            f"⏱️ Please wait a moment and try again.",
+            buttons=kb_back()
+        )
+        if uid in USER_STATES:
+            USER_STATES[uid] = {}
+        return
+
     state = USER_STATES.get(uid, {})
     chat_link = state.get("channel_link")
     post_link = state.get("post_link")
@@ -2124,12 +2192,23 @@ async def _run_reactions(event, uid):
         await event.answer("❌ Missing data", alert=True)
         return
 
-    await process_reactions_rotating(
-        event, uid, chat_link, post_link, count,
-        emoji_mode=emoji_mode, custom_emojis=custom_emojis
-    )
+    # ── Acquire task lock ──
+    TASK_RUNNING = True
+    TASK_OWNER_UID = uid
+    D(f"TASK START: uid={uid} count={count}", "lock")
+
+    try:
+        await process_reactions_rotating(
+            event, uid, chat_link, post_link, count,
+            emoji_mode=emoji_mode, custom_emojis=custom_emojis
+        )
+    finally:
+        TASK_RUNNING = False
+        TASK_OWNER_UID = None
+        D(f"TASK END: uid={uid}", "lock")
 
 
+# ==================== MESSAGE HANDLER ====================
 @bot.on(events.NewMessage)
 async def on_msg(event):
     try:
@@ -2271,6 +2350,7 @@ async def on_msg(event):
         D_err(e, "on_msg")
 
 
+# ==================== MAIN ====================
 async def main():
     db_init()
     await admin_client.start()
@@ -2281,7 +2361,7 @@ async def main():
     me = await admin_client.get_me()
     bots, added = sync_bots()
 
-    D_sep("GHOST REACTION BOT — v46")
+    D_sep("GHOST REACTION BOT — v47")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
     D(f"Bots (visible): {db_count_visible_bots()}", "ok")
     D(f"Bots (total incl. hidden): {db_count_bots()}", "ok")
@@ -2292,6 +2372,7 @@ async def main():
     D(f"Default free: {get_free_count()}", "info")
     D(f"Auto-approve: {'ON' if is_auto_approve() else 'OFF'}", "info")
     D(f"Admin check: {'ON' if ADMIN_CHECK_ENABLED else 'OFF'}", "info")
+    D(f"Task lock: ENABLED (one task at a time)", "lock")
     D("Bot online.", "ok")
 
     await bot.start(bot_token=BOT_TOKEN)
