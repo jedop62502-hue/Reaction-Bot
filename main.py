@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT - v47
-   Task Lock | Exact Count | Full English | Button Colors
+   GHOST REACTION BOT - v49
+   Full Feature Control | Per-User Settings | Auto-Watcher
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -34,16 +34,14 @@ from telethon.tl.types import (
     ChannelParticipantsAdmins,
 )
 
-# ── Try to import KeyboardButtonStyle (Telethon 1.37+) ──
 try:
     from telethon.tl.types import KeyboardButtonStyle
     HAS_BUTTON_STYLE = True
-    print("[STARTUP] ✅ KeyboardButtonStyle available — colors will work!")
+    print("[STARTUP] ✅ KeyboardButtonStyle available")
 except ImportError:
     KeyboardButtonStyle = None
     HAS_BUTTON_STYLE = False
-    print("[STARTUP] ⚠️ KeyboardButtonStyle NOT available — colors skipped")
-    print("[STARTUP] Update Telethon: pip install 'telethon>=1.37.0'")
+    print("[STARTUP] ⚠️ KeyboardButtonStyle NOT available")
 
 from telethon.errors import FloodWaitError
 from telethon.errors.rpcerrorlist import (
@@ -213,15 +211,16 @@ MAX_ADMINS = 50
 RESERVED_SLOTS = 5
 BATCH_SIZE = MAX_ADMINS - RESERVED_SLOTS
 
+# ── Auto-Watcher ──
+WATCHER_CHECK_INTERVAL = 60
+AUTO_WATCH_ENABLED = True
+
 BOT_POOL = {}
 BOT_POOL_LOCK = asyncio.Lock()
 FLOOD_UNTIL = {}
 ADMIN_CACHE = {}
 ADMIN_CHECK_ENABLED = True
 
-# ══════════════════════════════════════════════════════════
-# GLOBAL TASK LOCK — Ek waqt mein sirf EK task chale
-# ══════════════════════════════════════════════════════════
 TASK_RUNNING = False
 TASK_OWNER_UID = None
 
@@ -232,17 +231,10 @@ STAR_LINE = "✦ ─────────── ✦ ────────�
 SPARKLE = "✨"
 
 LOADING_FRAMES = [
-    "🔄 ▱▱▱▱▱▱▱▱▱▱",
-    "🔄 ▰▱▱▱▱▱▱▱▱▱",
-    "🔄 ▰▰▱▱▱▱▱▱▱▱",
-    "🔄 ▰▰▰▱▱▱▱▱▱▱",
-    "🔄 ▰▰▰▰▱▱▱▱▱▱",
-    "🔄 ▰▰▰▰▰▱▱▱▱▱",
-    "🔄 ▰▰▰▰▰▰▱▱▱▱",
-    "🔄 ▰▰▰▰▰▰▰▱▱▱",
-    "🔄 ▰▰▰▰▰▰▰▰▱▱",
-    "🔄 ▰▰▰▰▰▰▰▰▰▱",
-    "🔄 ▰▰▰▰▰▰▰▰▰▰",
+    "🔄 ▱▱▱▱▱▱▱▱▱▱", "🔄 ▰▱▱▱▱▱▱▱▱▱", "🔄 ▰▰▱▱▱▱▱▱▱▱",
+    "🔄 ▰▰▰▱▱▱▱▱▱▱", "🔄 ▰▰▰▰▱▱▱▱▱▱", "🔄 ▰▰▰▰▰▱▱▱▱▱",
+    "🔄 ▰▰▰▰▰▰▱▱▱▱", "🔄 ▰▰▰▰▰▰▰▱▱▱", "🔄 ▰▰▰▰▰▰▰▰▱▱",
+    "🔄 ▰▰▰▰▰▰▰▰▰▱", "🔄 ▰▰▰▰▰▰▰▰▰▰",
 ]
 
 
@@ -250,7 +242,7 @@ def D(msg, level="info"):
     ts = datetime.now().strftime("%H:%M:%S")
     icons = {"info": "ℹ️ ", "ok": "✅", "fail": "❌", "warn": "⚠️ ", "step": "▶️ ",
              "dbg": "🐛", "edit": "✏️ ", "flood": "🌊", "rot": "🔄", "keep": "🔒",
-             "cycle": "🔁", "new": "🆕", "lock": "🔐"}
+             "cycle": "🔁", "new": "🆕", "lock": "🔐", "watch": "📡", "feat": "🎛️ "}
     print(f"[{ts}] {icons.get(level, '•')} {msg}", flush=True)
 
 
@@ -350,7 +342,13 @@ def db_init():
         is_banned INTEGER DEFAULT 0,
         total_reactions INTEGER DEFAULT 0,
         total_bots INTEGER DEFAULT 0,
-        custom_limit INTEGER DEFAULT 0)""")
+        custom_limit INTEGER DEFAULT 0,
+        auto_watch_unlocked INTEGER DEFAULT 0,
+        allow_channel INTEGER DEFAULT 1,
+        allow_group INTEGER DEFAULT 1,
+        allow_manual INTEGER DEFAULT 1,
+        allow_autowatch INTEGER DEFAULT 0,
+        allow_custom_emoji INTEGER DEFAULT 1)""")
     c.execute("""CREATE TABLE IF NOT EXISTS reactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         chat_title TEXT, chat_id INTEGER, post_link TEXT, post_id INTEGER,
@@ -367,12 +365,33 @@ def db_init():
     c.execute("""CREATE TABLE IF NOT EXISTS bots (
         token TEXT PRIMARY KEY, username TEXT, bot_id INTEGER,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+    c.execute("""CREATE TABLE IF NOT EXISTS watchers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        chat_id INTEGER,
+        chat_title TEXT,
+        chat_link TEXT,
+        chat_type TEXT,
+        reaction_count INTEGER DEFAULT 5,
+        emoji_mode TEXT DEFAULT 'default',
+        custom_emojis TEXT,
+        last_post_id INTEGER DEFAULT 0,
+        is_active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_run TEXT)""")
 
+    # Add new columns to existing tables
     for col_name, col_def in [
         ("is_banned", "INTEGER DEFAULT 0"),
         ("total_reactions", "INTEGER DEFAULT 0"),
         ("total_bots", "INTEGER DEFAULT 0"),
         ("custom_limit", "INTEGER DEFAULT 0"),
+        ("auto_watch_unlocked", "INTEGER DEFAULT 0"),
+        ("allow_channel", "INTEGER DEFAULT 1"),
+        ("allow_group", "INTEGER DEFAULT 1"),
+        ("allow_manual", "INTEGER DEFAULT 1"),
+        ("allow_autowatch", "INTEGER DEFAULT 0"),
+        ("allow_custom_emoji", "INTEGER DEFAULT 1"),
     ]:
         try:
             c.execute(f"ALTER TABLE users ADD COLUMN {col_name} {col_def}")
@@ -383,10 +402,19 @@ def db_init():
     except sqlite3.OperationalError:
         pass
 
-    c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)",
-              ("free_count", str(DEFAULT_FREE_COUNT)))
-    c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)",
-              ("auto_approve", "0"))
+    # Global config defaults
+    for key, val in [
+        ("free_count", str(DEFAULT_FREE_COUNT)),
+        ("auto_approve", "0"),
+        ("channel_enabled", "1"),
+        ("group_enabled", "1"),
+        ("manual_enabled", "1"),
+        ("autowatch_enabled", "1"),
+        ("custom_emoji_enabled", "1"),
+        ("force_join_enabled", "1"),
+    ]:
+        c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)", (key, val))
+
     conn.commit()
     conn.close()
 
@@ -409,6 +437,25 @@ def cfg_set(key, value):
         conn.commit()
     finally:
         conn.close()
+
+
+def cfg_bool(key, default=True):
+    return cfg_get(key, "1" if default else "0") == "1"
+
+
+def cfg_toggle(key):
+    new_val = not cfg_bool(key)
+    cfg_set(key, "1" if new_val else "0")
+    return new_val
+
+
+# ── Global feature toggles ──
+def feat_channel(): return cfg_bool("channel_enabled")
+def feat_group(): return cfg_bool("group_enabled")
+def feat_manual(): return cfg_bool("manual_enabled")
+def feat_autowatch(): return cfg_bool("autowatch_enabled")
+def feat_custom_emoji(): return cfg_bool("custom_emoji_enabled")
+def feat_force_join(): return cfg_bool("force_join_enabled")
 
 
 def get_free_count():
@@ -438,6 +485,59 @@ def get_user_limit(uid):
     if r and r[0] and r[0] > 0:
         return r[0]
     return get_free_count()
+
+
+def db_get_user_full(uid):
+    """Get user with all permission fields."""
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        return conn.execute("""SELECT user_id, first_name, username, joined_at,
+            last_active, is_banned, total_reactions, total_bots, custom_limit,
+            auto_watch_unlocked, allow_channel, allow_group, allow_manual,
+            allow_autowatch, allow_custom_emoji
+            FROM users WHERE user_id=?""", (uid,)).fetchone()
+    finally:
+        conn.close()
+
+
+def db_user_can(uid, feature):
+    """Check if user has permission for a feature."""
+    if uid == OWNER_ID:
+        return True
+    u = db_get_user_full(uid)
+    if not u:
+        return False
+    # Map feature name to column index
+    idx = {
+        "channel": 10, "group": 11, "manual": 12,
+        "autowatch": 13, "custom_emoji": 14
+    }.get(feature)
+    if idx is None:
+        return True
+    return bool(u[idx])
+
+
+def db_set_user_perm(uid, feature, value):
+    """Set per-user permission."""
+    col = {
+        "channel": "allow_channel",
+        "group": "allow_group",
+        "manual": "allow_manual",
+        "autowatch": "allow_autowatch",
+        "custom_emoji": "allow_custom_emoji",
+        "auto_watch_unlocked": "auto_watch_unlocked",
+    }.get(feature)
+    if not col:
+        return False
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        c = conn.cursor()
+        c.execute(f"UPDATE users SET {col}=? WHERE user_id=?",
+                  (1 if value else 0, uid))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 
 def db_add_bot(token, username, bot_id):
@@ -637,6 +737,29 @@ def db_is_banned(uid):
         conn.close()
 
 
+def db_ban_user(uid, ban=True):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        c = conn.cursor()
+        c.execute("UPDATE users SET is_banned=? WHERE user_id=?",
+                  (1 if ban else 0, uid))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def db_set_user_limit(uid, limit):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        c = conn.cursor()
+        c.execute("UPDATE users SET custom_limit=? WHERE user_id=?", (limit, uid))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
 def db_recent_reactions(limit=20):
     conn = sqlite3.connect(DB_FILE)
     try:
@@ -654,6 +777,85 @@ def db_approved_users(limit=100):
         return conn.execute("""SELECT user_id, first_name, username, decided_at, approved_by
             FROM approvals WHERE status='approved'
             ORDER BY decided_at DESC LIMIT ?""", (limit,)).fetchall()
+    finally:
+        conn.close()
+
+
+# ── Auto-Watcher DB ──
+def db_add_watcher(user_id, chat_id, chat_title, chat_link, chat_type,
+                   reaction_count=5, emoji_mode="default", custom_emojis=None,
+                   last_post_id=0):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        c = conn.cursor()
+        emoji_str = ",".join(custom_emojis) if custom_emojis else None
+        c.execute("""INSERT INTO watchers
+            (user_id, chat_id, chat_title, chat_link, chat_type,
+             reaction_count, emoji_mode, custom_emojis, last_post_id, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)""",
+            (user_id, chat_id, chat_title, chat_link, chat_type,
+             reaction_count, emoji_mode, emoji_str, last_post_id))
+        conn.commit()
+        return c.lastrowid
+    finally:
+        conn.close()
+
+
+def db_list_watchers(user_id=None):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        if user_id:
+            return conn.execute("""SELECT id, user_id, chat_id, chat_title,
+                chat_link, chat_type, reaction_count, emoji_mode, custom_emojis,
+                last_post_id, is_active, created_at, last_run
+                FROM watchers WHERE user_id=? ORDER BY id DESC""",
+                (user_id,)).fetchall()
+        return conn.execute("""SELECT id, user_id, chat_id, chat_title,
+            chat_link, chat_type, reaction_count, emoji_mode, custom_emojis,
+            last_post_id, is_active, created_at, last_run
+            FROM watchers ORDER BY id DESC""").fetchall()
+    finally:
+        conn.close()
+
+
+def db_get_watcher(wid):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        return conn.execute("""SELECT id, user_id, chat_id, chat_title,
+            chat_link, chat_type, reaction_count, emoji_mode, custom_emojis,
+            last_post_id, is_active, created_at, last_run
+            FROM watchers WHERE id=?""", (wid,)).fetchone()
+    finally:
+        conn.close()
+
+
+def db_update_watcher(wid, **kwargs):
+    if not kwargs:
+        return False
+    fields = []
+    values = []
+    for k, v in kwargs.items():
+        fields.append(f"{k}=?")
+        values.append(v)
+    values.append(wid)
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        c = conn.cursor()
+        c.execute(f"UPDATE watchers SET {', '.join(fields)} WHERE id=?",
+                  tuple(values))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+
+def db_delete_watcher(wid):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        c = conn.cursor()
+        c.execute("DELETE FROM watchers WHERE id=?", (wid,))
+        conn.commit()
+        return True
     finally:
         conn.close()
 
@@ -761,13 +963,12 @@ bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
 USER_STATES = {}
 
 
-# ==================== BUTTON (COLOR SUPPORT) ====================
+# ==================== BUTTON ====================
 def btn(text, data=None, url=None, style=None):
     if url:
         b = Button.url(text, url)
     else:
         b = Button.inline(text, data)
-
     if style and HAS_BUTTON_STYLE and KeyboardButtonStyle is not None:
         try:
             if style == "primary":
@@ -776,9 +977,8 @@ def btn(text, data=None, url=None, style=None):
                 b.style = KeyboardButtonStyle(bg_success=True)
             elif style == "danger":
                 b.style = KeyboardButtonStyle(bg_danger=True)
-        except Exception as e:
-            D(f"Button style fail ({style}): {str(e)[:60]}", "warn")
-
+        except Exception:
+            pass
     return b
 
 
@@ -795,7 +995,6 @@ def is_bot_flooded(token):
 
 def mark_bot_flooded(token, seconds):
     FLOOD_UNTIL[token] = datetime.now() + timedelta(seconds=seconds)
-    D(f"Bot flooded for {seconds}s", "flood")
 
 
 async def acquire_bots(count, uid):
@@ -805,7 +1004,6 @@ async def acquire_bots(count, uid):
         now = datetime.now()
         free = []
         for tok, uname, bid, added in bots:
-            # Skip permanent (hidden) bots
             if is_permanent_admin(uname):
                 continue
             info = BOT_POOL.get(tok)
@@ -815,7 +1013,6 @@ async def acquire_bots(count, uid):
                     free.append((tok, uname))
             if len(free) >= count:
                 break
-
         if len(free) < count:
             wait_times = []
             for tok, uname, bid, added in bots:
@@ -830,7 +1027,6 @@ async def acquire_bots(count, uid):
                 wait_times.sort()
                 return None, int(wait_times[0]) + 2
             return None, 30
-
         for tok, uname in free:
             BOT_POOL[tok] = {
                 "username": uname,
@@ -853,6 +1049,8 @@ async def release_bots(bot_list):
 
 # ==================== CHECKS ====================
 async def is_joined(uid):
+    if not feat_force_join():
+        return True
     try:
         await bot.get_permissions(FORCE_CHANNEL, uid)
         return True
@@ -894,30 +1092,22 @@ async def check_owner_admin(entity):
 
 
 async def get_current_admin_bots(entity):
-    D_sep("FETCHING EXISTING ADMIN BOTS")
     admin_bots = []
     try:
         result = await admin_client(GetParticipantsRequest(
-            channel=entity,
-            filter=ChannelParticipantsAdmins(),
-            offset=0,
-            limit=200,
-            hash=0
+            channel=entity, filter=ChannelParticipantsAdmins(),
+            offset=0, limit=200, hash=0
         ))
         for user in result.users:
             if getattr(user, 'bot', False) and user.username:
                 admin_bots.append((user.username, user.id))
-                tag = " [hidden]" if is_permanent_admin(user.username) else ""
-                D(f"  Found admin bot: @{user.username}{tag}", "dbg")
     except Exception as e:
         D_err(e, "get_current_admin_bots")
-    D(f"Total admin bots: {len(admin_bots)}", "ok")
     return admin_bots
 
 
 async def remove_admin_rights(entity, user_id, username):
     if is_permanent_admin(username):
-        D(f"  [SKIP] Permanent admin protected", "keep")
         return True
     try:
         empty_rights = ChatAdminRights(
@@ -930,17 +1120,10 @@ async def remove_admin_rights(entity, user_id, username):
             channel=entity, user_id=user_id,
             admin_rights=empty_rights, rank="",
         ))
-        D(f"  Admin removed: @{username} (still member)", "ok")
         return True
     except FloodWaitError as e:
         await asyncio.sleep(e.seconds + 5)
         try:
-            empty_rights = ChatAdminRights(
-                change_info=False, post_messages=False, edit_messages=False,
-                delete_messages=False, ban_users=False, invite_users=False,
-                pin_messages=False, add_admins=False, anonymous=False,
-                manage_call=False, other=False,
-            )
             await admin_client(EditAdminRequest(
                 channel=entity, user_id=user_id,
                 admin_rights=empty_rights, rank="",
@@ -998,7 +1181,6 @@ async def add_one_bot(entity, bot_token, actual_type, cache_key):
     if not info:
         return False, "invalid"
     username = info["username"]
-    D(f"  add_one_bot: @{username}", "step")
     try:
         bot_entity = await admin_client.get_entity(username)
     except Exception as e:
@@ -1117,11 +1299,8 @@ async def send_reactions(chat_id, msg_id, bot_list, chat_title, post_link,
                     continue
                 ok2, d2, r2 = bot_reaction(token, api_chat_id, msg_id, p)
                 if ok2:
-                    ok += 1
-                    pop += 1
-                    final_emoji = p
-                    status = "ok"
-                    done = True
+                    ok += 1; pop += 1; final_emoji = p
+                    status = "ok"; done = True
                     break
                 elif r2 > 0:
                     mark_bot_flooded(token, r2)
@@ -1135,11 +1314,8 @@ async def send_reactions(chat_id, msg_id, bot_list, chat_title, post_link,
                     continue
                 ok2, d2, r2 = bot_reaction(token, api_chat_id, msg_id, p)
                 if ok2:
-                    ok += 1
-                    pop += 1
-                    final_emoji = p
-                    status = "ok"
-                    done = True
+                    ok += 1; pop += 1; final_emoji = p
+                    status = "ok"; done = True
                     break
                 elif r2 > 0:
                     mark_bot_flooded(token, r2)
@@ -1154,25 +1330,16 @@ async def send_reactions(chat_id, msg_id, bot_list, chat_title, post_link,
     return ok, skip, pop, flood_waits
 
 
-# ==================== PROCESS REACTIONS (FIXED v47) ====================
 async def process_reactions_rotating(event, uid, chat_link, post_link, count,
-                                     emoji_mode="default", custom_emojis=None):
-    """
-    FIXED LOGIC:
-      1. Check existing admin bots (skip permanent)
-      2. React with them (up to `count`)
-      3. Remove admin rights from them
-      4. If more needed: add EXACTLY (count - already_done) new bots
-      5. React with them
-      6. Remove admin rights
-      7. NEVER add more than `count` bots total
-    """
-    D_sep(f"PROCESS uid={uid} count={count} mode={emoji_mode}")
+                                     emoji_mode="default", custom_emojis=None,
+                                     is_auto_watch=False):
+    D_sep(f"PROCESS uid={uid} count={count} mode={emoji_mode} auto={is_auto_watch}")
 
     chat_ref, invite_hash = parse_channel_link(chat_link)
     post_ref, msg_id = parse_post_link(post_link)
     if not msg_id:
-        await safe_edit(event, "❌ Invalid post link")
+        if event:
+            await safe_edit(event, "❌ Invalid post link")
         return
 
     user_state = USER_STATES.get(uid, {})
@@ -1180,11 +1347,9 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     total_bots = db_count_bots()
     want = min(count, total_bots)
 
-    D(f"Want: {want} reactions (requested={count}, total_bots={total_bots})", "rot")
+    if event:
+        await safe_edit(event, f"{SPARKLE} **Processing...**\n\n🔍 Resolving chat...")
 
-    await safe_edit(event, f"{SPARKLE} **Processing...**\n\n🔍 Resolving chat...")
-
-    # ── Resolve chat ──
     try:
         if invite_hash and not post_ref:
             try:
@@ -1195,7 +1360,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         else:
             entity = await admin_client.get_entity(post_ref or chat_ref)
     except Exception as e:
-        await safe_edit(event, f"❌ Could not resolve chat:\n{e}")
+        if event:
+            await safe_edit(event, f"❌ Could not resolve chat:\n{e}")
         return
 
     chat_title = getattr(entity, "title", "Unknown")
@@ -1207,25 +1373,26 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     else:
         actual_type = chat_type
 
-    # ── Verify post ──
     try:
         post_msg = await admin_client.get_messages(entity, ids=msg_id)
         if post_msg is None:
-            await safe_edit(event, f"❌ Post #{msg_id} not found")
+            if event:
+                await safe_edit(event, f"❌ Post #{msg_id} not found")
             return
     except Exception:
         pass
 
-    # ── Admin check ──
-    if ADMIN_CHECK_ENABLED and uid != OWNER_ID:
-        await animate_loading(event, "🔍 **Checking owner admin status...**", 1.5)
+    if not is_auto_watch and ADMIN_CHECK_ENABLED and uid != OWNER_ID:
+        if event:
+            await animate_loading(event, "🔍 **Checking owner admin status...**", 1.5)
         owner_is_admin = await check_owner_admin(entity)
         if not owner_is_admin:
-            await safe_edit(
-                event,
-                get_admin_needed_message(chat_title),
-                buttons=kb_owner_needed()
-            )
+            if event:
+                await safe_edit(
+                    event,
+                    get_admin_needed_message(chat_title),
+                    buttons=kb_owner_needed()
+                )
             if uid in USER_STATES:
                 USER_STATES[uid] = {}
             return
@@ -1233,56 +1400,44 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     cache_key = str(real_id)
     ok_owner, reason_owner = await ensure_owner_admin(entity, cache_key)
     if not ok_owner:
-        await safe_edit(event, f"❌ **OWNER SETUP FAILED**\n\n`{reason_owner}`")
+        if event:
+            await safe_edit(event, f"❌ **OWNER SETUP FAILED**\n\n`{reason_owner}`")
         return
 
-    # ═══════════════════════════════════════════════════════════
-    # PHASE 1: React with existing admin bots (up to `want`)
-    # ═══════════════════════════════════════════════════════════
+    # PHASE 1
     existing_admins = await get_current_admin_bots(entity)
     db_bots = db_list_bots()
     username_to_token = {uname: tok for tok, uname, bid, added in db_bots}
-
-    # Filter out permanent bots + only those we know
     phase1_pairs = []
     for uname, bid in existing_admins:
         if is_permanent_admin(uname):
             continue
         if uname in username_to_token:
             phase1_pairs.append((username_to_token[uname], uname))
-
-    phase1_use = phase1_pairs[:want]  # ← EXACT count
-    D(f"Phase 1: using {len(phase1_use)} existing admins", "rot")
+    phase1_use = phase1_pairs[:want]
 
     reactions_done = 0
     phase1_ok = 0
 
     if phase1_use:
-        await safe_edit(event,
-                        f"{SPARKLE} **Phase 1** {SPARKLE}\n"
-                        f"{DIV}\n\n"
-                        f"💫 Reacting with {len(phase1_use)} existing admins...")
-
-        # Mark them busy
+        if event:
+            await safe_edit(event,
+                            f"{SPARKLE} **Phase 1** {SPARKLE}\n"
+                            f"{DIV}\n\n"
+                            f"💫 Reacting with {len(phase1_use)} existing admins...")
         for tok, uname in phase1_use:
             BOT_POOL.setdefault(tok, {})
             BOT_POOL[tok]["busy_until"] = datetime.now() + timedelta(minutes=30)
             BOT_POOL[tok]["username"] = uname
-
         ok1, skip1, pop1, fl1 = await send_reactions(
             real_id, msg_id, phase1_use, chat_title, post_link, uid,
-            len(phase1_use),
-            emoji_mode=emoji_mode, custom_emojis=custom_emojis
+            len(phase1_use), emoji_mode=emoji_mode, custom_emojis=custom_emojis
         )
         phase1_ok = ok1
         reactions_done += ok1
-        D(f"Phase 1 done: ok={ok1} skip={skip1}", "rot")
 
-        # Remove admin rights from phase1 (skip permanent)
-        await safe_edit(event,
-                        f"🔄 **Phase 2**\n"
-                        f"{DIV}\n\n"
-                        f"🧹 Removing admin rights...")
+        if event:
+            await safe_edit(event, f"🔄 **Phase 2**\n{DIV}\n\n🧹 Removing admin rights...")
         for uname, bid in existing_admins:
             if is_permanent_admin(uname):
                 continue
@@ -1294,43 +1449,30 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 await asyncio.sleep(0.5)
             except Exception:
                 pass
-
-        # Release phase1 bots
         await release_bots(phase1_use)
 
-    # ═══════════════════════════════════════════════════════════
-    # PHASE 3: Add new bots (EXACTLY what's needed, not more)
-    # ═══════════════════════════════════════════════════════════
+    # PHASE 3
     remaining = want - reactions_done
-    D(f"Remaining after phase 1: {remaining}", "rot")
-
     if remaining > 0:
-        await safe_edit(event,
-                        f"🤖 **Phase 3**\n"
-                        f"{DIV}\n\n"
-                        f"Adding **{remaining}** new bots...")
-
-        # Acquire ONLY what we need (+ small buffer for failures)
+        if event:
+            await safe_edit(event,
+                            f"🤖 **Phase 3**\n{DIV}\n\n"
+                            f"Adding **{remaining}** new bots...")
         need = remaining + 3
         acquired, wait_sec = await acquire_bots(need, uid)
         if acquired is None:
             await asyncio.sleep(wait_sec)
             acquired, wait_sec = await acquire_bots(need, uid)
             if acquired is None:
-                await safe_edit(event,
-                                f"⏳ **No free bots**\n\nPlease wait and try again.",
-                                buttons=kb_back())
-                if uid in USER_STATES:
+                if event:
+                    await safe_edit(event, f"⏳ No free bots. Try later.")
+                if uid in USER_STATES and event:
                     USER_STATES[uid] = {}
                 return
 
-        # Take only `remaining` bots
         to_add = acquired[:remaining]
-        D(f"Will add {len(to_add)} bots (need {remaining})", "rot")
-
         promoted = []
         for i, (tok, uname) in enumerate(to_add, 1):
-            D(f"  Promoting {i}/{len(to_add)}: @{uname}", "step")
             try:
                 ok, rmsg = await asyncio.wait_for(
                     add_one_bot(entity, tok, actual_type, cache_key),
@@ -1339,41 +1481,29 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 if ok:
                     promoted.append((tok, uname))
                 else:
-                    D(f"  ❌ @{uname}: {rmsg}", "fail")
                     if rmsg == "too_many_admins":
-                        D(f"  ⚠️ Channel admin limit — stopping", "warn")
                         break
-            except asyncio.TimeoutError:
-                D(f"  ❌ @{uname}: TIMEOUT", "fail")
-            except Exception as e:
-                D_err(e, f"add {uname}")
+            except Exception:
+                pass
             await asyncio.sleep(0.8)
 
-        # Release non-promoted
         non_promoted = [(t, u) for t, u in acquired if (t, u) not in promoted]
         if non_promoted:
             await release_bots(non_promoted)
 
-        # React with promoted bots
         if promoted:
-            await safe_edit(event,
-                            f"💫 **Phase 3b**\n"
-                            f"{DIV}\n\n"
-                            f"Reacting with **{len(promoted)}** bots...")
-
+            if event:
+                await safe_edit(event,
+                                f"💫 **Phase 3b**\n{DIV}\n\n"
+                                f"Reacting with **{len(promoted)}** bots...")
             ok_c, skip_c, pop_c, fl_c = await send_reactions(
                 real_id, msg_id, promoted, chat_title, post_link, uid,
-                len(promoted),
-                emoji_mode=emoji_mode, custom_emojis=custom_emojis
+                len(promoted), emoji_mode=emoji_mode, custom_emojis=custom_emojis
             )
             reactions_done += ok_c
-            D(f"Phase 3 done: ok={ok_c} skip={skip_c}", "rot")
 
-            # Remove admin rights
-            await safe_edit(event,
-                            f"🧹 **Phase 4**\n"
-                            f"{DIV}\n\n"
-                            f"Cleaning admin rights...")
+            if event:
+                await safe_edit(event, f"🧹 **Phase 4**\n{DIV}\n\nCleaning up...")
             for tok, uname in promoted:
                 if is_permanent_admin(uname):
                     continue
@@ -1388,26 +1518,110 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                     pass
             await release_bots(promoted)
 
-    # ── Summary ──
-    lines = [
-        f"{SPARKLE} ✅ **REACTIONS COMPLETE** ✅ {SPARKLE}",
-        f"{DIV}",
-        f"📢 Chat: **{chat_title}** ({actual_type})",
-        f"📩 Post: **#{msg_id}**",
-        f"🎯 Requested: **{count}**",
-        f"💫 Total Success: **{reactions_done}**",
-        f"{DIV}",
-    ]
-    if phase1_ok > 0:
-        lines.append(f"Phase 1 (existing admins): **{phase1_ok}**")
-    if remaining > 0:
-        lines.append(f"Phase 3 (new bots): **{reactions_done - phase1_ok}**")
-    lines.append(f"{DIV}")
-    lines.append(f"✅ Admin rights cleaned (bots stay as members)")
+    if event:
+        lines = [
+            f"{SPARKLE} ✅ **REACTIONS COMPLETE** ✅ {SPARKLE}",
+            f"{DIV}",
+            f"📢 Chat: **{chat_title}** ({actual_type})",
+            f"📩 Post: **#{msg_id}**",
+            f"🎯 Requested: **{count}**",
+            f"💫 Total Success: **{reactions_done}**",
+            f"{DIV}",
+            f"✅ Admin rights cleaned",
+        ]
+        await safe_edit(event, "\n".join(lines), buttons=kb_back())
 
-    await safe_edit(event, "\n".join(lines), buttons=kb_back())
-    if uid in USER_STATES:
+    if uid in USER_STATES and event:
         USER_STATES[uid] = {}
+    return reactions_done
+
+
+# ==================== AUTO WATCHER ====================
+async def watcher_loop():
+    """Background task — checks for new posts in watched chats."""
+    global TASK_RUNNING, TASK_OWNER_UID
+    D_sep("WATCHER LOOP STARTED")
+    while True:
+        try:
+            await asyncio.sleep(WATCHER_CHECK_INTERVAL)
+            if not AUTO_WATCH_ENABLED or not feat_autowatch():
+                continue
+            if TASK_RUNNING:
+                continue
+
+            watchers = db_list_watchers()
+            if not watchers:
+                continue
+
+            for w in watchers:
+                (wid, user_id, chat_id, chat_title, chat_link, chat_type,
+                 r_count, emoji_mode, custom_emojis_str, last_post_id,
+                 is_active, created_at, last_run) = w
+
+                if not is_active:
+                    continue
+
+                # Check if user is still allowed
+                if not db_user_can(user_id, "autowatch"):
+                    continue
+
+                try:
+                    entity = await admin_client.get_entity(chat_id)
+                    # Get latest messages
+                    msgs = await admin_client.get_messages(entity, limit=5)
+                    if not msgs:
+                        continue
+
+                    # Find newest message ID
+                    newest_id = max(m.id for m in msgs if m.id > 0)
+                    if newest_id <= last_post_id:
+                        continue
+
+                    # New post found!
+                    D(f"[WATCHER] New post #{newest_id} in {chat_title}", "watch")
+
+                    TASK_RUNNING = True
+                    TASK_OWNER_UID = user_id
+                    try:
+                        custom_emojis = (custom_emojis_str.split(",")
+                                         if custom_emojis_str else None)
+                        post_link = f"https://t.me/c/{str(chat_id).replace('-100','')}/{newest_id}"
+
+                        await process_reactions_rotating(
+                            None, user_id, chat_link, post_link, r_count,
+                            emoji_mode=emoji_mode, custom_emojis=custom_emojis,
+                            is_auto_watch=True
+                        )
+
+                        # Update watcher
+                        db_update_watcher(
+                            wid,
+                            last_post_id=newest_id,
+                            last_run=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        )
+
+                        # Notify user
+                        try:
+                            await bot.send_message(
+                                user_id,
+                                f"📡 **AUTO-WATCH**\n{DIV}\n\n"
+                                f"✅ Reactions sent on new post!\n\n"
+                                f"📢 Chat: **{chat_title}**\n"
+                                f"📩 Post: **#{newest_id}**\n"
+                                f"💫 Count: **{r_count}**",
+                            )
+                        except Exception:
+                            pass
+                    finally:
+                        TASK_RUNNING = False
+                        TASK_OWNER_UID = None
+
+                except Exception as e:
+                    D(f"[WATCHER] Error on {chat_title}: {str(e)[:80]}", "fail")
+
+        except Exception as e:
+            D_err(e, "watcher_loop")
+            await asyncio.sleep(30)
 
 
 # ==================== BROADCAST ====================
@@ -1472,6 +1686,7 @@ def kb_request_access():
 def kb_welcome(uid=None):
     rows = [
         [btn("💫 Send Reactions", data=b"react_flow", style="success")],
+        [btn("📡 Auto-Watch", data=b"watch_flow", style="primary")],
         [btn("ℹ️ Info", data=b"info", style="primary")],
         [btn("💬 Customer Support", data=b"support", style="primary")],
     ]
@@ -1496,11 +1711,13 @@ def kb_support():
 
 
 def kb_chat_type():
-    return [
-        [btn("📢 Channel", data=b"chattype:channel", style="primary")],
-        [btn("👥 Group", data=b"chattype:group", style="success")],
-        [btn("🔙 Cancel", data=b"home", style="danger")],
-    ]
+    rows = []
+    if feat_channel() or True:  # show but disable if off
+        rows.append([btn("📢 Channel", data=b"chattype:channel", style="primary")])
+    if feat_group() or True:
+        rows.append([btn("👥 Group", data=b"chattype:group", style="success")])
+    rows.append([btn("🔙 Cancel", data=b"home", style="danger")])
+    return rows
 
 
 def kb_reaction_count(uid):
@@ -1540,6 +1757,14 @@ def kb_emoji_choice():
     ]
 
 
+def kb_watch_menu():
+    return [
+        [btn("➕ Add New Watch", data=b"watch:add", style="success")],
+        [btn("📋 My Watches", data=b"watch:list", style="primary")],
+        [btn("🔙 Back", data=b"home", style="primary")],
+    ]
+
+
 def kb_contact_owner():
     return [
         [btn("👑 Contact Owner", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
@@ -1554,6 +1779,11 @@ def kb_back():
 def kb_owner():
     auto = "✅ ON" if is_auto_approve() else "❌ OFF"
     visible = db_count_visible_bots()
+
+    def tog(k, label):
+        v = cfg_bool(k)
+        return f"{'✅' if v else '❌'} {label}"
+
     return [
         [btn("📊 Dashboard", data=b"op:dash", style="primary"),
          btn("👥 Users", data=b"op:users", style="success")],
@@ -1561,30 +1791,57 @@ def kb_owner():
          btn("📢 Broadcast", data=b"op:broadcast", style="danger")],
         [btn(f"🔓 Auto: {auto}", data=b"op:toggle_auto", style="success"),
          btn(f"⚙️ Free: {get_free_count()}", data=b"op:setfree", style="primary")],
-        [btn("⏳ Pending", data=b"op:pending", style="danger"),
-         btn("✅ Approved", data=b"op:approved", style="success")],
+        [btn("🎛️ Feature Toggles", data=b"op:features", style="primary")],
+        [btn("📡 Watchers", data=b"op:watchers", style="primary"),
+         btn("⏳ Pending", data=b"op:pending", style="danger")],
         [btn("➕ Add User by ID", data=b"op:adduser", style="success"),
-         btn("📜 Recent", data=b"op:recent", style="primary")],
+         btn("✅ Approved", data=b"op:approved", style="success")],
+        [btn("📜 Recent", data=b"op:recent", style="primary")],
         [btn("🔙 Main Menu", data=b"home", style="primary")],
     ]
 
 
-def kb_broadcast_type():
+def kb_features():
+    def t(k, label):
+        return f"{'✅' if cfg_bool(k) else '❌'} {label}"
+
     return [
-        [btn("📝 Text Only", data=b"bc:text", style="primary")],
-        [btn("🖼️ Photo + Text", data=b"bc:photo_text", style="success")],
-        [btn("🖼️ Photo Only", data=b"bc:photo", style="primary")],
-        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+        [btn(t("channel_enabled", "Channel Reactions"), data=b"ft:toggle:channel_enabled", style="primary")],
+        [btn(t("group_enabled", "Group Reactions"), data=b"ft:toggle:group_enabled", style="success")],
+        [btn(t("manual_enabled", "Manual Reactions"), data=b"ft:toggle:manual_enabled", style="primary")],
+        [btn(t("autowatch_enabled", "Auto-Watcher"), data=b"ft:toggle:autowatch_enabled", style="success")],
+        [btn(t("custom_emoji_enabled", "Custom Emoji"), data=b"ft:toggle:custom_emoji_enabled", style="primary")],
+        [btn(t("force_join_enabled", "Force Join"), data=b"ft:toggle:force_join_enabled", style="success")],
+        [btn("🔙 Back", data=b"owner_panel", style="danger")],
     ]
 
 
-def kb_approval_actions(target_uid):
+def kb_user_manage(uid):
+    """User-specific settings panel."""
+    u = db_get_user_full(uid)
+    if not u:
+        return [[btn("❌ User not found", data=b"op:users", style="danger")]]
+
+    def yn(v):
+        return "✅" if v else "❌"
+
     return [
-        [btn("✅ Approve", data=f"approve:{target_uid}".encode(), style="success"),
-         btn("❌ Reject", data=f"reject:{target_uid}".encode(), style="danger")],
+        [btn(f"{yn(not u[5])} Ban Status: {'BANNED' if u[5] else 'Active'}",
+              data=f"um:ban:{uid}".encode(),
+              style="danger" if u[5] else "success")],
+        [btn(f"🎁 Limit: {u[8] if u[8] > 0 else get_free_count()} per post",
+              data=f"um:limit:{uid}".encode(), style="primary")],
+        [btn(f"{yn(u[10])} Channel Reactions", data=f"um:channel:{uid}".encode(), style="primary")],
+        [btn(f"{yn(u[11])} Group Reactions", data=f"um:group:{uid}".encode(), style="success")],
+        [btn(f"{yn(u[12])} Manual Reactions", data=f"um:manual:{uid}".encode(), style="primary")],
+        [btn(f"{yn(u[13])} Auto-Watch", data=f"um:autowatch:{uid}".encode(), style="success")],
+        [btn(f"{yn(u[14])} Custom Emoji", data=f"um:custom:{uid}".encode(), style="primary")],
+        [btn(f"{yn(u[9])} Auto-Watch Unlocked", data=f"um:unlock:{uid}".encode(), style="success")],
+        [btn("🔙 Back", data=b"op:users", style="danger")],
     ]
 
 
+# ── Messages ──
 def get_admin_needed_message(chat_title):
     return (
         f"{STAR_LINE}\n"
@@ -1593,64 +1850,44 @@ def get_admin_needed_message(chat_title):
         f"To send reactions in **{chat_title}**, you must first add\n"
         f"me (the owner) as an **admin** with **FULL permissions**.\n\n"
         f"{DIV}\n"
-        f"📋 **Step-by-step guide:**\n"
+        f"📋 **Steps:**\n"
         f"{DIV}\n\n"
         f"1️⃣ Open the channel/group\n"
-        f"2️⃣ Tap on the channel/group name at the top\n"
-        f"3️⃣ Tap **Administrators** or **Manage**\n"
-        f"4️⃣ Tap **Add Admin** button\n"
-        f"5️⃣ Search for: **@{OWNER_USERNAME}**\n"
-        f"6️⃣ Select the owner and tap **Add**\n"
-        f"7️⃣ Enable ALL of these permissions:\n"
-        f"     ✅ **Add New Admins** ⚠️ (MOST IMPORTANT)\n"
-        f"     ✅ **Post Messages**\n"
-        f"     ✅ **Delete Messages**\n"
-        f"     ✅ **Invite Users**\n"
-        f"     ✅ **Pin Messages**\n"
-        f"     ✅ **Manage Voice Chats**\n"
-        f"     ✅ **Ban Users**\n"
-        f"     ✅ **Change Group Info**\n"
-        f"8️⃣ Tap **Save**\n\n"
+        f"2️⃣ Tap channel name → Administrators\n"
+        f"3️⃣ Add Admin → Search: **@{OWNER_USERNAME}**\n"
+        f"4️⃣ Enable ALL permissions:\n"
+        f"     ⭐ **Add New Admins** (most important)\n"
+        f"     ⭐ **Post Messages**\n"
+        f"     ⭐ **Delete Messages**\n"
+        f"     ⭐ **Invite Users**\n"
+        f"5️⃣ Save ✅\n\n"
         f"{DIV}\n"
         f"👑 **Owner to add:**\n"
-        f"   Username: @{OWNER_USERNAME}\n"
+        f"   @{OWNER_USERNAME}\n"
         f"   ID: `{OWNER_ID}`\n"
         f"{DIV}\n\n"
-        f"Once done, tap **🔄 Retry** below."
+        f"Tap **🔄 Retry** below."
     )
 
 
 def get_welcome_message(first_name, uid, auto_approved=True):
     limit = get_user_limit(uid)
+    u = db_get_user_full(uid)
+    aw = u[9] if u else 0
     return (
         f"{STAR_LINE}\n"
         f"{SPARKLE}  ✅  **WELCOME BACK**  ✅  {SPARKLE}\n"
         f"{STAR_LINE}\n\n"
         f"👋 Hi **{first_name}**!\n"
         f"🎁 Your limit: **{limit} reactions per post**\n"
-        f"🔓 Auto-Approved: **{'YES ✅' if auto_approved else 'NO ⏳'}**\n\n"
+        f"🔓 Auto-Approved: **{'YES ✅' if auto_approved else 'NO ⏳'}**\n"
+        f"📡 Auto-Watch: **{'UNLOCKED ✅' if aw else 'LOCKED 🔒'}**\n\n"
         f"{DIV}\n"
-        f"⚠️ **IMPORTANT — READ THIS FIRST** ⚠️\n"
+        f"⚠️ **Make sure owner is admin** in your chat with\n"
+        f"**Add New Admins** permission!\n\n"
+        f"👑 **Owner:** @{OWNER_USERNAME}\n"
         f"{DIV}\n\n"
-        f"Before sending reactions, you MUST add me (the owner)\n"
-        f"as an **admin** in your channel/group with **FULL permissions**.\n\n"
-        f"{DIV}\n"
-        f"📋 **How to make me admin:**\n"
-        f"{DIV}\n\n"
-        f"1️⃣ Open your channel/group\n"
-        f"2️⃣ Tap the channel name at the top\n"
-        f"3️⃣ Tap **Administrators** → **Add Admin**\n"
-        f"4️⃣ Search: **@{OWNER_USERNAME}**\n"
-        f"5️⃣ Enable **ALL** permissions, especially:\n"
-        f"     ⭐ **Add New Admins**\n"
-        f"     ⭐ **Post Messages**\n"
-        f"6️⃣ Tap **Save** ✅\n\n"
-        f"{DIV}\n"
-        f"👑 **Owner to add:**\n"
-        f"   Username: @{OWNER_USERNAME}\n"
-        f"   ID: `{OWNER_ID}`\n"
-        f"{DIV}\n\n"
-        f"💬 Need help? Tap **Customer Support** below!"
+        f"💬 Need help? Tap **Customer Support**!"
     )
 
 
@@ -1659,17 +1896,10 @@ def get_approved_notify_message(first_name):
         f"{STAR_LINE}\n"
         f"{SPARKLE}  🎉  **ACCESS APPROVED**  🎉  {SPARKLE}\n"
         f"{STAR_LINE}\n\n"
-        f"👋 Hi **{first_name}**!\n\n"
-        f"✅ Your access request has been **APPROVED** by the owner!\n\n"
-        f"🎁 Your limit: **{DEFAULT_FREE_COUNT} reactions per post**\n"
-        f"🚀 You can now use the bot to send reactions!\n\n"
-        f"{DIV}\n"
-        f"⚠️ **Before sending reactions:**\n"
-        f"Make sure the owner is admin in your channel/group\n"
-        f"with ALL permissions (especially **Add New Admins**).\n\n"
-        f"👑 **Owner:** @{OWNER_USERNAME}\n"
-        f"{DIV}\n\n"
-        f"👉 Send /start to begin!"
+        f"👋 Hi **{first_name}**!\n"
+        f"✅ Your access has been approved!\n\n"
+        f"🎁 Limit: **{DEFAULT_FREE_COUNT} reactions per post**\n"
+        f"🚀 Send /start to begin!"
     )
 
 
@@ -1692,161 +1922,101 @@ async def on_start(event):
         first_name, username = "User", None
 
     db_save_user(uid, first_name, username)
-    D(f"/start from {uid} ({first_name})", "new")
 
     if db_is_banned(uid):
         await event.reply("🚫 **You are BANNED.**")
         return
 
     auto = is_auto_approve()
-
     if uid != OWNER_ID and auto:
-        status = db_approval_status(uid)
-        if status in (None, "pending"):
+        if db_approval_status(uid) in (None, "pending"):
             db_set_approval(uid, "approved", approved_by=OWNER_ID)
 
-    joined = await is_joined(uid)
-    if not joined:
+    if not await is_joined(uid):
         await event.reply(
-            f"{STAR_LINE}\n"
-            f"🤖  **GHOST REACTION BOT**  👻\n"
-            f"By GHOST | @Anonymous_User_37\n"
-            f"{STAR_LINE}\n\n"
+            f"{STAR_LINE}\n👻 **GHOST REACTION BOT**\n{STAR_LINE}\n\n"
             f"🔐 **ACCESS LOCKED**\n\n"
-            f"Please join our channel first:\n**{FORCE_CHANNEL}**\n\n"
-            f"After joining, tap **✅ I Have Joined** below.",
+            f"Join {FORCE_CHANNEL} first!",
             buttons=kb_join(),
         )
         return
 
     if uid == OWNER_ID:
-        visible = db_count_visible_bots()
         await event.reply(
-            f"{STAR_LINE}\n"
-            f"👑  **WELCOME OWNER**  👑\n"
-            f"{STAR_LINE}\n\n"
-            f"🤖 Bots: **{visible}**\n"
-            f"🔓 Auto-Approve: **{'✅ ON' if auto else '❌ OFF'}**\n"
-            f"📊 Users: **{db_total_users()}**\n\n"
-            "Choose an option below:",
-            buttons=kb_welcome(uid),
-        )
-        return
-
-    if auto:
-        await event.reply(
-            get_welcome_message(first_name, uid, auto_approved=True),
+            f"{STAR_LINE}\n👑 **WELCOME OWNER**\n{STAR_LINE}\n\n"
+            f"🤖 Bots: **{db_count_visible_bots()}**\n"
+            f"📊 Users: **{db_total_users()}**\n"
+            f"📡 Watchers: **{len(db_list_watchers())}**",
             buttons=kb_welcome(uid),
         )
         return
 
     status = db_approval_status(uid)
-    if status == "approved":
+    if status == "approved" or auto:
         await event.reply(
             get_welcome_message(first_name, uid, auto_approved=True),
             buttons=kb_welcome(uid),
         )
         return
     if status == "pending":
-        await event.reply(
-            f"{STAR_LINE}\n"
-            f"⏳  **ACCESS PENDING**  ⏳\n"
-            f"{STAR_LINE}\n\n"
-            f"Your request is waiting for owner approval.\n"
-            f"⏱️ Usually takes less than 24 hours.\n\n"
-            f"💬 Need help? Tap below.",
-            buttons=kb_request_access()
-        )
+        await event.reply("⏳ **ACCESS PENDING**", buttons=kb_request_access())
         return
     if status == "rejected":
-        await event.reply(
-            f"❌ **ACCESS DENIED**\n\nContact: @{OWNER_USERNAME}"
-        )
+        await event.reply(f"❌ **ACCESS DENIED**\n\n@{OWNER_USERNAME}")
         return
 
-    await event.reply(
-        f"{STAR_LINE}\n"
-        f"🔐  **WELCOME**  {SPARKLE}\n"
-        f"{STAR_LINE}\n\n"
-        f"Owner approval required to use the bot.\n\n"
-        f"⚠️ **One request per user.**\n\n"
-        f"Tap below to request access.",
-        buttons=kb_request_access(),
-    )
+    await event.reply("🔐 **WELCOME**\n\nRequest access:", buttons=kb_request_access())
 
 
-# ==================== CALLBACK ====================
+# ==================== CALLBACK HANDLER ====================
 @bot.on(events.CallbackQuery)
 async def on_cb(event):
     try:
         data = event.data.decode()
         uid = event.sender_id
-        D(f"CALLBACK: {data} from {uid}", "dbg")
 
+        # ═══ SUPPORT ═══
         if data == "support":
-            await event.answer("💬 Customer Support", alert=True)
-            await safe_edit(
-                event,
-                f"{STAR_LINE}\n"
-                f"💬 **CUSTOMER SUPPORT**\n"
-                f"{STAR_LINE}\n\n"
-                f"Need help? Contact the owner directly:\n\n"
+            await event.answer("💬 Support", alert=True)
+            await safe_edit(event,
+                f"{STAR_LINE}\n💬 **CUSTOMER SUPPORT**\n{STAR_LINE}\n\n"
                 f"👑 **{OWNER_DISPLAY}**\n\n"
-                f"📌 **Before contacting:**\n"
-                f"• Make sure owner is admin in your chat\n"
-                f"• Mention the chat/channel name\n"
-                f"• Describe the issue clearly\n"
-                f"• Screenshot if possible\n\n"
-                f"⏱️ **Response:** Usually within 24 hours",
-                buttons=kb_support()
-            )
+                f"• Make sure owner is admin\n"
+                f"• Mention chat name\n"
+                f"• Describe issue\n\n"
+                f"⏱️ Reply within 24 hours",
+                buttons=kb_support())
             return
 
+        # ═══ ACCESS REQUEST ═══
         if data == "request_access":
             if is_auto_approve():
                 db_set_approval(uid, "approved", approved_by=OWNER_ID)
                 await event.answer("✅ Auto-approved!", alert=True)
-                await safe_edit(event, "✅ You are approved!",
-                                buttons=kb_welcome(uid))
+                await safe_edit(event, "✅ Approved!", buttons=kb_welcome(uid))
                 return
-
             if db_has_requested(uid):
                 status = db_approval_status(uid) or "pending"
-                await event.answer(
-                    f"⏳ You already requested! Status: {status}", alert=True)
+                await event.answer(f"⏳ {status}", alert=True)
                 return
-
             try:
                 sender = await event.get_sender()
                 first_name = getattr(sender, "first_name", None) or "User"
                 username = getattr(sender, "username", None)
             except Exception:
                 first_name, username = "User", None
-
             ok, reason = db_create_approval(uid, first_name, username)
             if not ok:
-                await event.answer(f"⏳ Already {reason}!", alert=True)
+                await event.answer(f"⏳ {reason}", alert=True)
                 return
-
             try:
-                await bot.send_message(
-                    OWNER_ID, f"🔔 **REQUEST**\n👤 {first_name}\n🆔 `{uid}`",
+                await bot.send_message(OWNER_ID,
+                    f"🔔 **REQUEST**\n👤 {first_name}\n🆔 `{uid}`",
                     buttons=kb_approval_actions(uid))
             except Exception:
                 pass
-
-            await event.answer(
-                "✅ Request sent! Please wait for approval.", alert=True)
-            await safe_edit(
-                event,
-                f"{STAR_LINE}\n"
-                f"⏳  **REQUEST SENT**  ⏳\n"
-                f"{STAR_LINE}\n\n"
-                f"Your request has been sent to the owner.\n"
-                f"Please wait for approval.\n\n"
-                f"⏱️ You will be notified automatically.",
-                buttons=kb_request_access()
-            )
+            await event.answer("✅ Sent!", alert=True)
+            await safe_edit(event, "⏳ **PENDING**", buttons=kb_request_access())
             return
 
         if data.startswith("approve:"):
@@ -1856,16 +2026,12 @@ async def on_cb(event):
             db_set_approval(target, "approved", approved_by=OWNER_ID)
             await event.answer(f"✅ Approved {target}", alert=True)
             try:
-                target_user = db_get_user(target)
-                tname = target_user[1] if target_user else "User"
-                await bot.send_message(
-                    target,
-                    get_approved_notify_message(tname),
-                    buttons=kb_welcome(target)
-                )
-                D(f"Auto-notified {target}", "ok")
-            except Exception as e:
-                D(f"Notify fail {target}: {str(e)[:60]}", "warn")
+                tu = db_get_user(target)
+                tn = tu[1] if tu else "User"
+                await bot.send_message(target, get_approved_notify_message(tn),
+                                       buttons=kb_welcome(target))
+            except Exception:
+                pass
             return
 
         if data.startswith("reject:"):
@@ -1873,18 +2039,7 @@ async def on_cb(event):
                 return
             target = int(data.split(":")[1])
             db_set_approval(target, "rejected", approved_by=OWNER_ID)
-            await event.answer(f"❌ Rejected {target}", alert=True)
-            try:
-                await bot.send_message(
-                    target,
-                    f"{STAR_LINE}\n"
-                    f"❌  **ACCESS DENIED**\n"
-                    f"{STAR_LINE}\n\n"
-                    f"Your request was rejected by the owner.\n\n"
-                    f"Contact: @{OWNER_USERNAME}"
-                )
-            except Exception:
-                pass
+            await event.answer(f"❌ Rejected", alert=True)
             return
 
         if data == "check_join":
@@ -1893,18 +2048,14 @@ async def on_cb(event):
                 status = db_approval_status(uid)
                 auto = is_auto_approve()
                 if uid == OWNER_ID or status == "approved" or auto:
-                    await safe_edit(event, "👑 **WELCOME**", buttons=kb_welcome(uid))
-                elif status == "pending":
-                    await safe_edit(event, "⏳ Pending.", buttons=kb_request_access())
-                elif status == "rejected":
-                    await safe_edit(event, "❌ DENIED.")
+                    await safe_edit(event, "👑 Welcome", buttons=kb_welcome(uid))
                 else:
-                    await safe_edit(event, "🔐 Need approval.",
-                                    buttons=kb_request_access())
+                    await safe_edit(event, "🔐 Need approval", buttons=kb_request_access())
             else:
                 await event.answer("❌ Join first!", alert=True)
             return
 
+        # ═══ BANNED / APPROVED CHECK ═══
         if db_is_banned(uid):
             await event.answer("🚫 Banned!", alert=True)
             return
@@ -1912,6 +2063,7 @@ async def on_cb(event):
             await event.answer("❌ Not approved!", alert=True)
             return
 
+        # ═══ HOME / INFO ═══
         if data == "home":
             await safe_edit(event, "🏠 **MAIN MENU**", buttons=kb_welcome(uid))
             return
@@ -1919,36 +2071,52 @@ async def on_cb(event):
         if data == "info":
             user = db_get_user(uid)
             limit = get_user_limit(uid)
-            visible = db_count_visible_bots()
-            await safe_edit(
-                event,
-                f"ℹ️ **YOUR INFO**\n"
-                f"{DIV}\n\n"
+            u = db_get_user_full(uid)
+            aw = u[9] if u else 0
+            txt = (
+                f"ℹ️ **YOUR INFO**\n{DIV}\n\n"
                 f"🆔 `{uid}`\n"
                 f"📛 {user[1] if user else '—'}\n"
-                f"🎁 Limit: **{limit} reactions per post**\n"
-                f"🤖 Bots: **{visible}**\n\n"
-                f"⚠️ **Remember:**\n"
-                f"Owner must be admin in your chat with\n"
-                f"**Add New Admins** permission!",
-                buttons=kb_back()
+                f"🎁 Limit: **{limit} per post**\n"
+                f"📡 Auto-Watch: **{'✅ UNLOCKED' if aw else '🔒 LOCKED'}**\n"
+                f"🤖 Bots: **{db_count_visible_bots()}**\n"
             )
+            await safe_edit(event, txt, buttons=kb_back())
             return
 
+        # ═══ MANUAL REACTIONS ═══
         if data == "react_flow":
+            if not feat_manual():
+                await event.answer("❌ Manual reactions disabled by owner.", alert=True)
+                return
+            if not db_user_can(uid, "manual"):
+                await event.answer("❌ Manual reactions not allowed for you.", alert=True)
+                return
             USER_STATES[uid] = {"step": "wait_chat_type"}
-            await safe_edit(event, "💫 **SEND REACTIONS**\n\n**Step 1:** Chat type?",
+            await safe_edit(event, "💫 **SEND REACTIONS**\n\nStep 1: Chat type?",
                             buttons=kb_chat_type())
             return
+
         if data == "chattype:channel":
+            if not feat_channel():
+                await event.answer("❌ Channel reactions disabled.", alert=True)
+                return
+            if not db_user_can(uid, "channel"):
+                await event.answer("❌ Channel reactions not allowed.", alert=True)
+                return
             USER_STATES[uid] = {"step": "wait_channel", "chat_type": "channel"}
-            await safe_edit(event, "📢 **CHANNEL**\n\nSend channel link:",
-                            buttons=kb_back())
+            await safe_edit(event, "📢 **CHANNEL**\n\nSend channel link:", buttons=kb_back())
             return
+
         if data == "chattype:group":
+            if not feat_group():
+                await event.answer("❌ Group reactions disabled.", alert=True)
+                return
+            if not db_user_can(uid, "group"):
+                await event.answer("❌ Group reactions not allowed.", alert=True)
+                return
             USER_STATES[uid] = {"step": "wait_channel", "chat_type": "group"}
-            await safe_edit(event, "👥 **GROUP**\n\nSend group link:",
-                            buttons=kb_back())
+            await safe_edit(event, "👥 **GROUP**\n\nSend group link:", buttons=kb_back())
             return
 
         if data == "emoji:default":
@@ -1959,12 +2127,18 @@ async def on_cb(event):
             await event.answer("🎯 Default", alert=True)
             await _run_reactions(event, uid)
             return
+
         if data == "emoji:custom":
+            if not feat_custom_emoji():
+                await event.answer("❌ Custom emoji disabled.", alert=True)
+                return
+            if not db_user_can(uid, "custom_emoji"):
+                await event.answer("❌ Not allowed.", alert=True)
+                return
             state = USER_STATES.get(uid, {})
             state["step"] = "wait_custom_emoji"
             USER_STATES[uid] = state
-            await safe_edit(event,
-                            "✏️ **CUSTOM EMOJI**\n\nSend emojis (space/comma separated):",
+            await safe_edit(event, "✏️ **CUSTOM EMOJI**\n\nSend emojis (space/comma):",
                             buttons=kb_back())
             return
 
@@ -1977,8 +2151,7 @@ async def on_cb(event):
             state["reaction_count"] = count
             USER_STATES[uid] = state
             await event.answer(f"✅ ALL {count}", alert=True)
-            await safe_edit(event,
-                            f"🎯 Count: **{count}**\n\n**Step 5:** Emoji mode:",
+            await safe_edit(event, f"🎯 Count: **{count}**\n\nEmoji mode?",
                             buttons=kb_emoji_choice())
             return
 
@@ -1998,63 +2171,232 @@ async def on_cb(event):
             state = USER_STATES.get(uid, {})
             state["reaction_count"] = actual_count
             USER_STATES[uid] = state
-            await safe_edit(event,
-                            f"🎯 Count: **{actual_count}**\n\n**Step 5:** Emoji mode:",
+            await safe_edit(event, f"🎯 Count: **{actual_count}**\n\nEmoji mode?",
                             buttons=kb_emoji_choice())
             return
 
         if data == "rc_more":
             limit = get_user_limit(uid)
             await event.answer(f"💎 More than {limit} = PAID", alert=True)
-            await safe_edit(event,
-                            f"💎 **MORE THAN {limit}**\n\nContact owner:",
+            await safe_edit(event, f"💎 **MORE THAN {limit}**\n\nContact owner:",
                             buttons=kb_contact_owner())
             return
 
+        # ═══ AUTO-WATCH FLOW ═══
+        if data == "watch_flow":
+            if not feat_autowatch():
+                await event.answer("❌ Auto-Watch disabled by owner.", alert=True)
+                return
+            u = db_get_user_full(uid)
+            unlocked = u[9] if u else 0
+            if uid != OWNER_ID and not unlocked:
+                await event.answer("🔒 Auto-Watch is a PAID feature.", alert=True)
+                await safe_edit(event,
+                    f"🔒 **AUTO-WATCH (PAID)**\n{DIV}\n\n"
+                    f"Auto-Watch automatically sends reactions on every new post!\n\n"
+                    f"💰 **Contact owner to unlock**\n\n"
+                    f"👑 @{OWNER_USERNAME}\n🆔 `{OWNER_ID}`",
+                    buttons=kb_contact_owner())
+                return
+            await safe_edit(event, "📡 **AUTO-WATCH**\n\nChoose:", buttons=kb_watch_menu())
+            return
+
+        if data == "watch:add":
+            if not feat_autowatch():
+                await event.answer("❌ Disabled", alert=True)
+                return
+            USER_STATES[uid] = {"step": "watch_wait_chat_type"}
+            await safe_edit(event, "📡 **ADD WATCH**\n\nStep 1: Chat type?",
+                            buttons=[
+                                [btn("📢 Channel", data=b"watch:chattype:channel", style="primary")],
+                                [btn("👥 Group", data=b"watch:chattype:group", style="success")],
+                                [btn("🔙 Cancel", data=b"watch_flow", style="danger")],
+                            ])
+            return
+
+        if data == "watch:chattype:channel":
+            USER_STATES[uid] = {"step": "watch_wait_link", "chat_type": "channel"}
+            await safe_edit(event, "📢 Send channel link:", buttons=kb_back())
+            return
+
+        if data == "watch:chattype:group":
+            USER_STATES[uid] = {"step": "watch_wait_link", "chat_type": "group"}
+            await safe_edit(event, "👥 Send group link:", buttons=kb_back())
+            return
+
+        if data == "watch:list":
+            watchers = db_list_watchers(uid if uid != OWNER_ID else None)
+            if not watchers:
+                await safe_edit(event, "📋 **No watchers yet.**", buttons=kb_watch_menu())
+                return
+            txt = f"📋 **WATCHERS ({len(watchers)})**\n{DIV}\n\n"
+            for w in watchers[:10]:
+                (wid, wuid, cid, ctitle, clink, ctype, rcount,
+                 emode, cemoji, lpid, active, created, last_run) = w
+                status = "🟢" if active else "🔴"
+                txt += f"{status} **#{wid}** {ctitle}\n"
+                txt += f"   📊 {rcount} • {'Channel' if ctype=='channel' else 'Group'}\n"
+                txt += f"   👤 `{wuid}`\n\n"
+            rows = []
+            for w in watchers[:5]:
+                wid = w[0]
+                rows.append([
+                    btn(f"⚙️ #{wid}", data=f"watch:manage:{wid}".encode(), style="primary"),
+                ])
+            rows.append([btn("🔙 Back", data=b"watch_flow", style="primary")])
+            await safe_edit(event, txt[:4000], buttons=rows)
+            return
+
+        if data.startswith("watch:manage:"):
+            wid = int(data.split(":")[2])
+            w = db_get_watcher(wid)
+            if not w or (uid != OWNER_ID and w[1] != uid):
+                await event.answer("❌ Not found", alert=True)
+                return
+            (wid, wuid, cid, ctitle, clink, ctype, rcount,
+             emode, cemoji, lpid, active, created, last_run) = w
+            st = "🟢 ACTIVE" if active else "🔴 PAUSED"
+            txt = (
+                f"📡 **WATCH #{wid}**\n{DIV}\n\n"
+                f"📢 {ctitle}\n"
+                f"🎯 Count: **{rcount}**\n"
+                f"✏️ Emoji: **{emode}**\n"
+                f"📊 Last post: **{lpid}**\n"
+                f"🔄 Status: **{st}**\n"
+            )
+            rows = [
+                [btn("🟢 Turn ON" if not active else "🔴 Turn OFF",
+                     data=f"watch:toggle:{wid}".encode(),
+                     style="success" if not active else "danger")],
+                [btn("✏️ Edit Count", data=f"watch:edit_count:{wid}".encode(), style="primary")],
+                [btn("✏️ Edit Emoji", data=f"watch:edit_emoji:{wid}".encode(), style="primary")],
+                [btn("🗑️ Delete", data=f"watch:delete:{wid}".encode(), style="danger")],
+                [btn("🔙 Back", data=b"watch:list", style="primary")],
+            ]
+            await safe_edit(event, txt, buttons=rows)
+            return
+
+        if data.startswith("watch:toggle:"):
+            wid = int(data.split(":")[2])
+            w = db_get_watcher(wid)
+            if not w or (uid != OWNER_ID and w[1] != uid):
+                return
+            new_active = 0 if w[10] else 1
+            db_update_watcher(wid, is_active=new_active)
+            await event.answer(f"✅ {'Active' if new_active else 'Paused'}", alert=True)
+            # Refresh
+            w = db_get_watcher(wid)
+            (wid, wuid, cid, ctitle, clink, ctype, rcount,
+             emode, cemoji, lpid, active, created, last_run) = w
+            st = "🟢 ACTIVE" if active else "🔴 PAUSED"
+            txt = (f"📡 **WATCH #{wid}**\n{DIV}\n\n📢 {ctitle}\n"
+                   f"🎯 Count: **{rcount}**\n🔄 Status: **{st}**")
+            rows = [
+                [btn("🟢 Turn ON" if not active else "🔴 Turn OFF",
+                     data=f"watch:toggle:{wid}".encode(),
+                     style="success" if not active else "danger")],
+                [btn("✏️ Edit Count", data=f"watch:edit_count:{wid}".encode(), style="primary")],
+                [btn("✏️ Edit Emoji", data=f"watch:edit_emoji:{wid}".encode(), style="primary")],
+                [btn("🗑️ Delete", data=f"watch:delete:{wid}".encode(), style="danger")],
+                [btn("🔙 Back", data=b"watch:list", style="primary")],
+            ]
+            await safe_edit(event, txt, buttons=rows)
+            return
+
+        if data.startswith("watch:edit_count:"):
+            wid = int(data.split(":")[2])
+            USER_STATES[uid] = {"step": "watch_edit_count", "wid": wid}
+            await safe_edit(event, "✏️ Send new count (1-200):", buttons=kb_back())
+            return
+
+        if data.startswith("watch:edit_emoji:"):
+            wid = int(data.split(":")[2])
+            await safe_edit(event,
+                f"✏️ **EDIT EMOJI #{wid}**\n\nChoose mode:",
+                buttons=[
+                    [btn("🎯 Default", data=f"watch:emoji:default:{wid}".encode(), style="success")],
+                    [btn("✏️ Custom", data=f"watch:emoji:custom:{wid}".encode(), style="primary")],
+                    [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="danger")],
+                ])
+            return
+
+        if data.startswith("watch:emoji:default:"):
+            wid = int(data.split(":")[3])
+            db_update_watcher(wid, emoji_mode="default", custom_emojis=None)
+            await event.answer("✅ Default emoji", alert=True)
+            await safe_edit(event, "✅ Updated!", buttons=[
+                [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="primary")]
+            ])
+            return
+
+        if data.startswith("watch:emoji:custom:"):
+            wid = int(data.split(":")[3])
+            USER_STATES[uid] = {"step": "watch_edit_emoji", "wid": wid}
+            await safe_edit(event, "✏️ Send emojis (space/comma):", buttons=kb_back())
+            return
+
+        if data.startswith("watch:delete:"):
+            wid = int(data.split(":")[2])
+            w = db_get_watcher(wid)
+            if not w or (uid != OWNER_ID and w[1] != uid):
+                return
+            db_delete_watcher(wid)
+            await event.answer("🗑️ Deleted", alert=True)
+            await safe_edit(event, "✅ Deleted", buttons=kb_watch_menu())
+            return
+
+        # ═══ OWNER PANEL ═══
         if data == "owner_panel":
             if uid != OWNER_ID:
                 return
             await event.answer("👑 Owner Panel")
-            visible = db_count_visible_bots()
-            await safe_edit(
-                event,
+            await safe_edit(event,
                 f"👑 **OWNER PANEL**\n"
                 f"👥 Users: **{db_total_users()}**\n"
                 f"💫 Reactions: **{db_total_reactions()}**\n"
                 f"📅 Today: **{db_reactions_today()}**\n"
-                f"🤖 Visible Bots: **{visible}**\n"
-                f"🎁 Free: **{get_free_count()}**\n"
-                f"🔓 Auto: **{'✅ ON' if is_auto_approve() else '❌ OFF'}**",
+                f"🤖 Bots: **{db_count_visible_bots()}**\n"
+                f"📡 Watchers: **{len(db_list_watchers())}**\n"
+                f"🔓 Auto: **{'✅ ON' if is_auto_approve() else '❌ OFF'}**\n"
+                f"🎁 Free: **{get_free_count()}**",
                 buttons=kb_owner())
             return
 
-        if data == "op:broadcast":
+        # ── Feature toggles ──
+        if data == "op:features":
             if uid != OWNER_ID:
                 return
-            chats = await get_admin_chats()
+            await event.answer("🎛️ Feature Toggles")
             await safe_edit(event,
-                            f"📢 **BROADCAST**\n\nAdmin chats: **{len(chats)}**\n\nChoose:",
-                            buttons=kb_broadcast_type())
+                f"🎛️ **FEATURE TOGGLES**\n{DIV}\n\n"
+                f"Tap any button to toggle ON/OFF.\n\n"
+                f"These affect **all users** globally.",
+                buttons=kb_features())
             return
-        if data == "bc:text":
-            USER_STATES[uid] = {"step": "wait_bc_text"}
-            await safe_edit(event, "📝 Send text:", buttons=kb_owner())
-            return
-        if data == "bc:photo_text":
-            USER_STATES[uid] = {"step": "wait_bc_photo"}
-            await safe_edit(event, "🖼️ Send photo URL:", buttons=kb_owner())
-            return
-        if data == "bc:photo":
-            USER_STATES[uid] = {"step": "wait_bc_photo_only"}
-            await safe_edit(event, "🖼️ Send photo URL:", buttons=kb_owner())
+
+        if data.startswith("ft:toggle:"):
+            if uid != OWNER_ID:
+                return
+            key = data.split(":", 2)[2]
+            new_val = cfg_toggle(key)
+            await event.answer(f"{'✅ ON' if new_val else '❌ OFF'}", alert=True)
+            await safe_edit(event,
+                f"🎛️ **FEATURE TOGGLES**\n{DIV}\n\n"
+                f"Tap any button to toggle ON/OFF.",
+                buttons=kb_features())
             return
 
         if data == "op:toggle_auto":
             new_val = not is_auto_approve()
             set_auto_approve(new_val)
-            state = "✅ ON" if new_val else "❌ OFF"
-            await event.answer(f"Auto: {state}", alert=True)
-            await safe_edit(event, f"👑 **OWNER PANEL**\n🔓 Auto: **{state}**",
+            await event.answer(f"Auto: {'ON' if new_val else 'OFF'}", alert=True)
+            await safe_edit(event, f"👑 **OWNER PANEL**\n🔓 Auto: **{'✅ ON' if new_val else '❌ OFF'}**",
+                            buttons=kb_owner())
+            return
+
+        if data == "op:setfree":
+            USER_STATES[uid] = {"step": "wait_setfree"}
+            await safe_edit(event, f"⚙️ Current: {get_free_count()}\nSend new:",
                             buttons=kb_owner())
             return
 
@@ -2073,14 +2415,7 @@ async def on_cb(event):
                 txt += f"{status} **{i}.** @{r[1]}\n"
             if len(bots) > 30:
                 txt += f"\n... +{len(bots)-30} more"
-            txt += "\n\n🟢 free  🔴 busy  🌊 flood"
             await safe_edit(event, txt[:4000], buttons=kb_owner())
-            return
-
-        if data == "op:setfree":
-            USER_STATES[uid] = {"step": "wait_setfree"}
-            await safe_edit(event, f"⚙️ Current: {get_free_count()}\nSend new:",
-                            buttons=kb_owner())
             return
 
         if data == "op:dash":
@@ -2093,14 +2428,13 @@ async def on_cb(event):
             busy = sum(1 for t, i in BOT_POOL.items()
                        if i.get("busy_until") and i["busy_until"] > datetime.now())
             flooded = sum(1 for t in FLOOD_UNTIL if FLOOD_UNTIL[t] > datetime.now())
-            visible = db_count_visible_bots()
-            await safe_edit(
-                event,
+            await safe_edit(event,
                 f"📊 **DASHBOARD**\n👥 Users: **{db_total_users()}**\n"
                 f"✅ Approved: **{approved}**\n🚫 Banned: **{banned}**\n"
                 f"💫 Reactions: **{db_total_reactions()}**\n"
                 f"📅 Today: **{db_reactions_today()}**\n"
-                f"🤖 Bots: **{visible}**\n"
+                f"🤖 Bots: **{db_count_visible_bots()}**\n"
+                f"📡 Watchers: **{len(db_list_watchers())}**\n"
                 f"🔴 Busy: **{busy}**  🌊 Flooded: **{flooded}**",
                 buttons=kb_owner())
             return
@@ -2108,16 +2442,170 @@ async def on_cb(event):
         if data == "op:users":
             rows = db_all_users(10, 0)
             txt = f"👥 **USERS (10/{db_total_users()})**\n\n"
+            buttons_rows = []
             for r in rows:
                 icon = "🚫" if r[5] else "✅"
                 lim = get_user_limit(r[0])
-                txt += f"{icon} **{r[1] or '—'}**\n   `{r[0]}` | 🎁 {lim}\n\n"
-            await safe_edit(event, txt[:4000] or "_None._", buttons=kb_owner())
+                txt += f"{icon} **{r[1] or '—'}** `{r[0]}` 🎁 {lim}\n"
+                buttons_rows.append([
+                    btn(f"⚙️ {r[1] or 'User'}", data=f"um:panel:{r[0]}".encode(), style="primary")
+                ])
+            buttons_rows.append([btn("🔙 Back", data=b"owner_panel", style="danger")])
+            await safe_edit(event, txt[:4000], buttons=buttons_rows)
+            return
+
+        if data.startswith("um:panel:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            if not u:
+                await event.answer("❌ Not found", alert=True)
+                return
+            await event.answer("⚙️ User Settings")
+            txt = (
+                f"⚙️ **USER SETTINGS**\n{DIV}\n\n"
+                f"👤 **{u[1] or '—'}**\n"
+                f"🆔 `{u[0]}`\n"
+                f"📛 @{u[2] or 'none'}\n"
+                f"✅ Status: {'BANNED' if u[5] else 'Active'}\n"
+                f"🎁 Limit: **{u[8] if u[8] > 0 else get_free_count()}** per post\n"
+                f"💫 Reactions: **{u[6]}**\n"
+            )
+            await safe_edit(event, txt, buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:ban:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            new_ban = not u[5]
+            db_ban_user(target, ban=new_ban)
+            await event.answer(f"{'🚫 Banned' if new_ban else '✅ Unbanned'}", alert=True)
+            u = db_get_user_full(target)
+            txt = (f"⚙️ **USER SETTINGS**\n{DIV}\n\n"
+                   f"👤 **{u[1] or '—'}**\n🆔 `{u[0]}`\n"
+                   f"✅ Status: {'BANNED' if u[5] else 'Active'}\n"
+                   f"🎁 Limit: **{u[8] if u[8] > 0 else get_free_count()}**\n")
+            await safe_edit(event, txt, buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:limit:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            USER_STATES[uid] = {"step": "user_set_limit", "target": target}
+            await safe_edit(event, f"✏️ Send new limit for user `{target}`:",
+                            buttons=kb_owner())
+            return
+
+        if data.startswith("um:channel:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            db_set_user_perm(target, "channel", not u[10])
+            await event.answer("✅ Toggled", alert=True)
+            await safe_edit(event, "Updated", buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:group:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            db_set_user_perm(target, "group", not u[11])
+            await event.answer("✅ Toggled", alert=True)
+            await safe_edit(event, "Updated", buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:manual:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            db_set_user_perm(target, "manual", not u[12])
+            await event.answer("✅ Toggled", alert=True)
+            await safe_edit(event, "Updated", buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:autowatch:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            db_set_user_perm(target, "autowatch", not u[13])
+            await event.answer("✅ Toggled", alert=True)
+            await safe_edit(event, "Updated", buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:custom:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            db_set_user_perm(target, "custom_emoji", not u[14])
+            await event.answer("✅ Toggled", alert=True)
+            await safe_edit(event, "Updated", buttons=kb_user_manage(target))
+            return
+
+        if data.startswith("um:unlock:"):
+            if uid != OWNER_ID:
+                return
+            target = int(data.split(":")[2])
+            u = db_get_user_full(target)
+            db_set_user_perm(target, "auto_watch_unlocked", not u[9])
+            await event.answer("✅ Toggled", alert=True)
+            await safe_edit(event, "Updated", buttons=kb_user_manage(target))
+            return
+
+        if data == "op:watchers":
+            if uid != OWNER_ID:
+                return
+            watchers = db_list_watchers()
+            txt = f"📡 **ALL WATCHERS ({len(watchers)})**\n{DIV}\n\n"
+            if not watchers:
+                txt += "_No watchers yet._"
+            for w in watchers[:10]:
+                (wid, wuid, cid, ctitle, clink, ctype, rcount,
+                 emode, cemoji, lpid, active, created, last_run) = w
+                st = "🟢" if active else "🔴"
+                txt += f"{st} **#{wid}** {ctitle} • {rcount}x • 👤 `{wuid}`\n"
+            await safe_edit(event, txt[:4000], buttons=kb_owner())
+            return
+
+        if data == "op:broadcast":
+            if uid != OWNER_ID:
+                return
+            chats = await get_admin_chats()
+            await safe_edit(event, f"📢 **BROADCAST**\n\nChats: **{len(chats)}**\n\nChoose:",
+                            buttons=[
+                                [btn("📝 Text", data=b"bc:text", style="primary")],
+                                [btn("🖼️ Photo+Text", data=b"bc:photo_text", style="success")],
+                                [btn("🖼️ Photo", data=b"bc:photo", style="primary")],
+                                [btn("🔙 Back", data=b"owner_panel", style="danger")],
+                            ])
+            return
+
+        if data == "bc:text":
+            USER_STATES[uid] = {"step": "wait_bc_text"}
+            await safe_edit(event, "📝 Send text:", buttons=kb_owner())
+            return
+
+        if data == "bc:photo_text":
+            USER_STATES[uid] = {"step": "wait_bc_photo"}
+            await safe_edit(event, "🖼️ Send photo URL:", buttons=kb_owner())
+            return
+
+        if data == "bc:photo":
+            USER_STATES[uid] = {"step": "wait_bc_photo_only"}
+            await safe_edit(event, "🖼️ Send photo URL:", buttons=kb_owner())
             return
 
         if data == "op:adduser":
             USER_STATES[uid] = {"step": "wait_add_user_id"}
-            await safe_edit(event, "➕ Send ID:", buttons=kb_owner())
+            await safe_edit(event, "➕ Send user ID:", buttons=kb_owner())
             return
 
         if data == "op:recent":
@@ -2136,8 +2624,7 @@ async def on_cb(event):
                 return
             for r in rows:
                 try:
-                    await bot.send_message(
-                        OWNER_ID,
+                    await bot.send_message(OWNER_ID,
                         f"🔔 **PENDING**\n👤 {r[1]}\n🆔 `{r[0]}`",
                         buttons=kb_approval_actions(r[0]))
                     await asyncio.sleep(0.4)
@@ -2150,7 +2637,7 @@ async def on_cb(event):
             rows = db_approved_users(20)
             txt = f"✅ **APPROVED ({len(rows)})**\n\n"
             for r in rows:
-                txt += f"👤 {r[1] or '—'}\n"
+                txt += f"👤 {r[1] or '—'} `{r[0]}`\n"
             await safe_edit(event, txt[:4000] or "_None._", buttons=kb_owner())
             return
 
@@ -2160,52 +2647,6 @@ async def on_cb(event):
             await event.answer("❌ Error", alert=True)
         except Exception:
             pass
-
-
-# ==================== RUN REACTIONS (with TASK LOCK) ====================
-async def _run_reactions(event, uid):
-    global TASK_RUNNING, TASK_OWNER_UID
-
-    # ── Check if another task is running ──
-    if TASK_RUNNING:
-        D(f"TASK BUSY — uid={uid} blocked (owner={TASK_OWNER_UID})", "lock")
-        await safe_edit(
-            event,
-            f"⏳ **Please Wait**\n"
-            f"{DIV}\n\n"
-            f"Another reaction task is currently running.\n\n"
-            f"⏱️ Please wait a moment and try again.",
-            buttons=kb_back()
-        )
-        if uid in USER_STATES:
-            USER_STATES[uid] = {}
-        return
-
-    state = USER_STATES.get(uid, {})
-    chat_link = state.get("channel_link")
-    post_link = state.get("post_link")
-    count = state.get("reaction_count", 0)
-    emoji_mode = state.get("emoji_mode", "default")
-    custom_emojis = state.get("custom_emojis")
-
-    if not chat_link or not post_link or count <= 0:
-        await event.answer("❌ Missing data", alert=True)
-        return
-
-    # ── Acquire task lock ──
-    TASK_RUNNING = True
-    TASK_OWNER_UID = uid
-    D(f"TASK START: uid={uid} count={count}", "lock")
-
-    try:
-        await process_reactions_rotating(
-            event, uid, chat_link, post_link, count,
-            emoji_mode=emoji_mode, custom_emojis=custom_emojis
-        )
-    finally:
-        TASK_RUNNING = False
-        TASK_OWNER_UID = None
-        D(f"TASK END: uid={uid}", "lock")
 
 
 # ==================== MESSAGE HANDLER ====================
@@ -2234,6 +2675,7 @@ async def on_msg(event):
         if db_is_banned(uid):
             return
 
+        # ── Owner states ──
         if uid == OWNER_ID and uid in USER_STATES:
             state = USER_STATES[uid]
             step = state.get("step")
@@ -2245,6 +2687,7 @@ async def on_msg(event):
                 ok, fail, total = await broadcast_message(text=text)
                 await msg.edit(f"✅ Done\nTotal: {total}\nSent: {ok}\nFailed: {fail}")
                 return
+
             if step == "wait_bc_photo_only":
                 url = event.text.strip()
                 del USER_STATES[uid]
@@ -2252,13 +2695,15 @@ async def on_msg(event):
                 ok, fail, total = await broadcast_message(photo_url=url)
                 await msg.edit(f"✅ Done\nTotal: {total}\nSent: {ok}\nFailed: {fail}")
                 return
+
             if step == "wait_bc_photo":
                 url = event.text.strip()
                 state["photo_url"] = url
                 state["step"] = "wait_bc_photo_caption"
                 USER_STATES[uid] = state
-                await event.reply("🖼️ Photo saved. Now caption:")
+                await event.reply("🖼️ Now send caption:")
                 return
+
             if step == "wait_bc_photo_caption":
                 text = event.text.strip()
                 url = state.get("photo_url")
@@ -2267,6 +2712,7 @@ async def on_msg(event):
                 ok, fail, total = await broadcast_message(photo_url=url, text=text)
                 await msg.edit(f"✅ Done\nTotal: {total}\nSent: {ok}\nFailed: {fail}")
                 return
+
             if step == "wait_setfree":
                 text = event.text.strip()
                 if not text.isdigit():
@@ -2277,6 +2723,7 @@ async def on_msg(event):
                 del USER_STATES[uid]
                 await event.reply(f"✅ Free: {n}", buttons=kb_owner())
                 return
+
             if step == "wait_add_user_id":
                 text = event.text.strip()
                 if not text.lstrip("-").isdigit():
@@ -2285,9 +2732,22 @@ async def on_msg(event):
                 target = int(text)
                 db_set_approval(target, "approved", approved_by=OWNER_ID)
                 del USER_STATES[uid]
-                await event.reply(f"✅ Granted to `{target}`", buttons=kb_owner())
+                await event.reply(f"✅ Granted `{target}`", buttons=kb_owner())
                 return
 
+            if step == "user_set_limit":
+                text = event.text.strip()
+                if not text.isdigit():
+                    await event.reply("❌ Number")
+                    return
+                target = state.get("target")
+                db_set_user_limit(target, int(text))
+                del USER_STATES[uid]
+                await event.reply(f"✅ Limit set for `{target}`",
+                                  buttons=kb_user_manage(target))
+                return
+
+        # ── User states ──
         if not await is_joined(uid):
             await event.reply("Join channel first:", buttons=kb_join())
             return
@@ -2301,13 +2761,13 @@ async def on_msg(event):
         state = USER_STATES[uid]
         step = state.get("step")
 
+        # Manual reactions
         if step == "wait_channel":
             text = event.text.strip()
             state["channel_link"] = text
             state["step"] = "wait_post"
             USER_STATES[uid] = state
-            await event.reply("✅ Chat link received.\n\nSend post link:",
-                              buttons=kb_back())
+            await event.reply("✅ Chat link saved.\n\nSend post link:", buttons=kb_back())
             return
 
         if step == "wait_post":
@@ -2319,11 +2779,9 @@ async def on_msg(event):
             visible = db_count_visible_bots()
             header = (f"👑 OWNER — {visible} bots"
                       if uid == OWNER_ID
-                      else f"🎁 Your limit: **{limit} reactions per post**")
-            await event.reply(
-                f"✅ Post link received.\n\n"
-                f"🎯 How many reactions?\n\n{header}",
-                buttons=kb_reaction_count(uid))
+                      else f"🎁 Limit: **{limit} per post**")
+            await event.reply(f"✅ Post link saved.\n\nHow many reactions?\n\n{header}",
+                              buttons=kb_reaction_count(uid))
             return
 
         if step == "wait_custom_emoji":
@@ -2342,12 +2800,202 @@ async def on_msg(event):
             state["custom_emojis"] = emojis
             state["emoji_mode"] = "custom"
             USER_STATES[uid] = state
-            await event.reply(f"✅ Emojis saved. Starting...")
+            await event.reply(f"✅ Starting...")
             await _run_reactions(event, uid)
+            return
+
+        # Auto-Watch flow
+        if step == "watch_wait_link":
+            text = event.text.strip()
+            chat_ref, invite_hash = parse_channel_link(text)
+            state["watch_link"] = text
+            state["watch_chat_type"] = state.get("chat_type", "channel")
+            state["step"] = "watch_wait_count"
+            USER_STATES[uid] = state
+            await event.reply("✅ Link saved.\n\nSend reactions count per post (1-50):",
+                              buttons=kb_back())
+            return
+
+        if step == "watch_wait_count":
+            text = event.text.strip()
+            if not text.isdigit():
+                await event.reply("❌ Number")
+                return
+            n = min(int(text), 50)
+            state["watch_count"] = n
+            state["step"] = "watch_wait_emoji"
+            USER_STATES[uid] = state
+            await event.reply(f"✅ Count: {n}\n\nChoose emoji mode:",
+                              buttons=[
+                                  [btn("🎯 Default", data=b"watch_emoji:default", style="success")],
+                                  [btn("✏️ Custom", data=b"watch_emoji:custom", style="primary")],
+                                  [btn("🔙 Cancel", data=b"watch_flow", style="danger")],
+                              ])
+            return
+
+        if step == "watch_wait_custom_emoji":
+            text = event.text.strip()
+            parts = re.split(r"[,\s]+", text)
+            emojis = [p.strip() for p in parts if p.strip() in ALL_REACTIONS]
+            if not emojis:
+                await event.reply("❌ No valid emojis.")
+                return
+            state["watch_custom_emojis"] = emojis[:30]
+            USER_STATES[uid] = state
+            await _finalize_watch_add(event, uid)
+            return
+
+        if step == "watch_edit_count":
+            text = event.text.strip()
+            if not text.isdigit():
+                await event.reply("❌ Number")
+                return
+            wid = state.get("wid")
+            db_update_watcher(wid, reaction_count=min(int(text), 200))
+            del USER_STATES[uid]
+            await event.reply(f"✅ Updated!", buttons=[
+                [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="primary")]
+            ])
+            return
+
+        if step == "watch_edit_emoji":
+            text = event.text.strip()
+            parts = re.split(r"[,\s]+", text)
+            emojis = [p.strip() for p in parts if p.strip() in ALL_REACTIONS]
+            if not emojis:
+                await event.reply("❌ No valid emojis.")
+                return
+            wid = state.get("wid")
+            db_update_watcher(wid, emoji_mode="custom",
+                              custom_emojis=",".join(emojis[:30]))
+            del USER_STATES[uid]
+            await event.reply(f"✅ Updated!", buttons=[
+                [btn("🔙 Back", data=f"watch:manage:{wid}".encode(), style="primary")]
+            ])
             return
 
     except Exception as e:
         D_err(e, "on_msg")
+
+
+async def _finalize_watch_add(event, uid):
+    """Add watcher to DB and start."""
+    state = USER_STATES.get(uid, {})
+    link = state.get("watch_link")
+    chat_type = state.get("watch_chat_type", "channel")
+    count = state.get("watch_count", 5)
+    custom = state.get("watch_custom_emojis")
+    mode = "custom" if custom else "default"
+
+    try:
+        chat_ref, invite_hash = parse_channel_link(link)
+        if invite_hash:
+            try:
+                await admin_client(ImportChatInviteRequest(invite_hash))
+            except Exception:
+                pass
+            entity = await admin_client.get_entity(f"https://t.me/+{invite_hash}")
+        else:
+            entity = await admin_client.get_entity(chat_ref)
+    except Exception as e:
+        await event.reply(f"❌ Could not resolve: {e}")
+        if uid in USER_STATES:
+            USER_STATES[uid] = {}
+        return
+
+    chat_id = entity.id
+    chat_title = getattr(entity, "title", "Unknown")
+
+    # Check if already watching
+    existing = db_list_watchers(uid)
+    for w in existing:
+        if w[2] == chat_id:
+            await event.reply(f"⚠️ You already watch **{chat_title}**")
+            if uid in USER_STATES:
+                USER_STATES[uid] = {}
+            return
+
+    # Get current last post ID
+    try:
+        msgs = await admin_client.get_messages(entity, limit=1)
+        last_id = msgs[0].id if msgs else 0
+    except Exception:
+        last_id = 0
+
+    wid = db_add_watcher(uid, chat_id, chat_title, link, chat_type,
+                         count, mode, custom, last_id)
+
+    await event.reply(
+        f"{SPARKLE} ✅ **WATCH ADDED** {SPARKLE}\n{DIV}\n\n"
+        f"📢 Chat: **{chat_title}**\n"
+        f"🎯 Reactions per post: **{count}**\n"
+        f"✏️ Emoji: **{mode}**\n"
+        f"📊 Watching from post: **#{last_id}**\n\n"
+        f"🟢 **Auto-Watch is now ACTIVE!**\n\n"
+        f"I'll send reactions on every new post.",
+        buttons=[
+            [btn("📋 My Watches", data=b"watch:list", style="primary")],
+            [btn("🏠 Home", data=b"home", style="success")],
+        ]
+    )
+    if uid in USER_STATES:
+        USER_STATES[uid] = {}
+
+
+# ═══ Additional callbacks for watch flow ═══
+@bot.on(events.CallbackQuery(data=b"watch_emoji:default"))
+async def cb_watch_emoji_default(event):
+    uid = event.sender_id
+    state = USER_STATES.get(uid, {})
+    state["watch_custom_emojis"] = None
+    USER_STATES[uid] = state
+    await event.answer("🎯 Default", alert=True)
+    await _finalize_watch_add(event, uid)
+
+
+@bot.on(events.CallbackQuery(data=b"watch_emoji:custom"))
+async def cb_watch_emoji_custom(event):
+    uid = event.sender_id
+    state = USER_STATES.get(uid, {})
+    state["step"] = "watch_wait_custom_emoji"
+    USER_STATES[uid] = state
+    await safe_edit(event, "✏️ Send emojis (space/comma):", buttons=kb_back())
+
+
+# ==================== TASK LOCK RUNNER ====================
+async def _run_reactions(event, uid):
+    global TASK_RUNNING, TASK_OWNER_UID
+
+    if TASK_RUNNING:
+        await safe_edit(event,
+            f"⏳ **Please Wait**\n{DIV}\n\n"
+            f"Another task is running.\nTry again in a moment.",
+            buttons=kb_back())
+        if uid in USER_STATES:
+            USER_STATES[uid] = {}
+        return
+
+    state = USER_STATES.get(uid, {})
+    chat_link = state.get("channel_link")
+    post_link = state.get("post_link")
+    count = state.get("reaction_count", 0)
+    emoji_mode = state.get("emoji_mode", "default")
+    custom_emojis = state.get("custom_emojis")
+
+    if not chat_link or not post_link or count <= 0:
+        await event.answer("❌ Missing data", alert=True)
+        return
+
+    TASK_RUNNING = True
+    TASK_OWNER_UID = uid
+    try:
+        await process_reactions_rotating(
+            event, uid, chat_link, post_link, count,
+            emoji_mode=emoji_mode, custom_emojis=custom_emojis
+        )
+    finally:
+        TASK_RUNNING = False
+        TASK_OWNER_UID = None
 
 
 # ==================== MAIN ====================
@@ -2361,19 +3009,16 @@ async def main():
     me = await admin_client.get_me()
     bots, added = sync_bots()
 
-    D_sep("GHOST REACTION BOT — v47")
+    D_sep("GHOST REACTION BOT — v49")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
-    D(f"Bots (visible): {db_count_visible_bots()}", "ok")
-    D(f"Bots (total incl. hidden): {db_count_bots()}", "ok")
-    D(f"Button color support: {'✅ YES' if HAS_BUTTON_STYLE else '❌ NO (colors skipped)'}", "info")
-    D(f"DB file: {DB_FILE}", "info")
-    D(f"Batch size: {BATCH_SIZE}", "cycle")
-    D(f"Force channel: {FORCE_CHANNEL}", "info")
-    D(f"Default free: {get_free_count()}", "info")
-    D(f"Auto-approve: {'ON' if is_auto_approve() else 'OFF'}", "info")
-    D(f"Admin check: {'ON' if ADMIN_CHECK_ENABLED else 'OFF'}", "info")
-    D(f"Task lock: ENABLED (one task at a time)", "lock")
+    D(f"Bots: {db_count_visible_bots()} / total {db_count_bots()}", "ok")
+    D(f"Button colors: {'✅ YES' if HAS_BUTTON_STYLE else '❌ NO'}", "info")
+    D(f"Task lock: ENABLED", "lock")
+    D(f"Auto-Watcher: ENABLED", "watch")
     D("Bot online.", "ok")
+
+    # Start watcher loop in background
+    asyncio.create_task(watcher_loop())
 
     await bot.start(bot_token=BOT_TOKEN)
     await bot.run_until_disconnected()
