@@ -1,7 +1,7 @@
 """
 ============================================================
-   GITHUB SYNC MODULE - v62
-   Single DB file sync | Auto boot download + background upload
+   GITHUB SYNC MODULE - v63 (SAFE)
+   Token sirf ENV se — kabhi code mein nahi
 ============================================================
 """
 import os
@@ -11,9 +11,8 @@ import time
 import requests
 from datetime import datetime
 
-# ── ENV vars (Railway) — fallback defaults ──
-GITHUB_TOKEN   = os.getenv("GITHUB_TOKEN",
-    "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")
+# ── ENV vars (Railway) — NO hardcoded token ──
+GITHUB_TOKEN    = os.getenv("GITHUB_TOKEN", "")
 GITHUB_USERNAME = os.getenv("GITHUB_USERNAME", "jedop62502-hue")
 GITHUB_REPO     = os.getenv("GITHUB_REPO", "Reaction-Bot")
 GITHUB_BRANCH   = os.getenv("GITHUB_BRANCH", "main")
@@ -54,7 +53,7 @@ def is_enabled():
 def download_db():
     global _last_sha
     if not is_enabled():
-        return False, "Sync disabled (no token)"
+        return False, "Sync disabled (no GITHUB_TOKEN in env)"
     try:
         r = requests.get(API_URL, headers=_headers(),
                          params={"ref": GITHUB_BRANCH}, timeout=20)
@@ -74,7 +73,7 @@ def download_db():
             return True, _stats["last_msg"]
         elif r.status_code == 401:
             _stats["errors"] += 1
-            _stats["last_msg"] = "HTTP 401 Unauthorized (bad token)"
+            _stats["last_msg"] = "HTTP 401 (bad token)"
             return False, _stats["last_msg"]
         elif r.status_code == 403:
             _stats["errors"] += 1
@@ -127,16 +126,15 @@ def upload_db(force=False):
                 return upload_db(force=True)
             elif r.status_code == 401:
                 _stats["errors"] += 1
-                _stats["last_msg"] = "HTTP 401 Unauthorized"
+                _stats["last_msg"] = "HTTP 401 (bad token)"
                 return False, _stats["last_msg"]
             elif r.status_code == 403:
                 _stats["errors"] += 1
                 _stats["last_msg"] = "HTTP 403 (no write permission)"
                 return False, _stats["last_msg"]
             elif r.status_code == 422:
-                # Path missing — try to create via placeholder
                 _stats["errors"] += 1
-                _stats["last_msg"] = "HTTP 422 (path/branch issue)"
+                _stats["last_msg"] = "HTTP 422 (path issue)"
                 return False, _stats["last_msg"]
             else:
                 _stats["errors"] += 1
