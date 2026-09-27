@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT - v53 FINAL
-   Owner-Controlled Paid Features | Backup Session | Full Animations
+   GHOST REACTION BOT - v55 FINAL ADVANCE
+   Full Fixed | Backup Working | Plan Durations | Language Fix
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -51,7 +51,7 @@ API_HASH = "d21066a90786cf2dd348b907ece69d24"
 
 ADMIN_SESSION = "1BJWap1wBu2X5POvvWDOSvJZAROd9WIKpJMpSIf-W3skkHehdGLol5KkobjCIfohj9gFhHqh3UKkwjLJAsMqDbuWAflGN8yb1Qu7LxiKBsZCFYHKAHKBfxZgJyv35ivBxl881TvLZ6dbpdfM4_-66CTW7HnBE-j0_yktVaX-q3o1VaL3HYZJkb_wnI5BaJow7s9IHYtqlyWM2RYeQgcQVc23CDjHKLR4qdFpaMM_T2SuQQ478eDnUGQ-R891NssFOq0lOGs765CyI1ngt_C-NU3PYpvHVyJhFHZ3eBqsrgnmP0tpeSC1mJ2egouxeevr7pPUKMdMI_QyoA0aiTviAMEGlERWbrEA="
 
-BACKUP_SESSION_1 = "1AZWarzgBuwWqY5AI22LroGOCHfU4WphRbOpQ-0UC3OOkOjwvLMT2KKwy5R5kivT5J-31fZhft8OQwCgnmG3n8MpGy89rdBmZ8H2orhaMrk5TRHJZ7KSztXgE9jOOelQfHLMBrTQ3ypNJJ8trfg93tB-bJDDpIs1suEKFFuRAg81REqeyAh633WfZtYGPJfQ_F6OnqK88Vw3Z1qKVGLUROdFh2GicKaTrD7E4oNJlI4WVEC-es3lXXteR0ov5cHK_us8x_F_7yvXco-b-ByH-inHys7LbVJrG4NmXElaGkoogGuKzWEalw7DfXgieTF7XddiUoHDJ8JRzZO8lCdPPVQYcyKcdn9kM="
+BACKUP_SESSION_1 = "1AZWarzgBu2tZBeVP2KqGU3PKmu6shSzj5y_cyk-lPl-ymgoGjlVentuWIYdFQ9x_LZxoePMIgwoJM4EVThTNBvdAL0gqTqI5vgQOCzCYghU9p6J9oA-k4eEO8PJESXN-LsN7ch9_MZY-bx8UdBlJvSj1tZkJzbj8ByaSvVwVncgx1r8xtrTqwr8aWUGfxPKI0ESZBK9msBt7Kx2nRht8S1Yb1jcnP5AwNvgV4O73bqnHIZfRKy2cRVSXFiUII-AKsLh_ByQrOOGKIta2JHdzWlUlDBuSvsHLqbDW4NT44bApZskFNr46K-KbeKVE0OObN9-aBGAOpcjubn5V_UsPGV-6kTD2W70="
 
 BOT_TOKEN = "8878162447:AAGMBnukLS2jPxfBthfeY1GAblCCrgtaH2M"
 
@@ -111,7 +111,7 @@ BOT_TOKENS = [
     "8662013526:AAFpMDtWcV-vPVIIUhwzF890JbzvPONvHeE",
     "8729112057:AAHNJH5Q52rG06cxUhVH5v9abckcorrk-cc",
     "8471788383:AAFh-7qdOm0p_YZfHu-cFlnX0EvbaR_EPNA",
-    "8891259440:AAFkd8xRSTXYjBLoc5BJCUraaECgJyw7MA".replace("BLoc5", "Boc5"),
+    "8891259440:AAFkd8xRSTXYjLYBoc5BJCUraaECgJyw7MA",
     "8983293074:AAGAEWkH_fRsE1ZHDO6Y8400ItngSMUzWn0",
     "8471875480:AAExUSZAMmB3DJDjBHJJzQFreb4wuUhF-LE",
     "8861709151:AAGkJdg6dfNHgkImCoXLeqpj09BXaFn9K3A",
@@ -207,21 +207,15 @@ BATCH_SIZE = MAX_ADMINS - RESERVED_SLOTS
 WATCHER_CHECK_INTERVAL = 300
 AUTO_WATCH_ENABLED = True
 
-PLANS = {
-    "free":     {"name": "🆓 Free",    "limit": 5,   "duration_days": 9999, "price": 0},
-    "basic":    {"name": "🥉 Basic",   "limit": 20,  "duration_days": 30,   "price": 100},
-    "pro":      {"name": "🥈 Pro",     "limit": 50,  "duration_days": 30,   "price": 250},
-    "premium":  {"name": "🥇 Premium", "limit": 200, "duration_days": 30,   "price": 500},
+PLAN_LIMITS = {"free": 5, "basic": 20, "pro": 50, "premium": 200}
+PLAN_NAMES = {
+    "free": "🆓 Free", "basic": "🥉 Basic",
+    "pro": "🥈 Pro", "premium": "🥇 Premium",
 }
-
+DURATIONS = {1: "1 Day", 7: "7 Days", 15: "15 Days", 30: "30 Days"}
 PAID_PLANS = {"basic", "pro", "premium"}
 
-LANGUAGES = {
-    "en": "🇬🇧 English",
-    "ur": "🇵🇰 اردو",
-    "hi": "🇮🇳 हिन्दी",
-}
-
+LANGUAGES = {"en": "🇬🇧 English", "ur": "🇵🇰 اردو", "hi": "🇮🇳 हिन्दी"}
 REFERRAL_REWARD = 5
 FRIEND_VALID_REWARD = 10
 
@@ -384,20 +378,6 @@ async def safe_edit(event, text, buttons=None, alert=None):
             return False
 
 
-async def animate_loading(event, base_text, seconds=2.0, style="bar"):
-    frames = max(3, int(seconds / 0.25))
-    for i in range(frames):
-        if style == "dots":
-            frame = DOTS_FRAMES[i % len(DOTS_FRAMES)]
-        else:
-            frame = LOADING_FRAMES[i % len(LOADING_FRAMES)]
-        try:
-            await event.edit(f"{base_text}\n\n{frame}")
-        except Exception:
-            break
-        await asyncio.sleep(0.25)
-
-
 def to_bot_api_chat_id(chat_id):
     s = str(chat_id)
     if s.startswith("-100"):
@@ -527,7 +507,7 @@ def db_init():
         except sqlite3.OperationalError:
             pass
 
-    for key, val in [
+    default_config = [
         ("free_count", str(DEFAULT_FREE_COUNT)),
         ("auto_approve", "0"),
         ("channel_enabled", "1"),
@@ -543,7 +523,6 @@ def db_init():
         ("notifications_enabled", "1"),
         ("owner_pin_hash", ""),
         ("owner_2fa_enabled", "0"),
-        # ── PAID FEATURE TOGGLES (Owner control) ──
         ("paid_autowatch", "1"),
         ("paid_custom_emoji", "1"),
         ("paid_templates", "1"),
@@ -553,11 +532,23 @@ def db_init():
         ("paid_channel", "0"),
         ("paid_group", "0"),
         ("paid_manual", "0"),
-    ]:
+    ]
+
+    for plan in ["basic", "pro", "premium"]:
+        for days in [1, 7, 15, 30]:
+            default_config.append((f"price_{plan}_{days}", _default_price(plan, days)))
+
+    for key, val in default_config:
         c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)", (key, val))
 
     conn.commit()
     conn.close()
+
+
+def _default_price(plan, days):
+    base = {"basic": 20, "pro": 50, "premium": 100}.get(plan, 0)
+    multiplier = {1: 1, 7: 5, 15: 10, 30: 20}.get(days, 1)
+    return str(base * multiplier)
 
 
 def cfg_get(key, default=None):
@@ -588,6 +579,13 @@ def cfg_toggle(key):
     new_val = not cfg_bool(key)
     cfg_set(key, "1" if new_val else "0")
     return new_val
+
+
+def get_plan_price(plan, days):
+    try:
+        return int(cfg_get(f"price_{plan}_{days}", "0"))
+    except Exception:
+        return 0
 
 
 def feat_channel(): return cfg_bool("channel_enabled")
@@ -668,7 +666,7 @@ def get_user_limit(uid):
     custom_limit, plan, plan_expires = r
     if custom_limit and custom_limit > 0:
         return custom_limit
-    if plan and plan in PLANS:
+    if plan and plan in PLAN_LIMITS:
         if plan_expires:
             try:
                 exp = datetime.strptime(plan_expires, "%Y-%m-%d %H:%M:%S")
@@ -676,7 +674,7 @@ def get_user_limit(uid):
                     return get_free_count()
             except Exception:
                 pass
-        return PLANS[plan]["limit"]
+        return PLAN_LIMITS[plan]
     return get_free_count()
 
 
@@ -1341,6 +1339,48 @@ def btn(text, data=None, url=None, style=None):
         except Exception:
             pass
     return b
+
+
+# ==================== LANGUAGE SYSTEM ====================
+LANG_STRINGS = {
+    "en": {
+        "welcome": "Welcome Back", "send_reactions": "Send Reactions",
+        "auto_watch": "Auto-Watch", "templates": "Templates",
+        "referral": "Referral", "upgrade": "Upgrade Plan",
+        "notifications": "Notifications", "language": "Language",
+        "info": "Info", "support": "Customer Support",
+        "owner_panel": "Owner Panel", "home": "Main Menu", "back": "Back",
+    },
+    "ur": {
+        "welcome": "خوش آمدید", "send_reactions": "ری ایکشن بھیجیں",
+        "auto_watch": "آٹو واچ", "templates": "ٹیمپلیٹس",
+        "referral": "ریفرل", "upgrade": "پلان اپ گریڈ",
+        "notifications": "اطلاعات", "language": "زبان",
+        "info": "معلومات", "support": "کسٹمر سپورٹ",
+        "owner_panel": "اونر پینل", "home": "مین مینو", "back": "واپس",
+    },
+    "hi": {
+        "welcome": "वापसी पर स्वागत", "send_reactions": "रिएक्शन भेजें",
+        "auto_watch": "ऑटो-वॉच", "templates": "टेम्पलेट्स",
+        "referral": "रेफरल", "upgrade": "प्लान अपग्रेड",
+        "notifications": "सूचनाएं", "language": "भाषा",
+        "info": "जानकारी", "support": "ग्राहक सहायता",
+        "owner_panel": "ओनर पैनल", "home": "मुख्य मेनू", "back": "वापस",
+    },
+}
+
+
+def L(uid, key):
+    if not feat_multilang():
+        return LANG_STRINGS["en"].get(key, key)
+    try:
+        u = db_get_user_full(uid)
+        lang = "en"
+        if u and len(u) > 18 and u[18]:
+            lang = u[18]
+        return LANG_STRINGS.get(lang, LANG_STRINGS["en"]).get(key, key)
+    except Exception:
+        return LANG_STRINGS["en"].get(key, key)
 
 
 # ==================== FLOOD / POOL ====================
@@ -2099,13 +2139,26 @@ def kb_referral_menu(uid):
 
 
 def kb_plans_menu():
+    """Show plan selection (Step 1)."""
     rows = []
-    for key, plan in PLANS.items():
-        price = "FREE" if plan["price"] == 0 else f"{plan['price']}⭐"
-        rows.append([btn(f"{plan['name']} — {plan['limit']}/post — {price}",
-                        data=f"plan:{key}".encode(),
-                        style="success" if key == "free" else "primary")])
+    for key in ["basic", "pro", "premium"]:
+        limit = PLAN_LIMITS[key]
+        rows.append([btn(f"{PLAN_NAMES[key]} — {limit}/post",
+                        data=f"plan:{key}".encode(), style="primary")])
+    rows.append([btn("🆓 Free Plan", data=b"plan:free", style="success")])
     rows.append([btn("🔙 Back", data=b"home", style="primary")])
+    return rows
+
+
+def kb_plan_durations(plan):
+    """Show duration options for a plan (Step 2)."""
+    rows = []
+    for days, label in DURATIONS.items():
+        price = get_plan_price(plan, days)
+        rows.append([btn(f"📅 {label} — {price}⭐",
+                        data=f"pland:{plan}:{days}".encode(),
+                        style="success" if days == 30 else "primary")])
+    rows.append([btn("🔙 Back", data=b"plans_menu", style="primary")])
     return rows
 
 
@@ -2160,7 +2213,7 @@ def kb_owner():
         [btn(f"🔓 Auto:{auto}", data=b"op:toggle_auto", style="success"),
          btn(f"⚙️ Free:{get_free_count()}", data=b"op:setfree", style="primary")],
         [btn("🎛️ Features", data=b"op:features", style="primary"),
-         btn("💰 Plans", data=b"op:plans", style="success")],
+         btn("💰 Plan Prices", data=b"op:plan_prices", style="success")],
         [btn("💎 PAID FEATURES", data=b"op:paid_features", style="danger")],
         [btn("📡 Watchers", data=b"op:watchers", style="primary"),
          btn("🎁 Referrals", data=b"op:referrals", style="success")],
@@ -2193,8 +2246,29 @@ def kb_features():
     ]
 
 
+def kb_plan_prices():
+    """Plan price editor menu."""
+    rows = []
+    for plan in ["basic", "pro", "premium"]:
+        rows.append([btn(f"💰 {PLAN_NAMES[plan]}", data=f"pp:plan:{plan}".encode(),
+                        style="primary")])
+    rows.append([btn("🔙 Back", data=b"owner_panel", style="primary")])
+    return rows
+
+
+def kb_plan_prices_durations(plan):
+    """Show durations to edit prices."""
+    rows = []
+    for days, label in DURATIONS.items():
+        price = get_plan_price(plan, days)
+        rows.append([btn(f"📅 {label}: {price}⭐",
+                        data=f"pp:edit:{plan}:{days}".encode(),
+                        style="primary")])
+    rows.append([btn("🔙 Back", data=b"op:plan_prices", style="primary")])
+    return rows
+
+
 def kb_paid_features():
-    """Owner controls which features require paid plan."""
     def t(key, label):
         paid = cfg_bool(f"paid_{key}", False)
         status = "💎 PAID" if paid else "🆓 FREE"
@@ -2221,13 +2295,15 @@ def kb_user_manage(uid):
     def yn(v): return "✅" if v else "❌"
     plan = u[15] or "free"
     fb = u[17] or 0
+    plan_exp = u[16] or "N/A"
     return [
         [btn(f"{yn(not u[5])} {'BANNED' if u[5] else 'Active'}",
               data=f"um:ban:{uid}".encode(),
               style="danger" if u[5] else "success")],
         [btn(f"🎁 Limit: {u[8] if u[8] > 0 else get_free_count()}",
               data=f"um:limit:{uid}".encode(), style="primary")],
-        [btn(f"💰 Plan: {plan}", data=f"um:plan:{uid}".encode(), style="success")],
+        [btn(f"💰 Plan: {plan} (exp: {plan_exp[:10] if plan_exp != 'N/A' else 'N/A'})",
+              data=f"um:plan:{uid}".encode(), style="success")],
         [btn(f"🎁 Balance: {fb}", data=f"um:balance:{uid}".encode(), style="primary")],
         [btn(f"{yn(u[10])} Channel", data=f"um:channel:{uid}".encode(), style="primary")],
         [btn(f"{yn(u[11])} Group", data=f"um:group:{uid}".encode(), style="success")],
@@ -2237,6 +2313,22 @@ def kb_user_manage(uid):
         [btn(f"{yn(u[9])} AW Unlocked", data=f"um:unlock:{uid}".encode(), style="success")],
         [btn("🔙 Back", data=b"op:users", style="danger")],
     ]
+
+
+def kb_user_plan_durations(target_uid):
+    """Show plan+duration options for direct activation."""
+    rows = []
+    for plan in ["basic", "pro", "premium"]:
+        for days in [1, 7, 15, 30]:
+            label = DURATIONS[days]
+            rows.append([
+                btn(f"{PLAN_NAMES[plan]} {label}",
+                    data=f"um:activate:{plan}:{days}:{target_uid}".encode(),
+                    style="primary")
+            ])
+    rows.append([btn("🆓 Free", data=f"um:activate:free:9999:{target_uid}".encode(), style="success")])
+    rows.append([btn("🔙 Back", data=f"um:panel:{target_uid}".encode(), style="danger")])
+    return rows
 
 
 def get_admin_needed_message(chat_title):
@@ -2263,9 +2355,9 @@ def get_welcome_message(first_name, uid, auto_approved=True):
     aw = u[9] if u else 0
     plan = u[15] if u else "free"
     fb = u[17] if u else 0
-    plan_name = PLANS.get(plan, PLANS['free'])['name']
+    plan_name = PLAN_NAMES.get(plan, PLAN_NAMES['free'])
     return (
-        f"{STAR_LINE}\n{SPARKLE} ✅ **WELCOME BACK** ✅ {SPARKLE}\n"
+        f"{STAR_LINE}\n{SPARKLE} ✅ **{L(uid, 'welcome').upper()}** ✅ {SPARKLE}\n"
         f"{STAR_LINE}\n\n"
         f"👋 Hi **{first_name}**! Kaise ho bhai? 😊\n\n"
         f"{DIV}\n"
@@ -2492,15 +2584,16 @@ async def on_cb(event):
             fb = u[17] or 0
             aw = u[9] if u else 0
             ref_count, ref_earned = db_get_referral_stats(uid)
+            exp = u[16] or "N/A"
             await safe_edit(event,
                 f"ℹ️ **YOUR INFO**\n{DIV}\n\n"
                 f"🆔 `{uid}`\n"
                 f"📛 {user[1] if user else '—'}\n"
-                f"💰 Plan: **{PLANS.get(plan, PLANS['free'])['name']}**\n"
+                f"💰 Plan: **{PLAN_NAMES.get(plan, PLAN_NAMES['free'])}**\n"
+                f"📅 Expires: **{exp[:10] if exp != 'N/A' else 'N/A'}**\n"
                 f"🎁 Limit: **{limit} per post**\n"
                 f"💎 Balance: **{fb}**\n"
                 f"📡 Auto-Watch: **{'✅' if aw else '🔒'}**\n"
-                f"🤖 Bots: **{db_count_visible_bots()}**\n"
                 f"🎁 Referrals: **{ref_count}** ({ref_earned} earned)",
                 buttons=kb_back())
             return
@@ -2621,38 +2714,60 @@ async def on_cb(event):
             await safe_edit(event, txt, buttons=kb_referral_menu(uid))
             return
 
-        # Plans
+        # Plans - Step 1: show plans
         if data == "plans_menu":
             if not feat_plans():
                 await event.answer("❌ Disabled", alert=True)
                 return
             await safe_edit(event,
                 f"💰 **PLANS**\n{DIV}\n\n"
-                f"Upgrade karo aur zyada reactions pao!",
+                f"Choose a plan to see pricing:\n\n"
+                f"📅 Available durations:\n"
+                f"   1 Day / 7 Days / 15 Days / 30 Days",
                 buttons=kb_plans_menu())
             return
 
         if data.startswith("plan:"):
-            key = data.split(":")[1]
-            if key not in PLANS:
+            plan_key = data.split(":")[1]
+            if plan_key == "free":
+                db_set_user_plan(uid, "free", 9999)
+                await event.answer("✅ Free plan active", alert=True)
+                await safe_edit(event,
+                    f"{SPARKLE} ✅ **FREE PLAN** {SPARKLE}\n{DIV}\n\n"
+                    f"🎁 Limit: **5 per post**\n"
+                    f"✅ Activated!",
+                    buttons=kb_welcome(uid))
                 return
-            plan = PLANS[key]
-            if plan["price"] == 0:
-                db_set_user_plan(uid, key, plan["duration_days"])
-                await event.answer(f"✅ Free plan", alert=True)
-                await safe_edit(event, "✅ Free plan active",
-                                buttons=kb_welcome(uid))
+            if plan_key not in PLAN_LIMITS:
                 return
             await safe_edit(event,
-                f"{plan['name']}\n{DIV}\n\n"
-                f"🎁 Limit: **{plan['limit']}/post**\n"
-                f"📅 Duration: **{plan['duration_days']} days**\n"
-                f"💰 Price: **{plan['price']}⭐**\n\n"
+                f"{PLAN_NAMES[plan_key]}\n{DIV}\n\n"
+                f"🎁 Limit: **{PLAN_LIMITS[plan_key]} per post**\n\n"
+                f"📅 **Choose duration:**",
+                buttons=kb_plan_durations(plan_key))
+            return
+
+        # Step 2: User chooses duration
+        if data.startswith("pland:"):
+            parts = data.split(":")
+            plan_key = parts[1]
+            days = int(parts[2])
+            if plan_key not in PLAN_LIMITS:
+                return
+            price = get_plan_price(plan_key, days)
+            await safe_edit(event,
+                f"💰 **ORDER SUMMARY**\n{DIV}\n\n"
+                f"📦 Plan: **{PLAN_NAMES[plan_key]}**\n"
+                f"📅 Duration: **{DURATIONS[days]}**\n"
+                f"🎁 Limit: **{PLAN_LIMITS[plan_key]} per post**\n"
+                f"💰 Price: **{price}⭐**\n\n"
                 f"💬 Contact owner to purchase:\n"
-                f"👑 @{OWNER_USERNAME}",
+                f"👑 @{OWNER_USERNAME}\n\n"
+                f"📤 Send payment proof to owner and he will\n"
+                f"activate your plan manually.",
                 buttons=[
                     [btn("💬 Contact Owner", url=f"https://t.me/{OWNER_USERNAME}", style="primary")],
-                    [btn("🔙 Back", data=b"plans_menu", style="primary")],
+                    [btn("🔙 Back", data=f"plan:{plan_key}".encode(), style="primary")],
                 ])
             return
 
@@ -2674,7 +2789,10 @@ async def on_cb(event):
                 return
             db_set_user_lang(uid, code)
             await event.answer(f"✅ {LANGUAGES[code]}", alert=True)
-            await safe_edit(event, "🏠 **MAIN MENU**", buttons=kb_welcome(uid))
+            await safe_edit(event,
+                f"✅ Language changed to **{LANGUAGES[code]}**\n\n"
+                f"🏠 Returning to main menu...",
+                buttons=kb_welcome(uid))
             return
 
         # Notifications
@@ -2710,9 +2828,6 @@ async def on_cb(event):
                 return
             if not can_use_feature(uid, "manual"):
                 await event.answer("💎 PAID feature!", alert=True)
-                await safe_edit(event,
-                    f"💎 **MANUAL — PAID**\n{DIV}\n\nUpgrade to use!",
-                    buttons=kb_plans_menu())
                 return
             USER_STATES[uid] = {"step": "wait_chat_type"}
             await safe_edit(event, "💫 **SEND REACTIONS**\n\nChat type?",
@@ -3008,6 +3123,50 @@ async def on_cb(event):
                             buttons=kb_features())
             return
 
+        # ═══════ PLAN PRICES EDITOR ═══════
+        if data == "op:plan_prices":
+            if uid != OWNER_ID:
+                return
+            await event.answer("💰 Plan Prices")
+            await safe_edit(event,
+                f"💰 **PLAN PRICES**\n{DIV}\n\n"
+                f"Har plan ki har duration ka price edit karo.\n\n"
+                f"Select a plan:",
+                buttons=kb_plan_prices())
+            return
+
+        if data.startswith("pp:plan:"):
+            if uid != OWNER_ID:
+                return
+            plan = data.split(":")[2]
+            if plan not in ["basic", "pro", "premium"]:
+                return
+            await safe_edit(event,
+                f"💰 **{PLAN_NAMES[plan]} PRICES**\n{DIV}\n\n"
+                f"Tap any duration to edit its price:",
+                buttons=kb_plan_prices_durations(plan))
+            return
+
+        if data.startswith("pp:edit:"):
+            if uid != OWNER_ID:
+                return
+            parts = data.split(":")
+            plan, days = parts[2], int(parts[3])
+            current = get_plan_price(plan, days)
+            USER_STATES[uid] = {
+                "step": "pp_edit_price",
+                "plan": plan,
+                "days": days,
+            }
+            await safe_edit(event,
+                f"💰 **EDIT PRICE**\n{DIV}\n\n"
+                f"📦 Plan: **{PLAN_NAMES[plan]}**\n"
+                f"📅 Duration: **{DURATIONS[days]}**\n"
+                f"💵 Current: **{current}⭐**\n\n"
+                f"Send new price (number only):",
+                buttons=kb_back())
+            return
+
         # ═══════ PAID FEATURES CONTROL ═══════
         if data == "op:paid_features":
             if uid != OWNER_ID:
@@ -3034,16 +3193,6 @@ async def on_cb(event):
             await safe_edit(event,
                 f"💎 **PAID FEATURE CONTROL**\n{DIV}\n\nTap to toggle:",
                 buttons=kb_paid_features())
-            return
-
-        if data == "op:plans":
-            if uid != OWNER_ID:
-                return
-            txt = f"💰 **PLANS STATUS**\n{DIV}\n\n"
-            for k, p in PLANS.items():
-                txt += f"{p['name']} — {p['limit']}/post — {p['price']}⭐\n"
-            txt += f"\n📊 Plans feature: **{'ON' if feat_plans() else 'OFF'}**"
-            await safe_edit(event, txt, buttons=kb_owner())
             return
 
         if data == "op:referrals":
@@ -3198,11 +3347,13 @@ async def on_cb(event):
             await event.answer("⚙️")
             plan = u[15] or "free"
             fb = u[17] or 0
+            plan_exp = u[16] or "N/A"
             txt = (f"⚙️ **USER SETTINGS**\n{DIV}\n\n"
                    f"👤 **{u[1] or '—'}**\n🆔 `{u[0]}`\n"
                    f"📛 @{u[2] or 'none'}\n"
                    f"✅ Status: {'BANNED' if u[5] else 'Active'}\n"
                    f"💰 Plan: **{plan}**\n"
+                   f"📅 Expires: **{plan_exp[:16] if plan_exp != 'N/A' else 'N/A'}**\n"
                    f"🎁 Limit: **{u[8] if u[8] > 0 else get_free_count()}**\n"
                    f"💎 Balance: **{fb}**\n"
                    f"💫 Reactions: **{u[6]}**")
@@ -3216,7 +3367,7 @@ async def on_cb(event):
             u = db_get_user_full(target)
             new_ban = not u[5]
             db_ban_user(target, ban=new_ban)
-            await event.answer(f"{'🚫' if new_ban else '✅'}", alert=True)
+            await event.answer(f"{'🚫 Banned' if new_ban else '✅ Unbanned'}", alert=True)
             u = db_get_user_full(target)
             plan = u[15] or "free"
             fb = u[17] or 0
@@ -3239,26 +3390,40 @@ async def on_cb(event):
             if uid != OWNER_ID:
                 return
             target = int(data.split(":")[2])
-            await safe_edit(event, f"💰 **Set Plan for `{target}`**\n{DIV}",
-                buttons=[
-                    [btn("🆓 Free", data=f"um:setplan:free:{target}".encode(), style="success")],
-                    [btn("🥉 Basic", data=f"um:setplan:basic:{target}".encode(), style="primary")],
-                    [btn("🥈 Pro", data=f"um:setplan:pro:{target}".encode(), style="success")],
-                    [btn("🥇 Premium", data=f"um:setplan:premium:{target}".encode(), style="primary")],
-                    [btn("🔙 Back", data=f"um:panel:{target}".encode(), style="danger")],
-                ])
+            await safe_edit(event,
+                f"💰 **ACTIVATE PLAN for `{target}`**\n{DIV}\n\n"
+                f"Select plan + duration:",
+                buttons=kb_user_plan_durations(target))
             return
 
-        if data.startswith("um:setplan:"):
+        if data.startswith("um:activate:"):
             if uid != OWNER_ID:
                 return
             parts = data.split(":")
-            plan_key, target = parts[2], int(parts[3])
-            if plan_key in PLANS:
-                db_set_user_plan(target, plan_key, PLANS[plan_key]["duration_days"])
-                await event.answer(f"✅ Set {plan_key}", alert=True)
-                await safe_edit(event, "✅ Plan updated",
-                    buttons=kb_user_manage(target))
+            plan_key = parts[2]
+            days = int(parts[3])
+            target = int(parts[4])
+            if plan_key == "free":
+                db_set_user_plan(target, "free", 9999)
+            else:
+                db_set_user_plan(target, plan_key, days)
+            await event.answer(f"✅ {plan_key} {days}d activated", alert=True)
+            # Notify user
+            try:
+                if plan_key == "free":
+                    notif = f"🆓 **FREE PLAN activated**\n🎁 5 per post"
+                else:
+                    notif = (f"🎉 **PLAN ACTIVATED!**\n{DIV}\n\n"
+                             f"📦 Plan: **{PLAN_NAMES[plan_key]}**\n"
+                             f"📅 Duration: **{DURATIONS[days]}**\n"
+                             f"🎁 Limit: **{PLAN_LIMITS[plan_key]} per post**\n\n"
+                             f"🚀 Enjoy!")
+                await bot.send_message(target, notif)
+                db_add_notification(target, f"Plan activated: {plan_key} {days}d")
+            except Exception:
+                pass
+            await safe_edit(event, f"✅ Plan activated for `{target}`",
+                            buttons=kb_user_manage(target))
             return
 
         if data.startswith("um:balance:"):
@@ -3446,6 +3611,21 @@ async def on_msg(event):
                 cfg_set("owner_2fa_enabled", "1")
                 del USER_STATES[uid]
                 await event.reply("✅ 2FA enabled!", buttons=kb_owner())
+                return
+
+            if step == "pp_edit_price":
+                text = event.text.strip()
+                if not text.isdigit():
+                    await event.reply("❌ Number only")
+                    return
+                plan = state.get("plan")
+                days = state.get("days")
+                cfg_set(f"price_{plan}_{days}", text)
+                del USER_STATES[uid]
+                await event.reply(
+                    f"✅ Price updated!\n\n"
+                    f"{PLAN_NAMES[plan]} - {DURATIONS[days]}: **{text}⭐**",
+                    buttons=kb_plan_prices_durations(plan))
                 return
 
             if step == "wait_bc_text":
@@ -3740,7 +3920,6 @@ async def _run_reactions(event, uid):
         await event.answer("❌ Missing data", alert=True)
         return
 
-    # Use free balance for extra reactions
     u = db_get_user_full(uid)
     fb = u[17] if u and len(u) > 17 else 0
     limit = get_user_limit(uid)
@@ -3772,25 +3951,31 @@ async def main():
         print("❌ Primary session invalid.")
         return
 
-    # Backup session
-    if BACKUP_SESSION_1:
+    # Backup session (safe loading)
+    if BACKUP_SESSION_1 and len(BACKUP_SESSION_1) > 250:
         try:
-            backup_client = TelegramClient(StringSession(BACKUP_SESSION_1),
-                                            API_ID, API_HASH)
+            backup_client = TelegramClient(
+                StringSession(BACKUP_SESSION_1),
+                API_ID, API_HASH)
             await backup_client.start()
             if await backup_client.is_user_authorized():
                 D("✅ Backup session ready", "backup")
             else:
+                await backup_client.disconnect()
                 backup_client = None
                 D("⚠️ Backup session not authorized", "warn")
         except Exception as e:
             backup_client = None
-            D(f"⚠️ Backup failed: {e}", "warn")
+            D(f"⚠️ Backup failed: {str(e)[:80]}", "warn")
+    else:
+        backup_client = None
+        if BACKUP_SESSION_1:
+            D("⚠️ Backup session too short — ignoring", "warn")
 
     me = await admin_client.get_me()
     bots, added = sync_bots()
 
-    D_sep("GHOST REACTION BOT — v53 FINAL")
+    D_sep("GHOST REACTION BOT — v55 FINAL")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
     D(f"Bots: {db_count_visible_bots()} / {db_count_bots()}", "ok")
     D(f"Colors: {'✅' if HAS_BUTTON_STYLE else '❌'}", "info")
@@ -3798,6 +3983,7 @@ async def main():
     D(f"Task lock: ENABLED", "lock")
     D(f"Entity cache: ENABLED", "cache")
     D(f"Watcher: {WATCHER_CHECK_INTERVAL}s", "watch")
+    D(f"Plan durations: 1/7/15/30 days", "plan")
     D("Bot online.", "ok")
 
     asyncio.create_task(watcher_loop())
