@@ -1,0 +1,21 @@
+# ══════════════════════════════════════════════════════════════
+#   GHOST REACTION BOT — Requirements
+#   For Railway.app deployment
+# ══════════════════════════════════════════════════════════════
+
+# ── Telegram Client ──
+Telethon==1.36.0
+cryptg==0.4.0
+
+# ── HTTP Requests ──
+requests==2.32.3
+
+# ── Async support ──
+aiohttp==3.10.11
+asyncio==3.4.3
+
+# ── Python compatibility ──
+python-dateutil==2.9.0.post0
+
+# ── Optional (Railway ke liye helpful) ──
+pytz==2024.2
