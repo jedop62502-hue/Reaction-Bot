@@ -1,0 +1,7 @@
+*.db
+data/*.db
+.env
+__pycache__/
+*.pyc
+ghost_reaction_bot.session
+*.session
