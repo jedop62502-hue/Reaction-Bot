@@ -1,8 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT v75 - FINAL EDITION
-   Professional • Friendly • Multi-Language • Dual Server
-   Owner Flood → Backup Prompt • Coupon • Balance
+   GHOST REACTION BOT v76 - REBUILD EDITION
+   All Fixes + Debug Logging + Direct .session Sync
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -47,6 +46,8 @@ except ImportError:
         def is_enabled(self): return False
         def upload_db(self, force=False): return False, "disabled"
         def download_db(self): return False, "disabled"
+        def upload_sessions(self, force=False): return False, "disabled"
+        def download_sessions(self): return False, "disabled"
         def get_stats(self):
             return {"uploads":0, "downloads":0, "errors":0, "last_sync":None}
     github_sync = _DummyGH()
@@ -66,14 +67,13 @@ ADMIN_SESSION = "1BJWap1wBu2X5POvvWDOSvJZAROd9WIKpJMpSIf-W3skkHehdGLol5KkobjCIfo
 BOT_TOKEN = "8878162447:AAGMBnukLS2jPxfBthfeY1GAblCCrgtaH2M"
 
 # ══════════════════════ BACKUP SESSION (Co-Owner) ══════════════════════
-# Jab owner flood ho, user ko ye account admin banane ko bolo
-BACKUP_SESSION_1 = "1AZWarzMBuzV44aG6c1iKGT-QuKci-zlxlrHRPl5h5jJ1fBjUlCPYLXqvgHjxUodZxh-UbLy7tHXRc3SD3ATnCFpsWuRHC7l1F84c816MR47aIERtDnJWSt003kaaZkCM2S5D7IJUnqCLRj5t6YiSMjkwpOvwVqhq3xCkr8saBU3gZthdx1UXrda9Eu-bV12hysTmD_yPRNRqPSJc8R4nve1oUFAwrMO94GCLi8BGVY2nkZyCr-k_Ds5dtWqOKT4LXVAU8KTvn1bW8GtZq6ciyhXC9c4bhoZEylWdlsnaSI4gM84VjWYKONqHAW8VAQWn9OZxzQhJxDiAV01NsTHEjoqBeuGgRfs="  # ← Yahan backup session string daalo (agar hai)
-BACKUP_USERNAME = "Real_Member_Adding_1"  # Co-owner ka @username
-BACKUP_ID_PLACEHOLDER = "8855705009"       # Co-owner ka ID (agar pata ho, warna placeholder)
+BACKUP_SESSION_1 = ""  # ← Yahan @Real_Member_Adding_1 ka session daalo
+BACKUP_USERNAME = "Real_Member_Adding_1"
+BACKUP_ID_PLACEHOLDER = "1234567890"
 
 # ══════════════════════ ENGINE TOKENS (Hidden) ══════════════════════
 _RAW_ENGINE_TOKENS = [
-    # ═══ Group 1 ═══
+    # ═══ Batch 1 ═══
     "8841673258:AAHmkFSMiuS6eja_CnqVH548wcam_XBRAY4",
     "7593703253:AAEgY5r_UoBtXYiCntg6wt_seiBbhxqrMeI",
     "8553819198:AAEtfCIbrvgkvtAhUNMhull2sYZcnBVSj8o",
@@ -197,7 +197,7 @@ _RAW_ENGINE_TOKENS = [
     "8683641338:AAHO3dT8HdV7uTcN5UhCB6KmCiHA0-uco7I",
     "8655009239:AAGw-Y9ur0X0hu6t17ouYSL7BmHbd51tKk8",
     "8696672028:AAHiAB-U1A2650-HO4vaY-HE6kinLtlFUcQ",
-    # ═══ Group 2 ═══
+    # ═══ Batch 2 ═══
     "8836762962:AAEfykTc8xW-Qtg5Dj2sdyd8Pv32pdkTEG4",
     "8930953450:AAF4bV7rDvwkyttcwopbt6Cnz1hhDaBwiWs",
     "8872256184:AAFemPe7BzFsg639ZhGFsNEUG_z1IEPHrgs",
@@ -317,15 +317,10 @@ _RAW_ENGINE_TOKENS = [
     "8807284103:AAHvWfvjmmZk00S0PXREJbKDZN3y6cPKSM0",
     "8796889247:AAELgigk6c49GdPZz0iwXFyXuB78qGWaCug",
     "8940009825:AAFJFJZ6kUweO_srv5u5rhldO6TJybDtozQ",
-    # ═══ Group 3 (Naye) ═══
-    "8960571934:AAFlTT44gSwOKsR9-EIRRSV5sLVYOfB69Lg",
-    "8779154787:AAFTgYyGhFH9tl886CCAJf693FDcVNhV9U0",
-    "8903745472:AAEUCdpnOmFb7FvxAPWYyI9hiHqJJvgxYeQ",
 ]
 
 
 def _dedupe(lst):
-    """Remove duplicates while preserving order"""
     seen = set()
     result = []
     for x in lst:
@@ -337,19 +332,15 @@ def _dedupe(lst):
     return result
 
 
-# ══════════════════════ INTERNAL ENGINE LIST ══════════════════════
 ENGINE_TOKENS = _dedupe(_RAW_ENGINE_TOKENS)
 
 
-# ══════════════════════ SERVER SPLIT (50/50) ══════════════════════
 def _split_engines(tokens):
-    """Split into standard (free) + premium (paid)"""
     half = len(tokens) // 2
     return tokens[:half], tokens[half:]
 
 
 STANDARD_ENGINES, PREMIUM_ENGINES = _split_engines(ENGINE_TOKENS)
-
 
 # ══════════════════════ OWNER CONFIG ══════════════════════
 OWNER_USERNAME_DEFAULT = "Anonymous_User_37"
@@ -405,7 +396,6 @@ BOT_BUSY_TIMEOUT = 2
 POOL_CLEANUP_INTERVAL = 30
 USER_COOLDOWN = 15
 
-# ── Smart batch ──
 TELEGRAM_ADMIN_LIMIT = 50
 BATCH_SIZE = 45
 MAX_CYCLES = 50
@@ -469,7 +459,6 @@ bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
 USER_STATES = {}
 FAILED_BOTS_TRACKER = {}
 
-# ── Server pools ──
 FREE_POOL = {}
 PAID_POOL = {}
 FREE_FLOOD_UNTIL = {}
@@ -508,11 +497,12 @@ def progress_bar(cur, total, width=12):
     return "█" * f + "░" * (width - f)
 
 
-# ══════════════════════ SILENT LOGGING ══════════════════════
+# ══════════════════════ LOGGING (Silent + Debug) ══════════════════════
 _ALLOWED_LOG_LEVELS = {"ok", "warn", "fail", "startup", "ready", "shutdown"}
 
 
 def D(msg, level="info"):
+    """Silent logger — only friendly levels"""
     if level not in _ALLOWED_LOG_LEVELS:
         return
     ts = datetime.now().strftime("%H:%M:%S")
@@ -521,6 +511,18 @@ def D(msg, level="info"):
         "startup":"🚀","ready":"✨","shutdown":"🛑"
     }
     print(f"[{ts}] {ic.get(level,'•')} {msg}", flush=True)
+
+
+# 🔥 DEBUG LOGGER — ALWAYS prints (critical operations)
+def DBG(msg, level="info"):
+    """Debug logger — always prints for troubleshooting"""
+    ts = datetime.now().strftime("%H:%M:%S")
+    ic = {
+        "info": "🔍", "ok": "✅", "fail": "❌", "warn": "⚠️",
+        "api": "🌐", "react": "💫", "admin": "👑", "flood": "🌊",
+        "join": "🚪", "sync": "🔄", "db": "💾"
+    }
+    print(f"[{ts}] {ic.get(level, '•')} [DBG] {msg}", flush=True)
 
 
 def D_sep(t):
@@ -550,12 +552,10 @@ def OWNER_IS(uid):
 
 
 def get_backup_username():
-    """Get co-owner username"""
     return cfg_get("backup_username", BACKUP_USERNAME)
 
 
 def get_backup_id():
-    """Get co-owner ID"""
     try:
         return int(cfg_get("backup_id", BACKUP_ID_PLACEHOLDER))
     except Exception:
@@ -574,6 +574,8 @@ def get_week_start_str():
 
 # ══════════════════════ END OF PART 1 ══════════════════════
 D("Part 1 ready", "ok")
+DBG(f"Loaded {len(ENGINE_TOKENS)} unique engines "
+    f"(Std: {len(STANDARD_ENGINES)}, Prem: {len(PREMIUM_ENGINES)})", "ok")
 # ══════════════════════ DATABASE — PART 1 ══════════════════════
 def db_init():
     """Initialize database with all tables + migrations"""
@@ -582,9 +584,7 @@ def db_init():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
-    # ═══════════════════════════════════════════════════════
     # ═════ ALL TABLES (Fresh + Safe) ═════
-    # ═══════════════════════════════════════════════════════
 
     # ── Users ──
     c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -606,7 +606,7 @@ def db_init():
         ra_limit_override INTEGER DEFAULT -1,
         server_override TEXT DEFAULT NULL)""")
 
-    # ── Reactions log ──
+    # ── Reactions ──
     c.execute("""CREATE TABLE IF NOT EXISTS reactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         chat_title TEXT, chat_id INTEGER, post_link TEXT, post_id INTEGER,
@@ -626,7 +626,7 @@ def db_init():
     c.execute("""CREATE TABLE IF NOT EXISTS config (
         key TEXT PRIMARY KEY, value TEXT)""")
 
-    # ── Engines (main pool) ──
+    # ── Engines ──
     c.execute("""CREATE TABLE IF NOT EXISTS engines (
         token TEXT PRIMARY KEY, username TEXT, bot_id INTEGER,
         server TEXT DEFAULT 'free',
@@ -642,7 +642,7 @@ def db_init():
         is_active INTEGER DEFAULT 1,
         moved_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    # ── Engine Cache (cached validation) ──
+    # ── Engine Cache ──
     c.execute("""CREATE TABLE IF NOT EXISTS engine_cache (
         token_hash TEXT PRIMARY KEY,
         username TEXT,
@@ -809,7 +809,7 @@ def db_init():
         commission_paid INTEGER DEFAULT 0,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    # ── User Notes (Owner only) ──
+    # ── User Notes ──
     c.execute("""CREATE TABLE IF NOT EXISTS user_notes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER, note TEXT,
@@ -824,17 +824,16 @@ def db_init():
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         decided_at TEXT, decided_by INTEGER)""")
 
-    # ══════════════════════ SQLITE OPTIMIZATIONS ══════════════════════
+    # ═════ SQLITE OPTIMIZATIONS ═════
     try:
         c.execute("PRAGMA journal_mode=WAL")
         c.execute("PRAGMA synchronous=NORMAL")
         c.execute("PRAGMA cache_size=2000")
         c.execute("PRAGMA temp_store=MEMORY")
-        c.execute("PRAGMA foreign_keys=ON")
     except Exception:
         pass
 
-    # ── Indices ──
+    # ═════ INDICES ═════
     indices = [
         "CREATE INDEX IF NOT EXISTS idx_reactions_user ON reactions(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_reactions_date ON reactions(created_at)",
@@ -852,8 +851,6 @@ def db_init():
         "CREATE INDEX IF NOT EXISTS idx_stats_today ON user_stats(today_date)",
         "CREATE INDEX IF NOT EXISTS idx_engines_server ON engines(server)",
         "CREATE INDEX IF NOT EXISTS idx_engine_cache_valid ON engine_cache(is_valid)",
-        "CREATE INDEX IF NOT EXISTS idx_user_notes_uid ON user_notes(user_id)",
-        "CREATE INDEX IF NOT EXISTS idx_appeals_status ON ban_appeals(status)",
     ]
     for sql in indices:
         try:
@@ -861,28 +858,29 @@ def db_init():
         except Exception:
             pass
 
-    # ══════════════════════ 🔥 FIX MIGRATIONS (server columns) ══════════════════════
-    # Ye purane DB ke liye zaroori hai
+    # ═════ 🔥 MIGRATIONS — Fix missing columns ═════
+    # (Ye important hai purane DB ke liye)
 
     # Watchers
-    for col, dflt in [("server","TEXT DEFAULT 'free'")]:
-        try:
-            c.execute(f"ALTER TABLE watchers ADD COLUMN {col} {dflt}")
-        except sqlite3.OperationalError:
-            pass
+    try:
+        c.execute("ALTER TABLE watchers ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
 
     # Reactions
-    for col, dflt in [("server","TEXT DEFAULT 'free'"),
-                      ("method","TEXT DEFAULT 'bot'")]:
-        try:
-            c.execute(f"ALTER TABLE reactions ADD COLUMN {col} {dflt}")
-        except sqlite3.OperationalError:
-            pass
+    try:
+        c.execute("ALTER TABLE reactions ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute("ALTER TABLE reactions ADD COLUMN method TEXT DEFAULT 'bot'")
+    except sqlite3.OperationalError:
+        pass
 
     # Engines
-    for col, dflt in [("server","TEXT DEFAULT 'free'"),
-                      ("is_valid","INTEGER DEFAULT 1"),
-                      ("last_checked","TEXT")]:
+    for col, dflt in [("server", "TEXT DEFAULT 'free'"),
+                      ("is_valid", "INTEGER DEFAULT 1"),
+                      ("last_checked", "TEXT")]:
         try:
             c.execute(f"ALTER TABLE engines ADD COLUMN {col} {dflt}")
         except sqlite3.OperationalError:
@@ -907,22 +905,22 @@ def db_init():
         pass
 
     # Users
-    for col, dflt in [("ra_limit_override","INTEGER DEFAULT -1"),
-                      ("server_override","TEXT DEFAULT NULL")]:
+    for col, dflt in [("ra_limit_override", "INTEGER DEFAULT -1"),
+                      ("server_override", "TEXT DEFAULT NULL")]:
         try:
             c.execute(f"ALTER TABLE users ADD COLUMN {col} {dflt}")
         except sqlite3.OperationalError:
             pass
 
     # Payments
-    for col, dflt in [("coupon_code","TEXT"),
-                      ("discount_amount","INTEGER DEFAULT 0")]:
+    for col, dflt in [("coupon_code", "TEXT"),
+                      ("discount_amount", "INTEGER DEFAULT 0")]:
         try:
             c.execute(f"ALTER TABLE payments ADD COLUMN {col} {dflt}")
         except sqlite3.OperationalError:
             pass
 
-    # ✅ Rename "bots" to "engines" if engines doesn't exist
+    # ✅ Rename "bots" → "engines" if needed
     try:
         r = c.execute("""SELECT name FROM sqlite_master
             WHERE type='table' AND name='engines'""").fetchone()
@@ -934,7 +932,7 @@ def db_init():
     except Exception:
         pass
 
-    # ══════════════════════ CONFIG DEFAULTS ══════════════════════
+    # ═════ CONFIG DEFAULTS ═════
     cfg_defaults = [
         ("owner_username", OWNER_USERNAME_DEFAULT),
         ("owner_id", str(OWNER_ID_DEFAULT)),
@@ -973,9 +971,8 @@ def db_init():
         ("dual_server_enabled", "1"),
         ("engine_cache_enabled", "1"),
         ("engine_recheck_days", "7"),
-        # New features
         ("balance_reactions_enabled", "1"),
-        ("balance_to_reactions_rate", "1"),   # 1 balance = 1 extra reaction
+        ("balance_to_reactions_rate", "1"),
         ("backup_prompt_enabled", "1"),
         ("user_notes_enabled", "1"),
         ("ban_appeals_enabled", "1"),
@@ -1241,12 +1238,6 @@ def set_user_server_override(uid, server):
     finally:
         conn.close()
     _dirty()
-
-
-def get_server_tokens(server):
-    if server == "paid":
-        return PREMIUM_ENGINES
-    return STANDARD_ENGINES
 
 
 def get_server_label(server):
@@ -1689,6 +1680,7 @@ def cache_clear_invalid():
 
 # ══════════════════════ END OF PART 2 ══════════════════════
 D("Part 2 ready", "ok")
+DBG("Database initialized with migrations", "db")
 # ══════════════════════ DB — APPROVALS ══════════════════════
 def db_approval_status(uid):
     conn = sqlite3.connect(DB_FILE)
@@ -2273,6 +2265,7 @@ def db_engine_stats():
 
 # ══════════════════════ END OF PART 3 ══════════════════════
 D("Part 3 ready", "ok")
+DBG("DB Part 2 functions loaded", "db")
 # ══════════════════════ DB — QUEUE ══════════════════════
 def db_add_queue(uid, cl, pl, rc, em="default", ce=None, st=None,
                  server="free"):
@@ -3333,7 +3326,7 @@ def team_count_clients():
         return 0
 
 
-# ══════════════════════ DB — USER NOTES (Owner only) ══════════════════════
+# ══════════════════════ DB — USER NOTES ══════════════════════
 def db_add_user_note(uid, note, added_by=None):
     if not feat_user_notes():
         return False
@@ -3460,6 +3453,7 @@ def db_count_pending_appeals():
 
 # ══════════════════════ END OF PART 4 ══════════════════════
 D("Part 4 ready", "ok")
+DBG("DB Part 3 functions loaded", "db")
 # ══════════════════════ LANGUAGES ══════════════════════
 LANG_STRINGS = {
     "en": {
@@ -3700,7 +3694,7 @@ def L_static(lang, key):
     return LANG_STRINGS.get(lang, LANG_STRINGS["en"]).get(key, key)
 
 
-# ══════════════════════ HELP TEXT (Multi-Lang) ══════════════════════
+# ══════════════════════ HELP TEXT ══════════════════════
 def get_help_text(uid=None):
     uname = get_owner_username()
     oid = get_owner_id()
@@ -3767,7 +3761,6 @@ def get_help_text(uid=None):
             f"💬 संपर्क: @{uname}"
         )
 
-    # Default English
     return (
         f"{STAR_LINE}\n📖 **HELP — Make Owner Admin** 📖\n{STAR_LINE}\n\n"
         f"❌ **Required first!**\n"
@@ -3805,12 +3798,8 @@ def get_help_text(uid=None):
     )
 
 
-# ══════════════════════ 🔥 BACKUP PROMPT MESSAGE ══════════════════════
+# ══════════════════════ BACKUP PROMPT MESSAGE ══════════════════════
 def get_backup_prompt_message(chat_title, uid=None):
-    """
-    Shown when owner session is flooded.
-    Tells user to add co-owner as admin.
-    """
     backup_uname = get_backup_username()
     backup_id = get_backup_id()
 
@@ -3835,8 +3824,7 @@ def get_backup_prompt_message(chat_title, uid=None):
             f"4️⃣ تمام اجازتیں دیں\n"
             f"5️⃣ محفوظ کریں\n\n"
             f"{DIV}\n"
-            f"پھر نیچے **دوبارہ کوشش کریں** دبائیں۔\n\n"
-            f"💡 یہ محفوظ ہے اور صرف ایک بار کی ضرورت ہے۔"
+            f"پھر نیچے **دوبارہ کوشش کریں** دبائیں۔"
         )
 
     if lang == "hi":
@@ -3857,11 +3845,9 @@ def get_backup_prompt_message(chat_title, uid=None):
             f"4️⃣ सभी परमिशन दें\n"
             f"5️⃣ सेव करें\n\n"
             f"{DIV}\n"
-            f"फिर नीचे **दोबारा कोशिश करें** दबाएं।\n\n"
-            f"💡 यह सुरक्षित है और सिर्फ एक बार की ज़रूरत है।"
+            f"फिर नीचे **दोबारा कोशिश करें** दबाएं।"
         )
 
-    # Default English
     return (
         f"⚠️ **Owner is Currently Busy** ⚠️\n"
         f"{STAR_LINE}\n\n"
@@ -3882,178 +3868,6 @@ def get_backup_prompt_message(chat_title, uid=None):
         f"Then tap **Retry** below.\n\n"
         f"💡 This is safe and only needed once."
     )
-
-
-# ══════════════════════ FEATURE INFO CARDS ══════════════════════
-def get_feature_info(feature, uid=None):
-    u = db_get_user_full(uid) if uid else None
-    lang = u[18] if u and len(u) > 18 and u[18] else "en"
-
-    infos = {
-        "en": {
-            "manual": (
-                f"💫 **SEND REACTIONS**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What it does:**\n"
-                f"Sends reactions to any post you choose.\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Choose mode (👑 With Admin / 🔓 Without)\n"
-                f"2. Send chat link\n"
-                f"3. Send post link\n"
-                f"4. Pick reaction count\n"
-                f"5. Choose emoji style\n\n"
-                f"💡 **Tip:** Owner must be admin first!\n\n"
-                f"⚡ **Speed:** 30-60 seconds for 50 reactions"
-            ),
-            "autowatch": (
-                f"📡 **AUTO-TRACK**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What it does:**\n"
-                f"Automatically sends reactions whenever a new "
-                f"post appears in your channel or group.\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Tap 'Add Watch'\n"
-                f"2. Choose chat type\n"
-                f"3. Send channel/group link\n"
-                f"4. Set reactions per post (1-200)\n"
-                f"5. Pick emoji style\n"
-                f"6. Done! Works 24/7\n\n"
-                f"💡 **Tip:** Perfect for busy channels!"
-            ),
-            "queue": (
-                f"⏰ **SCHEDULE**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What it does:**\n"
-                f"Queues reactions to run at a later time.\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Tap 'New Job'\n"
-                f"2. Send chat link\n"
-                f"3. Send post link\n"
-                f"4. Choose count\n"
-                f"5. Set date/time\n\n"
-                f"💡 **Tip:** Great for scheduled posts!"
-            ),
-            "bulk": (
-                f"📦 **BULK MODE**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What it does:**\n"
-                f"Sends reactions to multiple posts in one go.\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Tap 'Multi Posts'\n"
-                f"2. Send chat link\n"
-                f"3. Send post links (one per line)\n"
-                f"4. Set count per post\n\n"
-                f"💡 **Tip:** Save time on many posts!"
-            ),
-            "store": (
-                f"🏪 **EMOJI STORE**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What it does:**\n"
-                f"Buy premium emoji packs using your balance.\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Browse available packs\n"
-                f"2. Check price\n"
-                f"3. Tap 'Buy'\n"
-                f"4. Load and use!\n\n"
-                f"💡 **Tip:** Earn free balance via referrals!"
-            ),
-            "referral": (
-                f"🎁 **REFERRAL PROGRAM**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What it does:**\n"
-                f"Earn free balance by inviting friends.\n\n"
-                f"💰 **Rewards:**\n"
-                f"• You get: **{REFERRAL_REWARD + FRIEND_VALID_REWARD}**\n"
-                f"• Friend gets: **{FRIEND_VALID_REWARD}**\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Tap 'My Link'\n"
-                f"2. Share with friends\n"
-                f"3. When they join — you earn!\n\n"
-                f"💡 **Tip:** Balance can be used for extra reactions!"
-            ),
-            "balance": (
-                f"💰 **BALANCE SYSTEM**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What is balance:**\n"
-                f"Free points you earn from referrals and daily bonus.\n\n"
-                f"🎯 **How to earn:**\n"
-                f"• 🎁 Daily bonus: +1/day\n"
-                f"• 🎉 7-day streak: +5 bonus\n"
-                f"• 🎁 Referrals: +15 per friend\n\n"
-                f"💎 **How to use:**\n"
-                f"1. Buy emoji packs from Store\n"
-                f"2. Get extra reactions beyond plan limit\n"
-                f"   (1 balance = 1 extra reaction)\n\n"
-                f"💡 **Tip:** Save up for premium packs!"
-            ),
-            "coupon": (
-                f"🎟️ **COUPONS**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **What are coupons:**\n"
-                f"Special discount codes for plan purchases.\n\n"
-                f"🎯 **How to use:**\n"
-                f"1. Buy Plan → Select duration\n"
-                f"2. Tap 'Apply Coupon'\n"
-                f"3. Enter your code\n"
-                f"4. Get instant discount!\n\n"
-                f"💡 **Tip:** Watch for coupon announcements!"
-            ),
-        },
-        "ur": {
-            "manual": (
-                f"💫 **ری ایکشن بھیجیں**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **کیا کرتا ہے:**\n"
-                f"آپ کی منتخب کردہ پوسٹ پر ری ایکشن بھیجتا ہے۔\n\n"
-                f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. موڈ منتخب کریں\n"
-                f"2. چیٹ لنک بھیجیں\n"
-                f"3. پوسٹ لنک بھیجیں\n"
-                f"4. تعداد منتخب کریں\n"
-                f"5. ایموجی اسٹائل منتخب کریں"
-            ),
-            "autowatch": (
-                f"📡 **آٹو ٹریک**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **کیا کرتا ہے:**\n"
-                f"جب آپ کے چینل/گروپ میں نئی پوسٹ آتی ہے، "
-                f"خودکار طور پر ری ایکشن بھیجتا ہے۔\n\n"
-                f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. 'واچ شامل کریں' دبائیں\n"
-                f"2. چیٹ کی قسم منتخب کریں\n"
-                f"3. لنک بھیجیں\n"
-                f"4. فی پوسٹ تعداد سیٹ کریں\n"
-                f"5. ایموجی اسٹائل منتخب کریں"
-            ),
-            "balance": (
-                f"💰 **بیلنس سسٹم**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **بیلنس کیا ہے:**\n"
-                f"مفت پوائنٹس جو ریفرل اور روزانہ بونس سے ملتے ہیں۔\n\n"
-                f"🎯 **کیسے کمائیں:**\n"
-                f"• 🎁 روزانہ بونس: +1\n"
-                f"• 🎉 7 دن سٹریک: +5\n"
-                f"• 🎁 ریفرل: ہر دوست پر +15\n\n"
-                f"💎 **کیسے استعمال کریں:**\n"
-                f"1. اسٹور سے ایموجی پیکس خریدیں\n"
-                f"2. اضافی ری ایکشن حاصل کریں"
-            ),
-            "coupon": (
-                f"🎟️ **کوپن**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **کوپن کیا ہے:**\n"
-                f"پلان خریدنے پر خصوصی رعایت کوڈ۔\n\n"
-                f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. پلان خریدیں → دورانیہ منتخب کریں\n"
-                f"2. 'کوپن لگائیں' دبائیں\n"
-                f"3. کوڈ درج کریں\n"
-                f"4. فوری رعایت حاصل کریں!"
-            ),
-        },
-    }
-
-    lang_infos = infos.get(lang, infos["en"])
-    return lang_infos.get(feature, "")
 
 
 # ══════════════════════ BOT API HELPERS ══════════════════════
@@ -4237,11 +4051,12 @@ async def safe_answer(event, text=None, alert=False):
         pass
 
 
-# ══════════════════════ SAFE ENTITY (Immediate Backup Fallback) ══════════════════════
+# ══════════════════════ SAFE ENTITY (With Backup Fallback) ══════════════════════
 async def safe_get_entity(ref, cache_key=None, cache_store=None):
     global RESOLVE_FLOOD_UNTIL
+
+    # If flood active, try backup
     if RESOLVE_FLOOD_UNTIL and datetime.now() < RESOLVE_FLOOD_UNTIL:
-        # ✅ Try backup immediately
         if backup_client:
             try:
                 entity = await asyncio.wait_for(
@@ -4250,6 +4065,7 @@ async def safe_get_entity(ref, cache_key=None, cache_store=None):
                     cache_store[cache_key] = (
                         entity,
                         datetime.now() + timedelta(seconds=ENTITY_CACHE_TTL))
+                DBG(f"Resolve via BACKUP: {ref}", "ok")
                 return entity
             except Exception:
                 pass
@@ -4272,16 +4088,18 @@ async def safe_get_entity(ref, cache_key=None, cache_store=None):
                                         timeout=15)
         cache_store[cache_key] = (entity,
                                   now + timedelta(seconds=ENTITY_CACHE_TTL))
+        DBG(f"Resolved: {ref}", "ok")
         return entity
     except FloodWaitError as e:
         wait_sec = min(e.seconds + 10, 3600)
-        # ✅ Try backup immediately
+        DBG(f"FLOOD {wait_sec}s on resolve: {ref}", "flood")
         if backup_client:
             try:
                 entity = await asyncio.wait_for(
                     backup_client.get_entity(ref), timeout=15)
                 cache_store[cache_key] = (
                     entity, now + timedelta(seconds=ENTITY_CACHE_TTL))
+                DBG(f"Resolve via BACKUP after flood", "ok")
                 return entity
             except Exception:
                 pass
@@ -4329,7 +4147,6 @@ async def safe_get_owner_entity():
 
 
 async def safe_get_backup_entity():
-    """Get backup (co-owner) entity"""
     try:
         backup_uname = get_backup_username()
         entity = await asyncio.wait_for(
@@ -4353,6 +4170,7 @@ def clear_owner_cache():
 
 # ══════════════════════ END OF PART 5 ══════════════════════
 D("Part 5 ready", "ok")
+DBG("Languages + Helpers loaded", "ok")
 # ══════════════════════ BOT POOL (DUAL-SERVER) ══════════════════════
 def get_pool(server):
     return PAID_POOL if server == "paid" else FREE_POOL
@@ -4517,9 +4335,9 @@ def reset_engine_pool(server=None):
     return op, of
 
 
-# ══════════════════════ CACHED ENGINE SYNC (Non-Blocking) ══════════════════════
+# ══════════════════════ CACHED ENGINE SYNC ══════════════════════
 async def sync_engines_cached():
-    """Sync engines from config → DB using cache (fast)"""
+    """Sync engines from config → DB using cache (fast, non-blocking)"""
     try:
         await asyncio.sleep(2)
         if not feat_engine_cache():
@@ -4528,19 +4346,28 @@ async def sync_engines_cached():
         existing = {r[0] for r in db_list_engines()}
         added_free = 0
         added_paid = 0
+        cached_count = 0
+        checked_count = 0
+        failed_count = 0
 
-        # Standard engines
+        DBG(f"Sync start: {len(STANDARD_ENGINES)} std, "
+            f"{len(PREMIUM_ENGINES)} premium", "sync")
+
+        # ── Standard engines ──
         for tok in STANDARD_ENGINES:
             if tok in existing:
                 continue
             cached, is_valid, uname, bid = cache_is_valid(tok)
             if cached:
+                cached_count += 1
                 if is_valid and uname and bid:
                     if db_add_engine(tok, uname, bid, server="free"):
                         added_free += 1
                         existing.add(tok)
                 continue
+            # Call API
             info = bot_get_me(tok)
+            checked_count += 1
             if info:
                 cache_set(tok, info["username"], info["id"], True)
                 if db_add_engine(tok, info["username"], info["id"],
@@ -4548,21 +4375,24 @@ async def sync_engines_cached():
                     added_free += 1
                     existing.add(tok)
             else:
+                failed_count += 1
                 cache_set(tok, "", 0, False, fail_inc=True)
             await asyncio.sleep(0.12)
 
-        # Premium engines
+        # ── Premium engines ──
         for tok in PREMIUM_ENGINES:
             if tok in existing:
                 continue
             cached, is_valid, uname, bid = cache_is_valid(tok)
             if cached:
+                cached_count += 1
                 if is_valid and uname and bid:
                     if db_add_engine(tok, uname, bid, server="paid"):
                         added_paid += 1
                         existing.add(tok)
                 continue
             info = bot_get_me(tok)
+            checked_count += 1
             if info:
                 cache_set(tok, info["username"], info["id"], True)
                 if db_add_engine(tok, info["username"], info["id"],
@@ -4570,14 +4400,18 @@ async def sync_engines_cached():
                     added_paid += 1
                     existing.add(tok)
             else:
+                failed_count += 1
                 cache_set(tok, "", 0, False, fail_inc=True)
             await asyncio.sleep(0.12)
 
+        DBG(f"Sync done: +{added_free} std, +{added_paid} premium | "
+            f"cached={cached_count} checked={checked_count} "
+            f"failed={failed_count}", "sync")
         if added_free or added_paid:
             D(f"Engines ready: +{added_free} std, +{added_paid} premium",
               "ok")
-    except Exception:
-        pass
+    except Exception as e:
+        DBG(f"Sync error: {str(e)[:120]}", "fail")
 
 
 # ══════════════════════ REAL ACCOUNTS ══════════════════════
@@ -4663,8 +4497,10 @@ async def get_real_client(sf):
                 await client.disconnect()
                 return None
             REAL_CLIENTS[sf] = client
+            DBG(f"Real client loaded: {sf}", "ok")
             return client
-        except Exception:
+        except Exception as e:
+            DBG(f"Real login fail {sf}: {str(e)[:80]}", "fail")
             return None
 
 
@@ -4675,16 +4511,20 @@ async def real_send_reaction(sf, chat_ref, msg_id, emoji):
     if not client:
         return False, "login_failed", 0
     try:
-        entity = await asyncio.wait_for(client.get_entity(chat_ref), timeout=20)
+        entity = await asyncio.wait_for(client.get_entity(chat_ref),
+                                        timeout=20)
         await asyncio.wait_for(
             client(SendReactionRequest(
                 peer=entity, msg_id=msg_id,
                 reaction=[ReactionEmoji(emoticon=emoji)])),
             timeout=20)
+        DBG(f"✅ {sf} reacted {emoji}", "react")
         return True, "", 0
     except FloodWaitError as e:
+        DBG(f"🌊 {sf} flood {e.seconds}s", "flood")
         return False, "flood", e.seconds
     except Exception as e:
+        DBG(f"❌ {sf} react fail: {str(e)[:80]}", "fail")
         return False, str(e)[:100], 0
 
 
@@ -4692,23 +4532,30 @@ async def send_reactions_real(chat_ref, msg_id, count,
                                emoji_pool=None, on_progress=None):
     files = discover_session_files()
     if not files:
+        DBG("No sessions available", "warn")
         return {"ok": 0, "fail": 0, "flooded": 0, "total": 0}
     available = [f for f in files if not is_real_flooded(f)]
     if not available:
+        DBG("All sessions flooded", "flood")
         return {"ok": 0, "fail": 0, "flooded": 0, "total": 0}
     random.shuffle(available)
     senders = available[:min(count, len(available))]
+
     if emoji_pool:
         valid = [e for e in emoji_pool if e in ALL_REACTIONS]
         emojis = valid if valid else DEFAULT_REACTIONS
     else:
         emojis = DEFAULT_REACTIONS + ["🥰", "😍", "💯", "🎉", "😎", "👏"]
+
+    DBG(f"Real reactions: {len(senders)} sessions → {chat_ref} msg={msg_id}",
+        "react")
+
     ok = fail = flooded = 0
     total = len(senders)
     for i, sf in enumerate(senders, 1):
         emoji = random.choice(emojis)
-        success, err, wait = await real_send_reaction(sf, chat_ref, msg_id,
-                                                       emoji)
+        success, err, wait = await real_send_reaction(
+            sf, chat_ref, msg_id, emoji)
         if success:
             ok += 1
         elif wait > 0:
@@ -4787,7 +4634,6 @@ async def check_owner_admin(entity):
 
 
 async def check_backup_admin(entity):
-    """Check if co-owner (backup) is admin in entity"""
     try:
         backup_entity = await safe_get_backup_entity()
         if not backup_entity:
@@ -4851,7 +4697,6 @@ async def get_non_our_admin_bots(entity):
 
 # ══════════════════════ MAKE / REMOVE ADMIN ══════════════════════
 async def make_engine_admin(entity, bot_entity, atype, use_backup=False):
-    """Make a bot admin. Optionally use backup session."""
     if atype == "channel":
         rights = ChatAdminRights(
             change_info=False, post_messages=True, edit_messages=False,
@@ -4872,6 +4717,7 @@ async def make_engine_admin(entity, bot_entity, atype, use_backup=False):
                 channel=entity, user_id=bot_entity,
                 admin_rights=rights, rank="")),
             timeout=15)
+        DBG(f"Promoted bot to admin (backup={use_backup})", "admin")
         return True, "promoted"
     except Exception as e:
         m = str(e).lower()
@@ -4879,6 +4725,7 @@ async def make_engine_admin(entity, bot_entity, atype, use_backup=False):
             return True, "already_admin"
         if "too many admins" in m:
             return False, "too_many_admins"
+        DBG(f"Promote failed: {str(e)[:100]}", "fail")
         return False, f"admin: {str(e)[:60]}"
 
 
@@ -4972,19 +4819,18 @@ async def add_one_engine(entity, bot_token, atype, cache_key,
                                     use_backup=use_backup)
 
 
-# ══════════════════════ ENSURE OWNER ADMIN (with Flood Detection) ══════════════════════
+# ══════════════════════ ENSURE OWNER ADMIN ══════════════════════
 async def ensure_owner_admin(entity, cache_key):
     """
     Ensure owner is admin.
-    Returns (ok, reason)
-    - ok=True → success
-    - ok=False, reason='owner_flood' → owner flooded, need backup
-    - ok=False, reason='...' → other error
+    Returns (ok, reason):
+      ok=True → success
+      reason='owner_flood' → flooded, need backup
+      reason='...' → error
     """
     if cache_key and ADMIN_CACHE.get(cache_key, {}).get("owner_done"):
         return True, "cached"
 
-    # Try owner
     try:
         oe = await safe_get_owner_entity()
         oid = oe.id
@@ -4994,7 +4840,6 @@ async def ensure_owner_admin(entity, cache_key):
             return False, "owner_flood"
         return False, f"owner: {str(e)[:40]}"
 
-    # Check if already admin
     try:
         if await is_admin_in(entity, oid):
             if cache_key:
@@ -5005,7 +4850,6 @@ async def ensure_owner_admin(entity, cache_key):
     except Exception:
         pass
 
-    # Try to promote
     rights = ChatAdminRights(
         change_info=True, post_messages=True, edit_messages=True,
         delete_messages=True, ban_users=True, invite_users=True,
@@ -5020,9 +4864,9 @@ async def ensure_owner_admin(entity, cache_key):
             timeout=15)
         if cache_key:
             ADMIN_CACHE.setdefault(cache_key, {})["owner_done"] = True
+        DBG(f"Owner promoted to admin", "admin")
         return True, "promoted"
     except FloodWaitError as e:
-        # ✅ Owner flooded — signal caller
         return False, f"owner_flood:{e.seconds}"
     except Exception as e:
         m = str(e).lower()
@@ -5033,6 +4877,7 @@ async def ensure_owner_admin(entity, cache_key):
 
 # ══════════════════════ END OF PART 6 ══════════════════════
 D("Part 6 ready", "ok")
+DBG("Bot pool + admin checks loaded", "ok")
 # ══════════════════════ FAILED BOT TRACKER ══════════════════════
 def track_failed_engine(task_key, bot_username, reason=""):
     if task_key not in FAILED_BOTS_TRACKER:
@@ -5043,6 +4888,7 @@ def track_failed_engine(task_key, bot_username, reason=""):
         }
     FAILED_BOTS_TRACKER[task_key][bot_username]["fail_count"] += 1
     FAILED_BOTS_TRACKER[task_key][bot_username]["last_reason"] = reason[:80]
+    DBG(f"Failed engine tracked: @{bot_username} — {reason[:60]}", "fail")
 
 
 def get_failed_engines(task_key):
@@ -5059,22 +4905,34 @@ def clear_failed_engines(task_key):
 
 # ══════════════════════ SINGLE REACTION WITH FALLBACK ══════════════════════
 def send_reaction_with_fallback(token, chat_id, msg_id, primary_emoji,
-                                 server=None):
+                                 server=None, bot_username="?"):
+    """Send reaction with fallback + detailed logging"""
+    DBG(f"@{bot_username} → try {primary_emoji} to {chat_id} #{msg_id}",
+        "api")
+
     ok, desc, retry = bot_reaction(token, chat_id, msg_id, primary_emoji)
     if ok:
+        DBG(f"@{bot_username} → ✅ sent {primary_emoji}", "ok")
         return True, primary_emoji, ""
     if retry > 0:
+        DBG(f"@{bot_username} → 🌊 FLOOD ({retry}s)", "flood")
         return False, primary_emoji, f"flood:{retry}"
+
+    DBG(f"@{bot_username} → ❌ fail: {desc[:100]}", "fail")
+
     if feat_fallback():
         for fb_emoji in FALLBACK_REACTIONS:
             if fb_emoji == primary_emoji:
                 continue
+            DBG(f"@{bot_username} → try fallback {fb_emoji}", "api")
             ok, desc, retry = bot_reaction(token, chat_id, msg_id, fb_emoji)
             if ok:
+                DBG(f"@{bot_username} → ✅ fallback {fb_emoji} worked!", "ok")
                 return True, fb_emoji, ""
             if retry > 0:
+                DBG(f"@{bot_username} → 🌊 FLOOD fallback", "flood")
                 return False, primary_emoji, f"flood:{retry}"
-    return False, primary_emoji, (desc[:80] if desc else "unknown")
+    return False, primary_emoji, (desc[:120] if desc else "unknown")
 
 
 # ══════════════════════ SEND BATCH REACTIONS ══════════════════════
@@ -5084,9 +4942,11 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
                                 custom_emojis=None, task_key=None,
                                 on_progress=None):
     if not bot_batch:
+        DBG("Empty bot batch", "warn")
         return 0, 0, []
 
     api_chat_id = to_bot_api_chat_id(chat_id)
+    DBG(f"Batch: {len(bot_batch)} bots → api_chat={api_chat_id}", "info")
 
     if emoji_mode == "custom" and custom_emojis:
         pool = [e for e in custom_emojis if e in ALL_REACTIONS]
@@ -5103,6 +4963,7 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
 
     for idx, (token, uname) in enumerate(bot_batch, 1):
         if is_engine_flooded(token, server):
+            DBG(f"[{idx}/{total}] @{uname} flooded — skip", "flood")
             skip += 1
             continue
         if task_key and is_engine_failed(task_key, uname):
@@ -5112,7 +4973,8 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
         emoji = pool.pop(0) if pool else random.choice(DEFAULT_REACTIONS)
 
         ok_f, used_emoji, err = send_reaction_with_fallback(
-            token, api_chat_id, msg_id, emoji, server=server)
+            token, api_chat_id, msg_id, emoji,
+            server=server, bot_username=uname)
 
         if ok_f:
             ok += 1
@@ -5152,32 +5014,208 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
 
         await asyncio.sleep(0.6)
 
+    DBG(f"Batch done: ✅{ok} ⏭️{skip} failed={len(failed_bots)}", "ok")
     return ok, skip, failed_bots
 
 
-# ══════════════════════ 🔥 MAIN SMART ENGINE ══════════════════════
+# ══════════════════════ WITHOUT ADMIN FLOW (Direct join + react) ══════════════════════
+async def process_without_admin(event, uid, chat_link, post_link,
+                                 count, emoji_mode="default",
+                                 custom_emojis=None):
+    """
+    WITHOUT ADMIN mode:
+    - Real sessions join chat themselves
+    - Send reactions directly (no admin)
+    """
+    global TASK_RUNNING, TASK_OWNER_UID
+
+    chat_ref, invite_hash = parse_channel_link(chat_link)
+    post_ref, msg_id = parse_post_link(post_link)
+
+    if not msg_id:
+        if event:
+            await safe_edit(event, "❌ Invalid post link",
+                            buttons=kb_back(uid))
+        return 0
+
+    DBG(f"WITHOUT ADMIN: chat_ref={chat_ref} invite={invite_hash} "
+        f"msg={msg_id} count={count}", "info")
+
+    if event:
+        try:
+            await event.edit(
+                f"🔓 **Without Admin Mode**\n"
+                f"{DIV}\n\n"
+                f"🎯 Target: **{count}** reactions\n"
+                f"🔐 Joining chat with sessions...")
+        except Exception:
+            pass
+
+    target_ref = post_ref or chat_ref
+    entity = None
+
+    # ═════ Try resolving first ═════
+    try:
+        entity = await safe_get_entity(
+            target_ref, cache_key=f"chat:{target_ref}")
+        DBG(f"Chat resolved: {getattr(entity, 'title', '?')}", "ok")
+    except Exception as e:
+        DBG(f"Initial resolve failed: {str(e)[:100]}", "warn")
+
+    # ═════ For private invites, make all sessions join ═════
+    if invite_hash:
+        DBG(f"Joining via {len(discover_session_files())} sessions", "join")
+        joined_count = 0
+        already_in = 0
+        failed = 0
+
+        files = discover_session_files()
+        for i, sf in enumerate(files):
+            if is_real_flooded(sf):
+                continue
+            try:
+                client = await get_real_client(sf)
+                if not client:
+                    continue
+                try:
+                    await asyncio.wait_for(
+                        client(ImportChatInviteRequest(invite_hash)),
+                        timeout=15)
+                    joined_count += 1
+                    DBG(f"✅ [{i+1}/{len(files)}] {sf} joined", "join")
+                except UserAlreadyParticipantError:
+                    already_in += 1
+                    DBG(f"⚡ [{i+1}/{len(files)}] {sf} already in", "join")
+                except FloodWaitError as e:
+                    mark_real_flooded(sf, e.seconds + 5)
+                    DBG(f"🌊 {sf} flood {e.seconds}s", "flood")
+                except Exception as e:
+                    failed += 1
+                    DBG(f"❌ {sf} join fail: {str(e)[:60]}", "fail")
+                await asyncio.sleep(0.4)
+            except Exception:
+                failed += 1
+                continue
+
+        DBG(f"Join result: ✅{joined_count} ⚡{already_in} ❌{failed}", "join")
+
+        # Try resolve again
+        try:
+            entity = await safe_get_entity(
+                f"https://t.me/+{invite_hash}",
+                cache_key=f"chat:{invite_hash}")
+        except Exception as e:
+            DBG(f"Resolve after join fail: {e}", "fail")
+
+        # Admin client join too
+        try:
+            await admin_client(ImportChatInviteRequest(invite_hash))
+        except Exception:
+            pass
+
+    if not entity:
+        try:
+            entity = await safe_get_entity(target_ref)
+        except Exception:
+            if event:
+                await safe_edit(
+                    event,
+                    f"😕 **Chat not accessible**\n\n"
+                    f"Try 👑 With Admin mode instead.",
+                    buttons=kb_back(uid))
+            return 0
+
+    chat_title = getattr(entity, "title", "Unknown")
+    real_id = entity.id
+    DBG(f"Real chat: {chat_title} (id={real_id})", "ok")
+
+    if event:
+        try:
+            await event.edit(
+                f"🔓 **Sending via sessions**\n"
+                f"{DIV}\n\n"
+                f"🎯 {count} reactions\n"
+                f"📢 {chat_title[:40]}\n\n"
+                f"⚡ Working...")
+        except Exception:
+            pass
+
+    emoji_pool = (custom_emojis if (emoji_mode == "custom" and custom_emojis)
+                  else None)
+
+    ra_lim, _ = get_user_ra_limit(uid)
+    real_count = min(count, max(1, ra_lim), max(1, real_count_available()))
+
+    async def on_prog(i, total, ok):
+        if event and (i % 5 == 0 or i == total):
+            bar = progress_bar(i, total)
+            try:
+                await event.edit(
+                    f"🔓 **Without Admin**\n"
+                    f"{DIV}\n\n"
+                    f"📊 `{bar}` {i}/{total}\n"
+                    f"✅ Success: **{ok}**")
+            except Exception:
+                pass
+
+    res = await send_reactions_real(
+        target_ref, msg_id, real_count,
+        emoji_pool=emoji_pool, on_progress=on_prog)
+
+    DBG(f"WITHOUT ADMIN done: {res}", "ok")
+
+    if event:
+        bar = progress_bar(res["ok"], max(real_count, 1))
+        success_pct = int(res["ok"] / max(1, real_count) * 100)
+        title = ("🎉 **COMPLETE!**" if res['ok'] >= real_count
+                 else ("✅ **PARTIAL**" if res['ok'] > 0
+                       else "😕 **TRY AGAIN**"))
+        txt = (
+            f"{title}\n{STAR_LINE}\n\n"
+            f"🔓 Mode: Without Admin\n"
+            f"📢 {chat_title[:40]}\n"
+            f"📩 Post: **#{msg_id}**\n\n"
+            f"{DIV}\n"
+            f"🎯 Requested: **{real_count}**\n"
+            f"✅ Sent: **{res['ok']}**\n"
+            f"❌ Failed: **{res['fail']}**\n"
+            f"🌊 Resting: **{res['flooded']}**\n"
+            f"📈 Success: **{success_pct}%**\n"
+            f"{DIV}\n\n"
+            f"🚀 **{bar}** {res['ok']}/{real_count}")
+        await safe_edit(event, txt, buttons=kb_back(uid))
+
+    return res["ok"]
+
+
+# ══════════════════════ MAIN SMART ENGINE ══════════════════════
 async def process_reactions_rotating(event, uid, chat_link, post_link,
                                       count, emoji_mode="default",
                                       custom_emojis=None,
                                       is_auto_watch=False,
-                                      use_backup=False):
+                                      use_backup=False,
+                                      mode="with_admin"):
     """
-    🔥 SMART REACTION ENGINE with Backup Support
-
-    Key features:
-    - Server auto-detect (free/paid)
-    - Owner flood detection → prompt for backup admin
-    - Adaptive batch sizes
-    - Fallback emojis
-    - Failed bot tracking
-    - use_backup=True → use backup session for admin ops
+    mode="with_admin" → Ensure owner admin + batch bots
+    mode="without_admin" → Real accounts only
     """
     global TASK_RUNNING, TASK_OWNER_UID
 
+    # ── WITHOUT ADMIN ──
+    if mode == "without_admin":
+        DBG("Routing → WITHOUT ADMIN", "info")
+        return await process_without_admin(
+            event, uid, chat_link, post_link, count,
+            emoji_mode=emoji_mode, custom_emojis=custom_emojis)
+
+    # ── WITH ADMIN ──
     server = get_user_server(uid)
 
     chat_ref, invite_hash = parse_channel_link(chat_link)
     post_ref, msg_id = parse_post_link(post_link)
+
+    DBG(f"WITH ADMIN: chat={chat_link[:50]} post={post_link[:60]} "
+        f"count={count} server={server}", "info")
 
     if not msg_id:
         if event:
@@ -5195,8 +5233,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         if event:
             await safe_edit(
                 event,
-                f"😕 No workers available on "
-                f"{get_server_label(server)} engine",
+                f"😕 No workers on {get_server_label(server)}",
                 buttons=kb_back(uid))
         return 0
 
@@ -5204,8 +5241,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         try:
             await event.edit(
                 f"⏳ **Preparing {get_server_label(server)}...**\n\n"
-                f"🎯 Target: **{want}** reactions\n"
-                f"⚙️ Available: **{total_engines}** engines")
+                f"🎯 Target: **{want}**\n"
+                f"⚙️ Available: **{total_engines}**")
         except Exception:
             pass
 
@@ -5225,7 +5262,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 target_ref, cache_key=f"chat:{target_ref}")
     except Exception as e:
         err_msg = str(e).lower()
-        # ✅ Check if flood
+        DBG(f"Chat resolve failed: {err_msg[:120]}", "fail")
         if "flood" in err_msg or "wait" in err_msg:
             if event:
                 await show_backup_prompt_to_user(
@@ -5234,10 +5271,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         if event:
             await safe_edit(
                 event,
-                f"😕 **Couldn't find that chat**\n\n"
-                f"💡 Make sure:\n"
-                f"• The link is correct\n"
-                f"• Owner has admin rights",
+                f"😕 **Couldn't find chat**\n\n"
+                f"💡 Check the link and try again",
                 buttons=kb_back(uid))
         return 0
 
@@ -5246,33 +5281,31 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
     actual_type = ("channel" if is_channel(entity)
                    else ("group" if is_group(entity) else chat_type))
 
-    # ═════ Verify post exists ═════
+    DBG(f"Chat: {chat_title} (id={real_id}, type={actual_type})", "ok")
+
+    # ═════ Verify post ═════
     try:
         post_msg = await asyncio.wait_for(
             admin_client.get_messages(entity, ids=msg_id), timeout=15)
         if post_msg is None:
+            DBG(f"Post #{msg_id} not found", "fail")
             if event:
                 await safe_edit(event,
                                 f"😕 Post #{msg_id} not found",
                                 buttons=kb_back(uid))
             return 0
+        DBG(f"Post #{msg_id} verified", "ok")
     except FloodWaitError:
         if event:
             await show_backup_prompt_to_user(event, uid, chat_title)
         return 0
-    except Exception:
-        pass
+    except Exception as e:
+        DBG(f"Post verify warn: {e}", "warn")
 
-    # ═════ Owner admin check (skip for auto-watch) ═════
+    # ═════ Owner admin check ═════
     if not is_auto_watch and ADMIN_CHECK_ENABLED and not OWNER_IS(uid):
-        if event:
-            try:
-                await event.edit("🔍 **Verifying access...**")
-            except Exception:
-                pass
         owner_is_admin = await check_owner_admin(entity)
         if not owner_is_admin:
-            # Check if backup is admin (maybe already added)
             backup_is_admin = await check_backup_admin(entity)
             if not backup_is_admin:
                 if event:
@@ -5284,44 +5317,39 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                     USER_STATES[uid] = {}
                 return 0
 
-    # ═════ 🔥 ENSURE OWNER ADMIN (with flood detection) ═════
+    # ═════ Ensure owner admin ═════
     cache_key = str(real_id)
     ok_owner, reason_owner = await ensure_owner_admin(entity, cache_key)
 
     if not ok_owner:
-        # ✅ Owner flooded? Show backup prompt
+        DBG(f"ensure_owner_admin fail: {reason_owner}", "fail")
         if reason_owner == "owner_flood" or \
            reason_owner.startswith("owner_flood:"):
-            # If we're already using backup, don't re-prompt
             if use_backup:
                 if event:
                     await safe_edit(
                         event,
-                        f"😕 **Backup is not admin yet**\n\n"
-                        f"Please add @{get_backup_username()} as admin "
-                        f"first, then retry.",
+                        f"😕 **Backup not admin yet**\n\n"
+                        f"Add @{get_backup_username()} as admin, then retry.",
                         buttons=kb_back(uid))
                 return 0
-            # Show backup prompt
             if event:
                 await show_backup_prompt_to_user(event, uid, chat_title)
             return 0
         else:
-            # Other error
             if event:
                 await safe_edit(
                     event,
-                    f"😕 **Setup failed**\n\n"
-                    f"Owner needs admin permissions.\n\n"
-                    f"_Details: {reason_owner[:80]}_",
+                    f"😕 **Setup failed**\n\n{reason_owner[:80]}",
                     buttons=kb_back(uid))
             return 0
 
-    # ═════ Task key ═════
+    DBG(f"Owner admin OK: {reason_owner}", "ok")
+
+    # ═════ Main loop ═════
     task_key = f"{uid}:{real_id}:{msg_id}:{server}"
     clear_failed_engines(task_key)
 
-    # ═════ Main loop ═════
     reactions_done = 0
     cycle = 0
     failed_batches = 0
@@ -5332,6 +5360,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
     while reactions_done < want and cycle < MAX_CYCLES:
         cycle += 1
         remaining = want - reactions_done
+        DBG(f"═══ CYCLE {cycle} ═══ done={reactions_done} want={want}",
+            "info")
 
         if event:
             bar = progress_bar(reactions_done, want)
@@ -5342,7 +5372,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 f"📊 `{bar}` {reactions_done}/{want}\n"
                 f"⏳ Remaining: **{remaining}**")
 
-        # ═════ PHASE 1: existing admins ═════
+        # PHASE 1: existing admins
         our_admins = await get_our_admin_engines(entity, server=server)
         phase1_bots = []
         for tok, uname, bid in our_admins:
@@ -5354,6 +5384,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 continue
             phase1_bots.append((tok, uname))
         phase1_bots = phase1_bots[:remaining]
+
+        DBG(f"Phase 1: {len(phase1_bots)} existing admins", "info")
 
         if phase1_bots and reactions_done < want:
             if event:
@@ -5387,6 +5419,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 emoji_mode=emoji_mode, custom_emojis=custom_emojis,
                 task_key=task_key, on_progress=on_p1)
 
+            DBG(f"Phase 1 result: ok={ok1} skip={skip1} fail={len(fail1)}",
+                "ok")
             reactions_done += ok1
             all_failed_bots.extend(fail1)
 
@@ -5404,7 +5438,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             if reactions_done >= want:
                 break
 
-        # ═════ PHASE 2: add new batch ═════
+        # PHASE 2: add new batch
         remaining = want - reactions_done
         if cycle <= 2:
             batch_size = min(BATCH_SIZE, remaining + 5)
@@ -5413,11 +5447,12 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         else:
             batch_size = min(10, remaining + 2)
 
+        DBG(f"Phase 2: acquiring {batch_size} engines", "info")
+
         if event:
             await safe_edit(
                 event,
-                f"⚙️ **Adding {batch_size} engines** "
-                f"({get_server_label(server)})\n"
+                f"⚙️ **Adding {batch_size} engines**\n"
                 f"📊 {progress_bar(reactions_done, want)} "
                 f"{reactions_done}/{want}")
 
@@ -5427,8 +5462,9 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             acquired, wait_sec = await acquire_engines(batch_size, uid, server)
         if acquired is None:
             failed_batches += 1
+            DBG(f"No free engines (batch {failed_batches})", "warn")
             if event:
-                await safe_edit(event, "⚠️ All engines busy. Retrying...",
+                await safe_edit(event, "⚠️ All busy. Retrying...",
                                 buttons=kb_back(uid))
             await asyncio.sleep(5)
             if failed_batches >= MAX_FAILED_BATCHES:
@@ -5461,10 +5497,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 if ok:
                     promoted.append((tok, uname))
                     used_bots.add(uname)
+                    DBG(f"Promoted @{uname} ({rmsg})", "admin")
                 elif rmsg == "too_many_admins":
+                    DBG("Too many admins — stop", "warn")
                     break
-            except Exception:
-                pass
+                else:
+                    DBG(f"Promote fail @{uname}: {rmsg}", "fail")
+            except Exception as e:
+                DBG(f"Add engine error: {str(e)[:80]}", "fail")
             await asyncio.sleep(0.6)
 
         non_promoted = [(t, u) for t, u in acquired
@@ -5474,11 +5514,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
 
         if not promoted:
             failed_batches += 1
+            DBG(f"No promoted (batch {failed_batches})", "fail")
             if failed_batches >= MAX_FAILED_BATCHES:
                 break
             continue
 
-        # ═════ PHASE 3: react ═════
+        DBG(f"Phase 2: {len(promoted)} promoted", "ok")
+
+        # PHASE 3: react
         if event:
             await safe_edit(
                 event,
@@ -5502,10 +5545,12 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             emoji_mode=emoji_mode, custom_emojis=custom_emojis,
             task_key=task_key, on_progress=on_p3)
 
+        DBG(f"Phase 3 result: ok={ok2} skip={skip2} fail={len(fail2)}", "ok")
+
         reactions_done += ok2
         all_failed_bots.extend(fail2)
 
-        # ═════ PHASE 4: remove admins ═════
+        # PHASE 4: remove admins
         for tok, uname in promoted:
             try:
                 await asyncio.wait_for(
@@ -5522,19 +5567,16 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             failed_batches = 0
         else:
             failed_batches += 1
+            DBG(f"No reactions sent (batch {failed_batches})", "fail")
             if failed_batches >= MAX_FAILED_BATCHES:
                 break
 
         cycle_log.append((cycle, ok2))
 
-    # ═════ PHASE 5: failed retry ═════
+    # PHASE 5: retry failed
     remaining = want - reactions_done
     if remaining > 0 and all_failed_bots and FAILED_BOT_RETRY:
-        if event:
-            await safe_edit(
-                event,
-                f"🔄 **Second try** — {len(all_failed_bots)} engines\n"
-                f"🎯 Need: **{remaining}** more")
+        DBG(f"Phase 5: retry {len(all_failed_bots)} failed", "info")
         failed_tokens = list(set(all_failed_bots))[:remaining]
         if failed_tokens:
             pool = get_pool(server)
@@ -5571,7 +5613,10 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                         pass
                 await release_engines(re_added, server)
 
-    # ═════ Final report ═════
+    # FINAL report
+    DBG(f"FINAL: {reactions_done}/{want} in {cycle} rounds",
+        "ok" if reactions_done >= count else "warn")
+
     if event:
         bar = progress_bar(reactions_done, max(want, reactions_done, 1))
         cycles_txt = "".join(
@@ -5590,21 +5635,19 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         else:
             title = "😕 **TRY AGAIN**"
 
-        backup_note = ""
-        if use_backup:
-            backup_note = f"\n🔐 Used backup account"
+        backup_note = "\n🔐 Used backup account" if use_backup else ""
 
         txt = (
             f"{title}\n{STAR_LINE}\n\n"
             f"📢 **{chat_title}**\n"
             f"📩 Post: **#{msg_id}**\n"
-            f"🖥️ Engine: **{get_server_label(server)}**"
-            f"{backup_note}\n\n"
+            f"🖥️ Engine: **{get_server_label(server)}**{backup_note}\n\n"
             f"{DIV}\n"
             f"🎯 Requested: **{count}**\n"
             f"✅ Sent: **{reactions_done}**\n"
             f"📈 Success: **{success_pct}%**\n"
             f"🔁 Rounds: **{cycle}**\n"
+            f"❌ Failed engines: **{failed_count}**\n"
             f"{DIV}\n\n"
             f"🚀 **{bar}** {reactions_done}/{count}")
 
@@ -5619,7 +5662,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
 
         await safe_edit(event, txt, buttons=kb_back(uid))
 
-    # ═════ Analytics ═════
     try:
         post_analytics_add(uid, real_id, msg_id, chat_title,
                            reactions_done, count, server=server)
@@ -5633,12 +5675,9 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
     return reactions_done
 
 
-# ══════════════════════ 🔥 BACKUP PROMPT TO USER ══════════════════════
+# ══════════════════════ BACKUP PROMPT ══════════════════════
 async def show_backup_prompt_to_user(event, uid, chat_title):
-    """
-    Show backup (co-owner) prompt when owner is flooded.
-    User adds backup admin, then taps Retry.
-    """
+    """Show backup (co-owner) prompt when owner is flooded"""
     if not feat_backup_prompt():
         await safe_edit(
             event,
@@ -5647,10 +5686,6 @@ async def show_backup_prompt_to_user(event, uid, chat_title):
             buttons=kb_back(uid))
         return
 
-    backup_uname = get_backup_username()
-    backup_id = get_backup_id()
-
-    # Save context for retry
     state = USER_STATES.get(uid, {})
     state["backup_pending"] = True
     state["backup_chat_title"] = chat_title
@@ -5658,11 +5693,12 @@ async def show_backup_prompt_to_user(event, uid, chat_title):
 
     txt = get_backup_prompt_message(chat_title, uid)
 
+    DBG(f"Showing backup prompt to user {uid}", "info")
+
     buttons = [
         [btn("✅ I've Added — Retry", data=b"backup_retry",
              style="success")],
-        [btn("❓ Help", data=b"backup_help",
-             style="primary")],
+        [btn("❓ Help", data=b"backup_help", style="primary")],
         [btn("❌ Cancel", data=b"home", style="danger")],
     ]
 
@@ -5670,10 +5706,7 @@ async def show_backup_prompt_to_user(event, uid, chat_title):
 
 
 async def process_reactions_with_backup(event, uid):
-    """
-    Retry reactions using backup session.
-    Called when user confirms they added backup admin.
-    """
+    """Retry reactions using backup session"""
     state = USER_STATES.get(uid, {})
     cl = state.get("channel_link")
     pl = state.get("post_link")
@@ -5685,17 +5718,15 @@ async def process_reactions_with_backup(event, uid):
         await safe_answer(event, "❌ No pending task", alert=True)
         return
 
-    # Check if backup session exists
     if not backup_client:
         await safe_edit(
             event,
             f"😕 **Backup Not Available**\n\n"
-            f"The backup account session is not configured.\n\n"
-            f"Please wait 5-10 minutes for the owner to be free.",
+            f"Wait 5-10 minutes for owner to be free.",
             buttons=kb_back(uid))
         return
 
-    # Verify backup is admin in the chat
+    # Verify backup is admin
     try:
         chat_ref, invite = parse_channel_link(cl)
         post_ref, msg_id = parse_post_link(pl)
@@ -5707,9 +5738,8 @@ async def process_reactions_with_backup(event, uid):
         if not backup_is_admin:
             await safe_edit(
                 event,
-                f"❌ **Backup is Not Admin Yet**\n\n"
-                f"Please add @{get_backup_username()} as admin "
-                f"in your chat first.\n\n"
+                f"❌ **Backup Not Admin Yet**\n\n"
+                f"Add @{get_backup_username()} as admin first.\n"
                 f"Then tap Retry again.",
                 buttons=[
                     [btn("🔄 Retry", data=b"backup_retry",
@@ -5718,22 +5748,19 @@ async def process_reactions_with_backup(event, uid):
                          style="danger")],
                 ])
             return
-    except Exception:
-        pass
+    except Exception as e:
+        DBG(f"Backup check error: {e}", "fail")
 
-    # ✅ Backup is admin — proceed with backup session
     await safe_edit(
         event,
         f"✅ **Backup Session Active**\n"
         f"{DIV}\n\n"
-        f"Continuing with backup account...\n"
+        f"Continuing with backup...\n"
         f"⚡ Processing...")
 
-    # Clear backup pending state
     state.pop("backup_pending", None)
     USER_STATES[uid] = state
 
-    # Run with use_backup=True
     await process_reactions_rotating(
         event, uid, cl, pl, count,
         emoji_mode=em, custom_emojis=ce,
@@ -5742,6 +5769,7 @@ async def process_reactions_with_backup(event, uid):
 
 # ══════════════════════ END OF PART 7 ══════════════════════
 D("Part 7 ready", "ok")
+DBG("Smart Reaction Engine loaded (with debug logging)", "ok")
 # ══════════════════════ GET ADMIN CHATS ══════════════════════
 async def get_admin_chats():
     chats = []
@@ -5822,6 +5850,7 @@ async def queue_loop():
                 TASK_RUNNING = True
                 TASK_OWNER_UID = user_id
                 try:
+                    DBG(f"[QUEUE] Job #{qid} starting", "info")
                     ce_list = (ce.split(",") if ce else None)
                     result = await process_reactions_rotating(
                         None, user_id, cl, pl, rc,
@@ -5831,6 +5860,7 @@ async def queue_loop():
                         qid, status="done",
                         executed_at=datetime.now().strftime(
                             "%Y-%m-%d %H:%M:%S"))
+                    DBG(f"[QUEUE] Job #{qid} done: {result}", "ok")
                     try:
                         await bot.send_message(
                             user_id,
@@ -5840,6 +5870,7 @@ async def queue_loop():
                     except Exception:
                         pass
                 except Exception as e:
+                    DBG(f"[QUEUE] Job #{qid} failed: {str(e)[:100]}", "fail")
                     db_update_queue(
                         qid, status="failed",
                         executed_at=datetime.now().strftime(
@@ -5850,7 +5881,8 @@ async def queue_loop():
                     TASK_OWNER_UID = None
         except asyncio.CancelledError:
             return
-        except Exception:
+        except Exception as e:
+            DBG(f"[QUEUE] Loop error: {str(e)[:100]}", "fail")
             await asyncio.sleep(30)
 
 
@@ -5866,11 +5898,11 @@ async def retry_loop():
             if not jobs:
                 continue
             for job in jobs:
-                (rid, user_id, cl, pl, count, em, ce, att, mx,
-                 sv) = job
+                (rid, user_id, cl, pl, count, em, ce, att, mx, sv) = job
                 TASK_RUNNING = True
                 TASK_OWNER_UID = user_id
                 try:
+                    DBG(f"[RETRY] Job #{rid} attempt {att+1}/{mx}", "info")
                     ce_list = (ce.split(",") if ce else None)
                     result = await process_reactions_rotating(
                         None, user_id, cl, pl, count,
@@ -5878,6 +5910,7 @@ async def retry_loop():
                         is_auto_watch=True)
                     if result and result > 0:
                         retry_mark(rid, success=True)
+                        DBG(f"[RETRY] Job #{rid} succeeded: {result}", "ok")
                         try:
                             await bot.send_message(
                                 user_id,
@@ -5931,6 +5964,7 @@ async def watcher_loop():
                     TASK_RUNNING = True
                     TASK_OWNER_UID = user_id
                     try:
+                        DBG(f"[WATCH] #{wid} new post #{newest}", "info")
                         ce_list = (ces.split(",") if ces else None)
                         chat_str = str(chat_id).replace("-100", "")
                         pl = f"https://t.me/c/{chat_str}/{newest}"
@@ -5955,8 +5989,8 @@ async def watcher_loop():
                     finally:
                         TASK_RUNNING = False
                         TASK_OWNER_UID = None
-                except Exception:
-                    pass
+                except Exception as e:
+                    DBG(f"[WATCH] #{wid} error: {str(e)[:80]}", "fail")
         except asyncio.CancelledError:
             return
         except Exception:
@@ -5968,7 +6002,9 @@ async def pool_cleaner_loop():
     while True:
         try:
             await asyncio.sleep(POOL_CLEANUP_INTERVAL)
-            cleanup_engine_pool()
+            cleaned = cleanup_engine_pool()
+            if cleaned > 0:
+                DBG(f"[POOL] Cleaned {cleaned} stale engines", "dbg")
         except asyncio.CancelledError:
             return
         except Exception:
@@ -5981,7 +6017,12 @@ async def health_check_loop():
         try:
             await asyncio.sleep(600)  # every 10 min
             uptime = int(time.time() - _start_time)
+            fs = get_pool_status("free")
+            ps = get_pool_status("paid")
             D(f"System healthy ({uptime}s uptime)", "ok")
+            DBG(f"FREE[🟢{fs['free']} 🔴{fs['busy']} 🌊{fs['flooded']}] "
+                f"PAID[🟢{ps['free']} 🔴{ps['busy']} 🌊{ps['flooded']}] "
+                f"clients={len(REAL_CLIENTS)}", "info")
         except asyncio.CancelledError:
             return
         except Exception:
@@ -6040,15 +6081,16 @@ async def daily_summary_loop():
                     f"   Total: **{tot}rs**")
                 try:
                     await bot.send_message(get_owner_id(), txt)
-                except Exception:
-                    pass
+                    DBG("Daily summary sent to owner", "ok")
+                except Exception as e:
+                    DBG(f"Daily summary send failed: {e}", "fail")
         except asyncio.CancelledError:
             return
         except Exception:
             await asyncio.sleep(60)
 
 
-# ══════════════════════ STARTUP ENGINE SYNC LOOP ══════════════════════
+# ══════════════════════ STARTUP ENGINE SYNC ══════════════════════
 async def startup_engine_sync():
     """One-time: fix missing server assignments"""
     try:
@@ -6076,41 +6118,40 @@ async def startup_engine_sync():
         finally:
             conn.close()
         _dirty()
-    except Exception:
-        pass
+        DBG("Startup engine sync complete", "sync")
+    except Exception as e:
+        DBG(f"Startup sync error: {e}", "fail")
 
 
 # ══════════════════════ CACHE CLEANUP LOOP ══════════════════════
 async def cache_cleanup_loop():
-    """Periodically clean invalid entries from cache"""
     while True:
         try:
             await asyncio.sleep(3600)  # every hour
             n = cache_clear_invalid()
             if n > 0:
-                D(f"Cache cleaned: {n} entries", "ok")
+                DBG(f"Cache cleaned: {n} entries", "db")
         except asyncio.CancelledError:
             return
         except Exception:
             pass
 
 
-# ══════════════════════ 🤖 AUTO BOT VALIDATOR ══════════════════════
+# ══════════════════════ AUTO BOT VALIDATOR ══════════════════════
 async def auto_bot_validator_loop():
     """
-    Periodically validates engines.
-    - Checks valid=True engines occasionally
-    - Marks invalid engines
-    - Disables them from pool
+    Periodic engine validation:
+    - Sample 20 random engines
+    - Check via getMe
+    - Mark invalid
     """
     while True:
         try:
             await asyncio.sleep(21600)  # every 6 hours
             if not feat_engine_cache():
                 continue
-            D("Auto-validating engines...", "ok")
+            DBG("Auto-validating engines (sample)...", "sync")
 
-            # Check random sample of 20 engines
             all_engines = db_list_engines()
             if not all_engines:
                 continue
@@ -6133,20 +6174,20 @@ async def auto_bot_validator_loop():
                 await asyncio.sleep(0.15)
 
             if invalid_count > 0:
-                D(f"Auto-validator: {invalid_count} invalid engines", "warn")
+                DBG(f"Auto-validator: {invalid_count} invalid engines", "warn")
+            else:
+                DBG("Auto-validator: all OK", "ok")
         except asyncio.CancelledError:
             return
         except Exception:
             await asyncio.sleep(3600)
 
 
-# ══════════════════════ USER NOTES CLEANUP (owner-only, weekly) ══════════════════════
+# ══════════════════════ USER NOTES CLEANUP ══════════════════════
 async def user_notes_cleanup_loop():
-    """Optional: cleans up very old notes (optional)"""
     while True:
         try:
             await asyncio.sleep(604800)  # 7 days
-            # Optional: clean notes older than 1 year
             try:
                 conn = sqlite3.connect(DB_FILE)
                 try:
@@ -6156,7 +6197,7 @@ async def user_notes_cleanup_loop():
                     n = c.rowcount
                     conn.commit()
                     if n > 0:
-                        D(f"Cleaned {n} old notes", "ok")
+                        DBG(f"Cleaned {n} old user notes", "db")
                 finally:
                     conn.close()
             except Exception:
@@ -6169,6 +6210,7 @@ async def user_notes_cleanup_loop():
 
 # ══════════════════════ END OF PART 8 ══════════════════════
 D("Part 8 ready", "ok")
+DBG("Background loops loaded (8 loops)", "ok")
 # ══════════════════════ USER KEYBOARDS ══════════════════════
 def kb_join():
     rows = [
@@ -6186,7 +6228,7 @@ def kb_request_access(uid=None):
 
 
 def kb_welcome(uid=None):
-    """Main welcome menu — friendly layout"""
+    """Main welcome menu"""
     rows = [
         [btn(f"💫 {L(uid, 'send_reactions')}", data=b"react_flow",
              style="success")],
@@ -6204,10 +6246,9 @@ def kb_welcome(uid=None):
              style="primary")],
         [btn(f"🏪 {L(uid, 'store')}", data=b"store_menu",
              style="success"),
-         btn(f"💰 {L(uid, 'referral')}", data=b"referral_menu",
+         btn(f"🎁 {L(uid, 'referral')}", data=b"referral_menu",
              style="success")],
-        [btn(f"🎁 {L(uid, 'daily_bonus')} / Balance",
-             data=b"balance_menu", style="primary"),
+        [btn(f"💰 Balance", data=b"balance_menu", style="primary"),
          btn(f"📜 {L(uid, 'post_history')}", data=b"post_history",
              style="primary")],
         [btn(f"💰 {L(uid, 'buy_plan')}", data=b"plans_menu",
@@ -6277,7 +6318,6 @@ def kb_chat_type(uid=None):
 
 
 def kb_reaction_count(uid=None):
-    """Count selection — server-aware"""
     limit = get_user_limit(uid) if uid else DEFAULT_FREE_COUNT
     server = get_user_server(uid) if uid else "free"
     tv = db_count_visible_engines(server=server)
@@ -6413,7 +6453,6 @@ def kb_referral_menu(uid):
 
 
 def kb_balance_menu(uid):
-    """Balance management menu"""
     return [
         [btn("💰 View Balance", data=b"balance_view",
              style="success")],
@@ -6427,7 +6466,6 @@ def kb_balance_menu(uid):
 
 
 def kb_coupon_info(uid=None):
-    """Coupon info menu"""
     return [
         [btn("🎟️ Enter Coupon Code", data=b"coupon_entry",
              style="success")],
@@ -6465,10 +6503,9 @@ def kb_plan_durations(plan, uid=None):
 
 
 def kb_plan_coupon_prompt(plan, days, uid=None):
-    """Show after selecting plan duration — with coupon option"""
     price = get_plan_price(plan, days)
     return [
-        [btn(f"🎟️ Apply Coupon", 
+        [btn(f"🎟️ Apply Coupon",
              data=f"pland_coupon:{plan}:{days}".encode(),
              style="success")],
         [btn(f"💬 Buy Now ({price}rs)",
@@ -6477,19 +6514,6 @@ def kb_plan_coupon_prompt(plan, days, uid=None):
         [btn(f"🔙 {L(uid, 'back')}",
              data=f"plan:{plan}".encode(),
              style="danger")],
-    ]
-
-
-def kb_after_coupon(plan, days, coupon_code, uid=None):
-    """After coupon applied — buy button"""
-    return [
-        [btn("💬 Complete Purchase",
-             url=f"https://t.me/{get_owner_username()}",
-             style="success")],
-        [btn("🎟️ Change Coupon",
-             data=f"pland_coupon:{plan}:{days}".encode(),
-             style="primary")],
-        [btn("🔙 Back", data=b"plans_menu", style="danger")],
     ]
 
 
@@ -6525,7 +6549,6 @@ def kb_back(uid=None):
 
 
 def kb_mode_choice(uid=None):
-    """Reaction mode selection"""
     has_real = user_has_realaccounts(uid) if uid else False
     server = get_user_server(uid) if uid else "free"
     server_label = get_server_label(server)
@@ -6539,7 +6562,6 @@ def kb_mode_choice(uid=None):
     ]
 
 
-# ── Feature Keyboards ──
 def kb_dashboard(uid):
     return [
         [btn("🔄 Refresh", data=b"dashboard", style="success"),
@@ -6629,6 +6651,7 @@ def kb_store_mine(uid):
 
 # ══════════════════════ END OF PART 9 ══════════════════════
 D("Part 9 ready", "ok")
+DBG("User keyboards loaded", "ok")
 # ══════════════════════ OWNER KEYBOARDS ══════════════════════
 def kb_owner():
     """Main owner panel"""
@@ -6637,94 +6660,73 @@ def kb_owner():
     real_status = real_get_status()
 
     return [
-        # Analytics
         [btn("📊 Analytics", data=b"op:analytics", style="success"),
          btn("👥 Users", data=b"op:users", style="primary")],
-        # Revenue
         [btn("💰 Revenue", data=b"op:revenue", style="primary"),
          btn("💳 Payments", data=b"op:payments", style="danger")],
-        # Engines + Broadcast
         [btn(f"⚙️ Engines: {stats['total']}",
               data=b"op:engines", style="primary"),
          btn("📢 Broadcast", data=b"op:broadcast", style="danger")],
-        # Dual Server
         [btn(f"🆓 Standard ({stats['free']})",
               data=b"srv:panel:free", style="success"),
          btn(f"💎 Premium ({stats['paid']})",
               data=b"srv:panel:paid", style="primary")],
-        # Access Keys + RA Plans
         [btn(f"🔐 Access Keys ({real_status['available']}/"
               f"{real_status['total']})",
               data=b"op:ra", style="success"),
          btn("⚙️ RA Plans", data=b"op:ra_plans", style="primary")],
-        # Co-Owner + Owner Info
-        [btn(f"👥 Co-Owner Setup",
-              data=b"op:coowner", style="success"),
+        [btn("👥 Co-Owner Setup", data=b"op:coowner",
+              style="success"),
          btn("👤 Owner Info", data=b"op:owner_info",
               style="primary")],
-        # Coupons + Store
         [btn("🎟️ Coupons", data=b"op:coupons", style="success"),
          btn("🏪 Emoji Store", data=b"op:store", style="primary")],
-        # User Notes + Ban Appeals
         [btn("📝 User Notes", data=b"op:user_notes",
               style="primary"),
          btn(f"📮 Ban Appeals ({db_count_pending_appeals()})",
               data=b"op:appeals", style="danger")],
-        # Retry + Rate Limits
         [btn("🔄 Auto-Retry", data=b"op:retry", style="primary"),
          btn("📈 Rate Limits", data=b"op:rate_limits",
               style="primary")],
-        # Bulk Users + Analytics Export
         [btn("👥 Bulk Users", data=b"op:bulk_users",
               style="primary"),
          btn("📤 Export Data", data=b"op:export",
               style="success")],
-        # Toggles
         [btn(f"🔓 Auto:{auto}", data=b"op:toggle_auto",
               style="success"),
          btn(f"⚙️ Free:{get_free_count()}", data=b"op:setfree",
               style="primary")],
-        # Features + Prices
         [btn("🎛️ Features", data=b"op:features", style="primary"),
          btn("💰 Prices", data=b"op:plan_prices",
               style="success")],
-        # Paid Features
         [btn("💎 PAID FEATURES", data=b"op:paid_features",
               style="danger")],
-        # Force + Team
         [btn("📢 Force Ch", data=b"op:force_channels",
               style="primary"),
          btn("👥 Team", data=b"op:team", style="success")],
-        # Custom Packs + Watchers
         [btn("🎨 Custom Packs", data=b"op:emoji_packs",
               style="primary"),
          btn("📡 Auto-Tracks", data=b"op:watchers",
               style="primary")],
-        # Referrals + Queue
         [btn("🎁 Referrals", data=b"op:referrals",
               style="success"),
          btn("⏰ Queue", data=b"op:queue", style="primary")],
-        # Pool Status + Reset
         [btn("📊 Pool Status", data=b"op:pool_status",
               style="primary"),
          btn("🧹 RESET POOL", data=b"op:reset_pool",
               style="danger")],
-        # Backup + Add User
         [btn("🔄 Auto Backup", data=b"op:ghsync",
               style="success"),
          btn("➕ Add User", data=b"op:adduser", style="success")],
-        # Pending + Approved
         [btn("⏳ Pending", data=b"op:pending", style="danger"),
          btn("✅ Approved", data=b"op:approved", style="success")],
-        # Recent + Main
         [btn("📜 Recent", data=b"op:recent", style="primary"),
          btn("🔙 Main", data=b"home", style="primary")],
     ]
 
 
-# ══════════════════════ CO-OWNER SETUP PANEL 🆕 ══════════════════════
+# ══════════════════════ CO-OWNER PANEL ══════════════════════
 def kb_coowner_panel():
-    """Co-owner (backup) configuration panel"""
     backup_uname = get_backup_username()
     backup_id = get_backup_id()
     backup_status = "✅ Active" if backup_client else "⚠️ Not connected"
@@ -6750,9 +6752,8 @@ def kb_coowner_panel():
     ]
 
 
-# ══════════════════════ USER NOTES PANEL 🆕 ══════════════════════
+# ══════════════════════ USER NOTES PANEL ══════════════════════
 def kb_user_notes_menu():
-    """User notes management panel"""
     return [
         [btn("🔍 Search User", data=b"notes_search",
               style="primary")],
@@ -6765,7 +6766,6 @@ def kb_user_notes_menu():
 
 
 def kb_user_notes_view(tuid):
-    """View notes for a specific user"""
     notes = db_list_user_notes(tuid)
     rows = [
         [btn(f"👤 User: {tuid}", data=f"um:panel:{tuid}".encode(),
@@ -6790,9 +6790,8 @@ def kb_user_notes_view(tuid):
     return rows
 
 
-# ══════════════════════ BAN APPEALS PANEL 🆕 ══════════════════════
+# ══════════════════════ BAN APPEALS PANEL ══════════════════════
 def kb_ban_appeals():
-    """Ban appeals management"""
     pending = db_count_pending_appeals()
     return [
         [btn(f"📮 Pending Appeals: {pending}",
@@ -6806,9 +6805,8 @@ def kb_ban_appeals():
 
 
 def kb_appeal_actions(aid, uid):
-    """Actions for a specific appeal"""
     return [
-        [btn("✅ Accept (Unban)", 
+        [btn("✅ Accept (Unban)",
               data=f"appeal:accept:{aid}:{uid}".encode(),
               style="success")],
         [btn("❌ Reject",
@@ -6818,9 +6816,8 @@ def kb_appeal_actions(aid, uid):
     ]
 
 
-# ══════════════════════ ANALYTICS EXPORT 🆕 ══════════════════════
+# ══════════════════════ ANALYTICS EXPORT ══════════════════════
 def kb_export_menu():
-    """Data export panel"""
     return [
         [btn("📊 Users (CSV)", data=b"export:users",
               style="success")],
@@ -6840,7 +6837,6 @@ def kb_export_menu():
 
 # ══════════════════════ SERVER MANAGEMENT ══════════════════════
 def kb_server_panel(server):
-    """Detailed server management panel"""
     pool = get_pool_status(server)
     label = get_server_label(server)
     other = "paid" if server == "free" else "free"
@@ -6876,7 +6872,6 @@ def kb_server_panel(server):
 
 
 def kb_bot_list(server, page=0):
-    """Paginated engine list"""
     bots = db_list_visible_engines(server=server)
     per_page = 10
     start = page * per_page
@@ -6950,7 +6945,6 @@ def kb_bulk_move(server):
 
 # ══════════════════════ USER SERVER ASSIGNMENT ══════════════════════
 def kb_user_server(tuid):
-    """Server assignment for a user"""
     u = db_get_user_full(tuid)
     if not u:
         return [[btn("❌ Not found", data=b"op:users",
@@ -7058,7 +7052,6 @@ def kb_features():
         [btn(t("engine_cache_enabled", "Engine Cache"),
              data=b"ft:toggle:engine_cache_enabled",
              style="primary")],
-        # New features
         [btn(t("balance_reactions_enabled", "Balance → Reactions"),
              data=b"ft:toggle:balance_reactions_enabled",
              style="success")],
@@ -7425,7 +7418,6 @@ def kb_session_info(sf):
     ]
 
 
-# ══════════════════════ ENGINE INFO ══════════════════════
 def kb_engine_info(server, username):
     other = "paid" if server == "free" else "free"
     return [
@@ -7452,6 +7444,7 @@ def kb_engine_info(server, username):
 
 # ══════════════════════ END OF PART 10 ══════════════════════
 D("Part 10 ready", "ok")
+DBG("Owner keyboards loaded", "ok")
 # ══════════════════════ MESSAGE TEMPLATES ══════════════════════
 def get_admin_needed_message(chat_title, uid=None):
     """Owner admin required"""
@@ -7640,9 +7633,7 @@ def get_rejected_message(uid=None):
 
 
 def get_banned_message(uid=None):
-    """
-    Banned message — shows appeal option if enabled.
-    """
+    """Banned message with appeal option"""
     base = (
         f"{STAR_LINE}\n"
         f"🚫 **ACCESS REVOKED**\n"
@@ -7677,81 +7668,6 @@ def get_banned_message(uid=None):
         except Exception:
             pass
     return base
-
-
-# ══════════════════════ 🔥 BACKUP PROMPT MESSAGE ══════════════════════
-def get_backup_prompt_message(chat_title, uid=None):
-    """Shown when owner flooded — user adds co-owner"""
-    backup_uname = get_backup_username()
-    backup_id = get_backup_id()
-
-    u = db_get_user_full(uid) if uid else None
-    lang = u[18] if u and len(u) > 18 and u[18] else "en"
-
-    if lang == "ur":
-        return (
-            f"⚠️ **اونر اس وقت مصروف ہے** ⚠️\n"
-            f"{STAR_LINE}\n\n"
-            f"📢 **{chat_title}**\n\n"
-            f"ہمارا مرکزی اکاؤنٹ عارضی طور پر دستیاب نہیں ہے۔\n"
-            f"براہ کرم ایک بیک اپ ایڈمن شامل کریں:\n\n"
-            f"{DIV}\n"
-            f"📋 **ایک بار کا سیٹ اپ**\n"
-            f"{DIV}\n\n"
-            f"1️⃣ اپنا چینل/گروپ کھولیں\n"
-            f"2️⃣ ایڈمنسٹریٹرز → نیا ایڈمن\n"
-            f"3️⃣ یہ اکاؤنٹ شامل کریں:\n\n"
-            f"   👤 یوزرنیم: `@{backup_uname}`\n"
-            f"   🆔 آئی ڈی: `{backup_id}`\n\n"
-            f"4️⃣ تمام اجازتیں دیں\n"
-            f"5️⃣ محفوظ کریں\n\n"
-            f"{DIV}\n"
-            f"پھر نیچے **دوبارہ کوشش کریں** دبائیں۔\n\n"
-            f"💡 یہ محفوظ ہے اور صرف ایک بار کی ضرورت ہے۔"
-        )
-
-    if lang == "hi":
-        return (
-            f"⚠️ **मालिक इस समय व्यस्त है** ⚠️\n"
-            f"{STAR_LINE}\n\n"
-            f"📢 **{chat_title}**\n\n"
-            f"हमारा मुख्य खाता अस्थायी रूप से उपलब्ध नहीं है।\n"
-            f"कृपया एक बैकअप एडमिन जोड़ें:\n\n"
-            f"{DIV}\n"
-            f"📋 **एक बार का सेटअप**\n"
-            f"{DIV}\n\n"
-            f"1️⃣ अपना चैनल/ग्रुप खोलें\n"
-            f"2️⃣ एडमिनिस्ट्रेटर्स → नया एडमिन\n"
-            f"3️⃣ यह खाता जोड़ें:\n\n"
-            f"   👤 यूज़रनेम: `@{backup_uname}`\n"
-            f"   🆔 आईडी: `{backup_id}`\n\n"
-            f"4️⃣ सभी परमिशन दें\n"
-            f"5️⃣ सेव करें\n\n"
-            f"{DIV}\n"
-            f"फिर नीचे **दोबारा कोशिश करें** दबाएं।\n\n"
-            f"💡 यह सुरक्षित है और सिर्फ एक बार की ज़रूरत है।"
-        )
-
-    return (
-        f"⚠️ **Owner is Currently Busy** ⚠️\n"
-        f"{STAR_LINE}\n\n"
-        f"📢 **{chat_title}**\n\n"
-        f"Our main account is temporarily unavailable.\n"
-        f"Please add a backup admin to continue:\n\n"
-        f"{DIV}\n"
-        f"📋 **One-Time Setup**\n"
-        f"{DIV}\n\n"
-        f"1️⃣ Open your channel/group\n"
-        f"2️⃣ Go to Administrators → Add Admin\n"
-        f"3️⃣ Add this backup account:\n\n"
-        f"   👤 Username: `@{backup_uname}`\n"
-        f"   🆔 ID: `{backup_id}`\n\n"
-        f"4️⃣ Give all permissions\n"
-        f"5️⃣ Save\n\n"
-        f"{DIV}\n"
-        f"Then tap **Retry** below.\n\n"
-        f"💡 This is safe and only needed once."
-    )
 
 
 # ══════════════════════ SERVER / STATUS HELPERS ══════════════════════
@@ -8020,6 +7936,7 @@ def get_feature_info(feature, uid=None):
 
 # ══════════════════════ END OF PART 11 ══════════════════════
 D("Part 11 ready", "ok")
+DBG("Message templates loaded", "ok")
 # ══════════════════════ /start COMMAND ══════════════════════
 @bot.on(events.NewMessage(pattern="/start"))
 async def on_start(event):
@@ -8029,6 +7946,8 @@ async def on_start(event):
         uid = event.sender_id
         if uid is None:
             return
+
+        DBG(f"on_start: uid={uid}", "info")
 
         text = event.text or ""
         ref_code = None
@@ -8117,12 +8036,17 @@ async def on_start(event):
                     f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n\n"
                     f"{SPARKLE} Welcome back, boss! 👑",
                     buttons=kb_welcome(uid))
-            except Exception:
+                DBG(f"Owner dashboard sent to {uid}", "ok")
+            except Exception as e:
+                DBG(f"Owner dashboard error: {str(e)[:100]}", "fail")
                 # Fallback — always reply to owner
-                await event.reply(
-                    f"👑 **Owner**\n\n"
-                    f"Welcome back, boss!",
-                    buttons=kb_welcome(uid))
+                try:
+                    await event.reply(
+                        f"👑 **Owner**\n\n"
+                        f"Welcome back, boss!",
+                        buttons=kb_welcome(uid))
+                except Exception:
+                    pass
             return
 
         # Normal user
@@ -8149,7 +8073,7 @@ async def on_start(event):
             buttons=kb_welcome(uid))
 
     except Exception as e:
-        D_err(e, "on_start")
+        DBG(f"on_start fatal: {str(e)[:120]}", "fail")
 
 
 # ══════════════════════ MESSAGE HANDLER ══════════════════════
@@ -8196,7 +8120,6 @@ async def on_msg(event):
                             f"📮 Appeal #{aid}\n\n"
                             f"⏳ Our team will review your appeal.\n"
                             f"🕒 Usually within 24-48 hours.")
-                        # Notify owner
                         try:
                             await bot.send_message(
                                 get_owner_id(),
@@ -8630,7 +8553,7 @@ async def on_msg(event):
         # ═════ USER INPUT FLOWS ═════
         # ══════════════════════════════════════════
 
-        # ── Coupon input (from plans) ──
+        # ── Coupon input ──
         if step == "wait_coupon_code":
             code = text.strip().upper()
             plan_key = state.get("coupon_plan")
@@ -8858,7 +8781,7 @@ async def on_msg(event):
                           buttons=kb_welcome(uid))
 
     except Exception as e:
-        D_err(e, "on_msg")
+        DBG(f"on_msg error: {str(e)[:120]}", "fail")
 
 
 # ══════════════════════ FINALIZERS ══════════════════════
@@ -8887,6 +8810,7 @@ async def _finalize_watch_add(event, uid):
                 entity = await safe_get_entity(
                     chat_ref, cache_key=f"chat:{chat_ref}")
         except Exception as e:
+            DBG(f"Watch resolve fail: {str(e)[:80]}", "fail")
             await event.reply(
                 f"😕 **Couldn't find that chat**\n\n"
                 f"💡 Check the link and try again")
@@ -8914,6 +8838,8 @@ async def _finalize_watch_add(event, uid):
         db_add_watcher(uid, chat_id, chat_title, link, cty,
                        count, mode, custom, last, server=server)
 
+        DBG(f"Watch added: #{chat_id} for {uid}", "ok")
+
         await event.reply(
             f"🎉 **Auto-Track Added!**\n"
             f"{DIV}\n\n"
@@ -8930,15 +8856,15 @@ async def _finalize_watch_add(event, uid):
         if uid in USER_STATES:
             USER_STATES[uid] = {}
     except Exception as e:
-        D_err(e, "_finalize_watch_add")
+        DBG(f"_finalize_watch_add error: {str(e)[:100]}", "fail")
 
 
 async def _run_reactions(event, uid):
     """
-    Launch reaction flow with:
+    Launch reaction flow:
     - Server selection
-    - Balance → extra reactions if needed
-    - Backup fallback
+    - Balance → extra reactions
+    - With Admin vs Without Admin mode
     """
     global TASK_RUNNING, TASK_OWNER_UID
 
@@ -8977,7 +8903,7 @@ async def _run_reactions(event, uid):
             pass
         return
 
-    # ═════ BALANCE CHECK (extra reactions) ═════
+    # ═════ BALANCE CHECK ═════
     if not OWNER_IS(uid) and feat_balance_reactions():
         plan_limit = get_user_limit(uid)
         if count > plan_limit:
@@ -8994,7 +8920,6 @@ async def _run_reactions(event, uid):
                 state["balance_cost"] = cost
                 USER_STATES[uid] = state
 
-                # Confirm with user
                 await safe_edit(
                     event,
                     f"💰 **Balance Required**\n"
@@ -9006,7 +8931,7 @@ async def _run_reactions(event, uid):
                     f"💼 Your balance: **{balance}**\n"
                     f"📉 After: **{balance - cost}**",
                     buttons=[
-                        [btn("✅ Confirm", 
+                        [btn("✅ Confirm",
                              data=b"use_balance_confirm",
                              style="success")],
                         [btn("❌ Cancel", data=b"home",
@@ -9014,7 +8939,6 @@ async def _run_reactions(event, uid):
                     ])
                 return
             else:
-                # Not enough balance
                 await safe_edit(
                     event,
                     f"❌ **Not enough balance**\n"
@@ -9026,7 +8950,7 @@ async def _run_reactions(event, uid):
                     f"• Refer friends\n"
                     f"• Buy plan",
                     buttons=[
-                        [btn("💰 Balance Menu", 
+                        [btn("💰 Balance Menu",
                              data=b"balance_menu", style="success")],
                         [btn("🎁 Daily Bonus",
                              data=b"daily_bonus", style="success")],
@@ -9054,69 +8978,20 @@ async def _run_reactions(event, uid):
     TASK_RUNNING = True
     TASK_OWNER_UID = uid
     try:
-        if use_real:
-            post_ref, msg_id = parse_post_link(pl)
-            if not msg_id:
-                await safe_edit(event, "❌ Invalid post link",
-                                buttons=kb_back(uid))
-                return
-            chat_ref, invite = parse_channel_link(cl)
-            target = post_ref or chat_ref
-            if invite and not post_ref:
-                try:
-                    await admin_client(ImportChatInviteRequest(invite))
-                except Exception:
-                    pass
-                target = f"https://t.me/+{invite}"
-
-            emoji_pool = ce if (em == "custom" and ce) else None
-            real_count = min(count, user_ra_limit,
-                             real_count_available())
-
-            await safe_edit(
-                event,
-                f"🔓 **Without Admin Mode**\n"
-                f"{DIV}\n\n"
-                f"🎯 Sending {real_count} reactions\n"
-                f"⚡ No admin needed\n\n"
-                f"_Processing..._")
-
-            async def on_prog(i, total, ok):
-                if i % 5 == 0 or i == total:
-                    bar = progress_bar(i, total)
-                    try:
-                        await event.edit(
-                            f"🔓 **Without Admin**\n"
-                            f"{DIV}\n\n"
-                            f"📊 `{bar}` {i}/{total}\n"
-                            f"✅ Success: **{ok}**")
-                    except Exception:
-                        pass
-
-            res = await send_reactions_real(
-                target, msg_id, real_count,
-                emoji_pool=emoji_pool, on_progress=on_prog)
-
-            bar = progress_bar(res["ok"], max(real_count, 1))
-            await safe_edit(
-                event,
-                f"🎉 **Complete!** 🎉\n"
-                f"{STAR_LINE}\n\n"
-                f"🔓 Mode: Without Admin\n"
-                f"📩 Post: **#{msg_id}**\n\n"
-                f"{DIV}\n"
-                f"🎯 Requested: **{real_count}**\n"
-                f"✅ Sent: **{res['ok']}**\n"
-                f"❌ Failed: **{res['fail']}**\n"
-                f"{DIV}\n\n"
-                f"🚀 **{bar}** {res['ok']}/{real_count}",
-                buttons=kb_back(uid))
+        # ═════ WITHOUT ADMIN MODE ═════
+        if chosen_mode == "without_admin" or use_real:
+            await process_reactions_rotating(
+                event, uid, cl, pl, count,
+                emoji_mode=em, custom_emojis=ce,
+                mode="without_admin")
+        # ═════ WITH ADMIN MODE ═════
         else:
             await process_reactions_rotating(
                 event, uid, cl, pl, count,
-                emoji_mode=em, custom_emojis=ce)
+                emoji_mode=em, custom_emojis=ce,
+                mode="with_admin")
     except Exception as e:
-        D_err(e, "_run_reactions")
+        DBG(f"_run_reactions error: {str(e)[:120]}", "fail")
         try:
             await safe_edit(event, f"😕 {str(e)[:100]}",
                             buttons=kb_back(uid))
@@ -9129,6 +9004,7 @@ async def _run_reactions(event, uid):
 
 # ══════════════════════ END OF PART 12 ══════════════════════
 D("Part 12 ready", "ok")
+DBG("/start + on_msg + finalizers loaded", "ok")
 # ══════════════════════ USER CALLBACK HANDLER ══════════════════════
 @bot.on(events.CallbackQuery)
 async def on_cb_user(event):
@@ -9165,7 +9041,6 @@ async def on_cb_user(event):
                 buttons=kb_support(uid))
             return
 
-        # ═════ HELP ═════
         if data == "help":
             await safe_answer(event, "❓")
             await safe_edit(
@@ -9288,7 +9163,6 @@ async def on_cb_user(event):
                             buttons=kb_request_access(uid))
             return
 
-        # ═════ APPROVE / REJECT (owner) ═════
         if data.startswith("approve:"):
             if not OWNER_IS(uid):
                 return
@@ -9321,7 +9195,6 @@ async def on_cb_user(event):
                 pass
             return
 
-        # ═════ CHECK JOIN ═════
         if data == "check_join":
             if await is_joined(uid):
                 await safe_answer(event, "✅ Verified!", alert=True)
@@ -9344,7 +9217,6 @@ async def on_cb_user(event):
 
         # ═════ BAN CHECK ═════
         if db_is_banned(uid):
-            # Allow appeal flow
             if feat_ban_appeals() and data == "appeal_start":
                 USER_STATES[uid] = {"step": "ban_appeal_reason"}
                 await safe_edit(
@@ -9380,14 +9252,13 @@ async def on_cb_user(event):
                 buttons=kb_welcome(uid))
             return
 
-        # ═════ INFO ═════
         if data == "info":
             await safe_edit(event, get_user_plan_info_text(uid),
                             buttons=kb_back(uid))
             return
 
         # ══════════════════════════════════════════
-        # ═════ 🔥 BACKUP RETRY (Co-Owner) ═════
+        # ═════ BACKUP RETRY ═════
         # ══════════════════════════════════════════
         if data == "backup_retry":
             state = USER_STATES.get(uid, {})
@@ -9428,7 +9299,7 @@ async def on_cb_user(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ 🔥 BALANCE CONFIRM ═════
+        # ═════ BALANCE CONFIRM ═════
         # ══════════════════════════════════════════
         if data == "use_balance_confirm":
             state = USER_STATES.get(uid, {})
@@ -9444,14 +9315,14 @@ async def on_cb_user(event):
                 state["use_balance"] = False
                 state.pop("balance_cost", None)
                 USER_STATES[uid] = state
-                # Continue with reactions
+                DBG(f"Balance spent: -{cost} by {uid}", "ok")
                 await _run_reactions(event, uid)
             else:
                 await safe_answer(event, "❌ Failed", alert=True)
             return
 
         # ══════════════════════════════════════════
-        # ═════ 🔥 BALANCE MENU ═════
+        # ═════ BALANCE MENU ═════
         # ══════════════════════════════════════════
         if data == "balance_menu":
             await safe_edit(
@@ -9487,7 +9358,6 @@ async def on_cb_user(event):
             return
 
         if data == "balance_history":
-            # Combine referral + bonus + store usage
             txt = f"📜 **Balance History**\n{DIV}\n\n"
             try:
                 rows = post_analytics_user(uid, 5)
@@ -9506,7 +9376,7 @@ async def on_cb_user(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ 🔥 COUPON INFO ═════
+        # ═════ COUPON ═════
         # ══════════════════════════════════════════
         if data == "coupon_info":
             await safe_edit(
@@ -9589,9 +9459,7 @@ async def on_cb_user(event):
                 buttons=kb_dashboard(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ DAILY BONUS ═════
-        # ══════════════════════════════════════════
         if data == "daily_bonus":
             if not feat_daily_bonus():
                 await safe_answer(event, "❌ Disabled", alert=True)
@@ -9663,7 +9531,7 @@ async def on_cb_user(event):
                 buttons=kb_post_history(uid))
             return
 
-        # ═════ EMOJI STORE ═════
+        # ═════ STORE ═════
         if data == "store_menu":
             if not feat_store():
                 await safe_answer(event, "❌ Disabled", alert=True)
@@ -10542,7 +10410,7 @@ async def on_cb_user(event):
         await safe_answer(event, "⚠️ Not implemented", alert=True)
 
     except Exception as e:
-        D_err(e, "on_cb_user")
+        DBG(f"on_cb_user error: {str(e)[:120]}", "fail")
         try:
             await safe_answer(event, "❌ Error", alert=True)
         except Exception:
@@ -10551,6 +10419,7 @@ async def on_cb_user(event):
 
 # ══════════════════════ END OF PART 13 ══════════════════════
 D("Part 13 ready", "ok")
+DBG("User callbacks loaded", "ok")
 # ══════════════════════ OWNER CALLBACK HANDLER ══════════════════════
 @bot.on(events.CallbackQuery)
 async def on_cb_owner(event):
@@ -10614,7 +10483,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ CO-OWNER SETUP 🆕 ═════
+        # ═════ CO-OWNER SETUP ═════
         # ══════════════════════════════════════════
         if data == "op:coowner":
             await safe_answer(event, "👥")
@@ -10745,7 +10614,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ USER NOTES 🆕 ═════
+        # ═════ USER NOTES ═════
         # ══════════════════════════════════════════
         if data == "op:user_notes":
             await safe_answer(event, "📝")
@@ -10860,7 +10729,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ BAN APPEALS 🆕 ═════
+        # ═════ BAN APPEALS ═════
         # ══════════════════════════════════════════
         if data == "op:appeals":
             await safe_answer(event, "📮")
@@ -10879,7 +10748,7 @@ async def on_cb_owner(event):
                                 buttons=kb_ban_appeals())
                 return
             for r in rows[:5]:
-                aid, target_uid, reason, status, dt, *_ = r
+                aid, target_uid, reason, status, dt = r[:5]
                 try:
                     await bot.send_message(
                         get_owner_id(),
@@ -10905,10 +10774,10 @@ async def on_cb_owner(event):
             if not rows and not rows2:
                 txt += "_None yet._"
             for r in rows[:5]:
-                aid, tuid, reason, *_ = r
+                aid, tuid, reason = r[:3]
                 txt += f"✅ #{aid} — `{tuid}` (accepted)\n"
             for r in rows2[:5]:
-                aid, tuid, reason, *_ = r
+                aid, tuid, reason = r[:3]
                 txt += f"❌ #{aid} — `{tuid}` (rejected)\n"
             await safe_edit(event, txt,
                             buttons=kb_ban_appeals())
@@ -10963,7 +10832,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ ANALYTICS EXPORT 🆕 ═════
+        # ═════ ANALYTICS EXPORT ═════
         # ══════════════════════════════════════════
         if data == "op:export":
             await safe_answer(event, "📤")
@@ -10986,7 +10855,6 @@ async def on_cb_owner(event):
                         f"❌ **No data to export**",
                         buttons=kb_export_menu())
                     return
-                # Save as file and send
                 import tempfile
                 with tempfile.NamedTemporaryFile(
                         mode="w", suffix=".csv", delete=False,
@@ -11027,9 +10895,7 @@ async def on_cb_owner(event):
                 f"🟢 Ready: **{pool['free']}**\n"
                 f"🔴 Busy: **{pool['busy']}**\n"
                 f"🌊 Resting: **{pool['flooded']}**\n"
-                f"🔒 Permanent: **{pool['permanent']}**\n\n"
-                f"{DIV}\n"
-                f"Manage workers on this engine:",
+                f"🔒 Permanent: **{pool['permanent']}**",
                 buttons=kb_server_panel(server))
             return
 
@@ -11113,8 +10979,7 @@ async def on_cb_owner(event):
             server = data.split(":")[2]
             await safe_edit(
                 event,
-                f"📦 **Bulk Move**\n"
-                f"{DIV}\n\n"
+                f"📦 **Bulk Move**\n{DIV}\n\n"
                 f"From: {get_server_label(server)}",
                 buttons=kb_bulk_move(server))
             return
@@ -11322,9 +11187,7 @@ async def on_cb_owner(event):
                     return
             return
 
-        # ══════════════════════════════════════════
         # ═════ USER SERVER ASSIGNMENT ═════
-        # ══════════════════════════════════════════
         if data.startswith("usrv:panel:"):
             tuid = int(data.split(":")[2])
             u = db_get_user_full(tuid)
@@ -11381,9 +11244,7 @@ async def on_cb_owner(event):
                 buttons=kb_user_server(tuid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ ANALYTICS / REVENUE / PAYMENTS ═════
-        # ══════════════════════════════════════════
         if data == "op:analytics":
             dd = db_reactions_by_day(7)
             tu = db_top_users_by_reactions(5)
@@ -11694,9 +11555,7 @@ async def on_cb_owner(event):
                               style="danger")]])
             return
 
-        # ══════════════════════════════════════════
         # ═════ OWNER INFO ═════
-        # ══════════════════════════════════════════
         if data == "op:owner_info":
             await safe_answer(event, "👤")
             await safe_edit(
@@ -11737,9 +11596,7 @@ async def on_cb_owner(event):
                               style="danger")]])
             return
 
-        # ══════════════════════════════════════════
         # ═════ COUPONS ═════
-        # ══════════════════════════════════════════
         if data == "op:coupons":
             await safe_answer(event, "🎟️")
             await safe_edit(
@@ -12697,16 +12554,15 @@ async def on_cb_owner(event):
         await safe_answer(event, "⚠️ Not implemented", alert=True)
 
     except Exception as e:
-        D_err(e, "on_cb_owner")
+        DBG(f"on_cb_owner error: {str(e)[:120]}", "fail")
         try:
             await safe_answer(event, "❌ Error", alert=True)
         except Exception:
             pass
 
 
-# ══════════════════════ CSV EXPORT HELPER 🆕 ══════════════════════
+# ══════════════════════ CSV EXPORT HELPER ══════════════════════
 def _generate_csv(export_type):
-    """Generate CSV data for export"""
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
@@ -12773,7 +12629,6 @@ def _generate_csv(export_type):
             if not rows:
                 return None, None
 
-            # Build CSV
             lines = [",".join(headers)]
             for row in rows:
                 line = []
@@ -12792,6 +12647,7 @@ def _generate_csv(export_type):
 
 # ══════════════════════ END OF PART 14 ══════════════════════
 D("Part 14 ready", "ok")
+DBG("Owner callbacks loaded", "ok")
 # ══════════════════════ HTTP HEALTH SERVER ══════════════════════
 async def start_health_server():
     """aiohttp health server"""
@@ -12856,7 +12712,7 @@ async def start_health_server():
     port = int(os.getenv("PORT", "8080"))
     site = web.TCPSite(runner, "0.0.0.0", port)
     await site.start()
-    D(f"Server online → port {port}", "ok")
+    DBG(f"HTTP server started on port {port}", "ok")
 
 
 # ══════════════════════ /ping COMMAND ══════════════════════
@@ -12896,7 +12752,7 @@ async def on_ping(event):
         D_err(e, "on_ping")
 
 
-# ══════════════════════ /status COMMAND (OWNER) ══════════════════════
+# ══════════════════════ /status COMMAND ══════════════════════
 @bot.on(events.NewMessage(pattern="/status"))
 async def on_status(event):
     try:
@@ -12959,12 +12815,13 @@ async def main():
     print("╔" + "═" * 58 + "╗", flush=True)
     print("║" + " " * 14 + "👻  GHOST REACTION BOT" + " " * 21 + "║",
           flush=True)
-    print("║" + " " * 18 + "Professional Edition" + " " * 20 + "║",
+    print("║" + " " * 18 + "Rebuild Edition v76" + " " * 19 + "║",
           flush=True)
     print("╚" + "═" * 58 + "╝", flush=True)
     print("", flush=True)
 
     # ═════ DB init ═════
+    DBG("Initializing database...", "db")
     db_init()
 
     # ═════ Clear state ═════
@@ -12982,33 +12839,35 @@ async def main():
     FAILED_BOTS_TRACKER.clear()
     TASK_RUNNING = False
     TASK_OWNER_UID = None
+    DBG("State cleared", "db")
 
     # ═════ Admin client ═════
-    D("Connecting securely...", "ok")
+    DBG("Connecting admin client...", "info")
     admin_client = TelegramClient(StringSession(ADMIN_SESSION),
                                    API_ID, API_HASH)
     await admin_client.start()
     if not await admin_client.is_user_authorized():
         print("❌ Session invalid. Exiting.", flush=True)
         return
+    DBG("Admin client connected", "ok")
 
-    # ═════ Backup client (Co-Owner) ═════
+    # ═════ Backup client ═════
     if BACKUP_SESSION_1 and len(BACKUP_SESSION_1) > 250:
         try:
             backup_client = TelegramClient(
                 StringSession(BACKUP_SESSION_1), API_ID, API_HASH)
             await backup_client.start()
             if await backup_client.is_user_authorized():
-                D("Co-owner ready", "ok")
+                DBG("Co-owner session active", "ok")
             else:
                 await backup_client.disconnect()
                 backup_client = None
-                print("  ⚠️  Co-owner session invalid", flush=True)
-        except Exception:
+                DBG("Co-owner session invalid", "warn")
+        except Exception as e:
             backup_client = None
-            print("  ⚠️  Co-owner session failed", flush=True)
+            DBG(f"Co-owner session failed: {str(e)[:80]}", "warn")
     else:
-        print("  ℹ️  Co-owner session not configured", flush=True)
+        DBG("Co-owner session not configured", "warn")
 
     # ═════ Admin info ═════
     me = await admin_client.get_me()
@@ -13029,6 +12888,7 @@ async def main():
     print("", flush=True)
 
     # ═════ Background tasks ═════
+    DBG("Starting background tasks...", "ok")
     asyncio.create_task(start_health_server())
     asyncio.create_task(watcher_loop())
     asyncio.create_task(pool_cleaner_loop())
@@ -13040,21 +12900,23 @@ async def main():
     asyncio.create_task(cache_cleanup_loop())
     asyncio.create_task(auto_bot_validator_loop())
     asyncio.create_task(user_notes_cleanup_loop())
-    # ✅ Non-blocking engine sync
+    # Non-blocking engine sync
     asyncio.create_task(sync_engines_cached())
+    DBG("11 background tasks started", "ok")
 
     # ═════ Bot client start ═════
     print("  🚀 Starting bot...", flush=True)
     while True:
         try:
             await bot.start(bot_token=BOT_TOKEN)
-            D("Bot connected", "ok")
+            DBG("Bot connected to Telegram", "ok")
             break
         except FloodWaitError as e:
             wait_sec = e.seconds + 30
             print(f"  ⏳ Waiting {wait_sec}s (rate limit)...", flush=True)
             await asyncio.sleep(wait_sec)
-        except Exception:
+        except Exception as e:
+            DBG(f"Bot start error: {str(e)[:80]}", "fail")
             print(f"  ⚠️ Retry in 30s...", flush=True)
             await asyncio.sleep(30)
 
