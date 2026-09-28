@@ -13,6 +13,7 @@ env/
 # Database
 *.db
 *.db.backup
+*.db.remote
 *.db-journal
 *.db-wal
 *.db-shm
