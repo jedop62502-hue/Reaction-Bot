@@ -1,7 +1,7 @@
 """
 ============================================================
-   GHOST REACTION BOT v64 FULL
-   Real Accounts (Sessions repo) + Dynamic Payments + Plan Limits
+   GHOST REACTION BOT v65 - FINAL
+   Real Accounts + Dynamic Payments + Animations + Friendly
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -176,7 +176,7 @@ RESOLVE_FLOOD_UNTIL = None
 admin_client = None
 backup_client = None
 _start_time = time.time()
-bot = None
+bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
 USER_STATES = {}
 
 
@@ -193,15 +193,53 @@ def global_exception_handler(loop, context):
         print(f"{'─'*60}\n", flush=True)
 
 
+# ══════════════════════ ANIMATIONS ══════════════════════
 DIV = "━━━━━━━━━━━━━━━━━━━━━━━━━"
 STAR_LINE = "✦ ─────────── ✦ ─────────── ✦"
 SPARKLE = "✨"
 
+ANIM_LOAD = ["⏳", "⌛", "⏳", "⌛", "⏳"]
+ANIM_WORK = ["🔄", "🔃", "🔄", "🔃"]
+ANIM_FIRE = ["🔥", "💥", "⚡", "🌟", "✨", "💫"]
+ANIM_HEART = ["❤️", "💖", "💗", "💓", "💕"]
+ANIM_GHOST = ["👻", "🎃", "👻", "🌙", "⭐"]
+ANIM_SUCCESS = ["⏳", "⌛", "✨", "🌟", "✅"]
+
 
 def progress_bar(cur, total, width=12):
     if total <= 0: return "░"*width
-    f = int((cur/total)*width)
+    f = min(int((cur/total)*width), width)
     return "█"*f + "░"*(width-f)
+
+
+async def anim_loading(event, msg="Processing"):
+    """Play loading animation."""
+    for f in ANIM_LOAD[:2]:
+        try:
+            await event.edit(f"{f} **{msg}...**")
+            await asyncio.sleep(0.3)
+        except Exception: return
+
+
+async def anim_success(event, title, subtitle=""):
+    """Play success animation."""
+    for f in ["⏳", "⌛", "✨", "🌟", "✅"]:
+        try:
+            await event.edit(f"{f} **{title}**")
+            await asyncio.sleep(0.25)
+        except Exception: pass
+    txt = f"✅ **{title}**"
+    if subtitle: txt += f"\n\n{subtitle}"
+    try: await event.edit(txt)
+    except Exception: pass
+
+
+async def anim_progress(event, i, total, prefix="⚡", note=""):
+    """Animated progress bar."""
+    bar = progress_bar(i, total)
+    try:
+        await event.edit(f"{prefix} `{bar}` **{i}/{total}**\n{note}")
+    except Exception: pass
 
 
 def D(msg, level="info"):
@@ -209,7 +247,7 @@ def D(msg, level="info"):
     ic = {"info":"ℹ️ ","ok":"✅","fail":"❌","warn":"⚠️ ","step":"▶️ ","dbg":"🐛",
           "flood":"🌊","rot":"🔄","cycle":"🔁","watch":"📡","ref":"🎁","plan":"💰",
           "lang":"🌍","backup":"🛡️","paid":"💎","pool":"🎯","health":"❤️","queue":"⏰",
-          "pay":"💳","team":"👥","bulk":"📦","gh":"🔄","real":"👤"}
+          "pay":"💳","team":"👥","bulk":"📦","gh":"🔄","real":"👤","anim":"🎬"}
     print(f"[{ts}] {ic.get(level,'•')} {msg}", flush=True)
 
 
@@ -229,6 +267,7 @@ def get_owner_id():
 def OWNER_IS(uid): return uid == get_owner_id()
 
 
+# ══════════════════════ LANGUAGES ══════════════════════
 LANG_STRINGS = {
     "en": {"welcome":"Welcome Back","send_reactions":"Send Reactions","auto_watch":"Auto-Watch",
            "templates":"Templates","referral":"Referral","upgrade":"Upgrade","notifications":"Notifications",
@@ -478,7 +517,6 @@ def db_init():
             cfg_defaults.append((f"price_{plan}_{days}", str(price)))
     for k, v in cfg_defaults:
         c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)", (k, v))
-
     conn.commit(); conn.close(); _dirty()
     D(f"DB initialized: {DB_FILE}", "ok")
 
@@ -1425,6 +1463,8 @@ async def close_all_real_clients():
         try: await c.disconnect()
         except Exception: pass
     REAL_CLIENTS.clear()
+
+
 # ══════════════════════ BOT API ══════════════════════
 def bot_get_me(token):
     try:
@@ -1474,8 +1514,7 @@ def sync_bots():
         if tok in ex: continue
         info = bot_get_me(tok)
         if info and db_add_bot(tok, info["username"], info["id"]):
-            added += 1
-            ex.add(tok)
+            added += 1; ex.add(tok)
     return db_list_bots(), added
 
 
@@ -1621,8 +1660,7 @@ def is_permanent_admin(username):
 def is_bot_flooded(token):
     u = FLOOD_UNTIL.get(token)
     if u is None: return False
-    if datetime.now() >= u:
-        FLOOD_UNTIL.pop(token, None); return False
+    if datetime.now() >= u: FLOOD_UNTIL.pop(token, None); return False
     return True
 
 
@@ -1844,8 +1882,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     total_bots = db_count_bots()
     want = min(count, total_bots)
     if event:
-        try: await event.edit(f"✨ **Processing {want} reactions...**")
-        except Exception: pass
+        await anim_loading(event, f"Processing {want} reactions")
     try:
         if invite_hash and not post_ref:
             try: await admin_client(ImportChatInviteRequest(invite_hash))
@@ -1869,7 +1906,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     except Exception: pass
     if not is_auto_watch and ADMIN_CHECK_ENABLED and not OWNER_IS(uid):
         if event:
-            try: await event.edit("🔍 **Checking owner admin...**")
+            try: await event.edit(f"{random.choice(ANIM_GHOST)} **Checking access...**")
             except Exception: pass
         owner_is_admin = await check_owner_admin(entity)
         if not owner_is_admin:
@@ -1881,7 +1918,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     cache_key = str(real_id)
     ok_owner, reason_owner = await ensure_owner_admin(entity, cache_key)
     if not ok_owner:
-        if event: await safe_edit(event, f"❌ Owner setup failed: {reason_owner}")
+        if event: await safe_edit(event, f"❌ Setup failed: {reason_owner}")
         return
     reactions_done = 0; cycle = 0; failed_batches = 0; cycle_log = []
     while reactions_done < want and cycle < MAX_CYCLES:
@@ -1890,7 +1927,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             bar = progress_bar(reactions_done, want)
             await safe_edit(event,
                 f"🎬 **Cycle {cycle}** 🎬\n{DIV}\n\n📊 `{bar}` {reactions_done}/{want}\n"
-                f"⏳ Remaining: **{remaining}**\n\n🔍 Finding bots...")
+                f"⏳ Remaining: **{remaining}**\n\n🔍 Finding...")
         existing_admins = await get_current_admin_bots(entity)
         db_bots = db_list_bots()
         uname_to_token = {u: t for t, u, b, a in db_bots}
@@ -1905,7 +1942,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             if event:
                 await safe_edit(event,
                     f"💫 **Cycle {cycle}** — Phase 1 💫\n{DIV}\n\n"
-                    f"♻️ Using **{len(cycle_admins)}** existing admins...")
+                    f"♻️ Using **{len(cycle_admins)}** existing...")
             for tok, uname in cycle_admins:
                 BOT_POOL.setdefault(tok, {})
                 BOT_POOL[tok]["busy_until"] = datetime.now() + timedelta(minutes=BOT_BUSY_TIMEOUT)
@@ -1929,7 +1966,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             bar = progress_bar(reactions_done, want)
             await safe_edit(event,
                 f"🤖 **Cycle {cycle}** — Phase 2 🤖\n{DIV}\n\n📊 `{bar}` {reactions_done}/{want}\n\n"
-                f"➕ Adding **{remaining}** new bots...")
+                f"➕ Adding **{remaining}**...")
         acquired, wait_sec = await acquire_bots(need, uid)
         if acquired is None:
             await asyncio.sleep(wait_sec)
@@ -1956,7 +1993,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         if event:
             await safe_edit(event,
                 f"💫 **Cycle {cycle}** — Reacting 💫\n{DIV}\n\n"
-                f"🎯 Using **{len(promoted)}** new admins...")
+                f"🎯 Using **{len(promoted)}** new...")
         ok2, s2 = await send_reactions(real_id, msg_id, promoted, chat_title, post_link, uid,
                                         len(promoted), emoji_mode=emoji_mode, custom_emojis=custom_emojis)
         reactions_done += ok2
@@ -2084,14 +2121,11 @@ async def daily_summary_loop():
             if cur == tt and last != today:
                 last = today
                 tot, tr, mr = db_revenue_stats()
-                gh = github_sync.get_stats()
                 txt = (f"📊 **DAILY SUMMARY** — {today}\n{STAR_LINE}\n\n"
                        f"👥 Users: **{db_total_users()}**\n💫 Today: **{db_reactions_today()}**\n"
                        f"💫 Total: **{db_total_reactions()}**\n🤖 Bots: **{db_count_visible_bots()}**\n"
-                       f"👤 Sessions: **{real_count_available()}/{len(discover_session_files())}**\n"
                        f"📡 Watchers: **{len(db_list_watchers())}**\n\n"
-                       f"💰 **Revenue:**\n   Today: **{tr}rs**\n   Month: **{mr}rs**\n   Total: **{tot}rs**\n\n"
-                       f"🔄 **GitHub:** ⬆️{gh['uploads']} ⬇️{gh['downloads']} 👤{gh['sessions_dl']}")
+                       f"💰 Revenue:\n   Today: **{tr}rs**\n   Month: **{mr}rs**\n   Total: **{tot}rs**")
                 try: await bot.send_message(get_owner_id(), txt)
                 except Exception: pass
         except asyncio.CancelledError: return
@@ -2282,7 +2316,7 @@ def kb_payment_methods(plan, days, uid=None):
         mid, key, name, number, holder, icon, instr, act, so = m
         rows.append([btn(f"{icon} {name}", data=f"pay:{plan}:{days}:{mid}".encode(), style="primary")])
     if not rows:
-        rows.append([btn("❌ No payment methods", data=b"home", style="danger")])
+        rows.append([btn("❌ No methods", data=b"home", style="danger")])
     rows.append([btn(f"🔙 {L(uid, 'back')}", data=f"pland:{plan}:{days}".encode(), style="primary")])
     return rows
 
@@ -2321,8 +2355,7 @@ def kb_back(uid=None):
 
 def kb_owner():
     auto = "✅" if is_auto_approve() else "❌"
-    vis = db_count_visible_bots()
-    sess = real_count_available()
+    vis = db_count_visible_bots(); sess = real_count_available()
     return [
         [btn("📊 Analytics", data=b"op:analytics", style="success"),
          btn("👥 Users", data=b"op:users", style="primary")],
@@ -2465,7 +2498,7 @@ def kb_payment_method_edit(mid):
         [btn(f"✏️ Number: {number}", data=f"pm:edit_number:{mid}".encode(), style="primary")],
         [btn(f"✏️ Holder: {holder}", data=f"pm:edit_holder:{mid}".encode(), style="primary")],
         [btn(f"✏️ Icon: {icon}", data=f"pm:edit_icon:{mid}".encode(), style="primary")],
-        [btn(f"🟢 ON" if act else "🔴 OFF", data=f"pm:toggle:{mid}".encode(),
+        [btn(f"{'🟢 ON' if act else '🔴 OFF'}", data=f"pm:toggle:{mid}".encode(),
               style="success" if act else "danger")],
         [btn("🗑️ Delete", data=f"pm:del:{mid}".encode(), style="danger")],
         [btn("🔙 Back", data=b"op:pm", style="primary")],
@@ -2476,8 +2509,7 @@ def kb_user_manage(uid):
     u = db_get_user_full(uid)
     if not u: return [[btn("❌ Not found", data=b"op:users", style="danger")]]
     def yn(v): return "✅" if v else "❌"
-    plan = u[15] or "free"
-    fb = u[17] or 0
+    plan = u[15] or "free"; fb = u[17] or 0
     try: ra_ov = u[26] if len(u) > 26 else -1
     except Exception: ra_ov = -1
     ra_lbl = ra_ov if ra_ov >= 0 else "Plan"
@@ -2623,17 +2655,12 @@ async def on_start(event):
                 try: await bot.send_message(referrer, "🎁 **REFERRAL VALIDATED!**")
                 except Exception: pass
         if OWNER_IS(uid):
-            gh = github_sync.get_stats()
             await event.reply(
                 f"{STAR_LINE}\n👑 **OWNER DASHBOARD**\n{STAR_LINE}\n\n"
                 f"🤖 Bots: **{db_count_visible_bots()}**\n"
                 f"👥 Users: **{db_total_users()}**\n"
-                f"👤 Sessions: **{real_count_available()}/{len(discover_session_files())}**\n"
                 f"📡 Watchers: **{len(db_list_watchers())}**\n"
-                f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n"
-                f"💳 Payment Methods: **{len(db_payment_list())}**\n"
-                f"🔄 GitHub: **{'✅' if github_sync.is_enabled() else '❌'}** "
-                f"(⬆️{gh['uploads']} ⬇️{gh['downloads']} 👤{gh['sessions_dl']})\n\n"
+                f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n\n"
                 f"✨ Welcome back, boss! 👑",
                 buttons=kb_welcome(uid))
             return
@@ -2693,8 +2720,7 @@ async def on_cb(event):
             db_set_approval(target, "approved", approved_by=get_owner_id())
             await event.answer("✅", alert=True)
             try:
-                tu = db_get_user(target)
-                tn = tu[1] if tu else "User"
+                tu = db_get_user(target); tn = tu[1] if tu else "User"
                 await bot.send_message(target, get_approved_notify_message(tn, target),
                                         buttons=kb_welcome(target))
             except Exception: pass
@@ -2740,7 +2766,6 @@ async def on_cb(event):
                 f"🎁 {L(uid, 'your_limit')}: **{limit}** {L(uid, 'per_post')}\n"
                 f"💎 Balance: **{fb}**\n"
                 f"📡 Auto-Watch: **{'✅' if aw else '🔒'}**\n"
-                f"👤 Real Account: **{ra_lim}** ({ra_src})\n"
                 f"🎁 Referrals: **{rc}** ({re} earned)",
                 buttons=kb_back(uid)); return
 
@@ -2784,8 +2809,7 @@ async def on_cb(event):
             for t in db_list_templates(uid):
                 if t[0] == tid:
                     state = USER_STATES.get(uid, {})
-                    state["custom_emojis"] = t[2].split(",")
-                    state["emoji_mode"] = "custom"
+                    state["custom_emojis"] = t[2].split(","); state["emoji_mode"] = "custom"
                     USER_STATES[uid] = state
                     await event.answer("✅ Loaded", alert=True)
                     if state.get("reaction_count"): await _run_reactions(event, uid)
@@ -2827,8 +2851,7 @@ async def on_cb(event):
 
         # PLANS
         if data == "plans_menu":
-            if not feat_plans(): await event.answer("❌", alert=True); return
-            await safe_edit(event, f"💰 **{L(uid, 'buy_plan').upper()}**\n{DIV}", buttons=kb_plans_menu(uid)); return
+            if not feat_plans(): await event.answer("❌", alert=True); return            await safe_edit(event, f"💰 **{L(uid, 'buy_plan').upper()}**\n{DIV}", buttons=kb_plans_menu(uid)); return
         if data.startswith("plan:"):
             plan_key = data.split(":")[1]
             if plan_key == "free":
@@ -2836,9 +2859,8 @@ async def on_cb(event):
                 await event.answer("✅ Free active", alert=True)
                 await safe_edit(event, "✅ **FREE**", buttons=kb_welcome(uid)); return
             if plan_key not in PLAN_LIMITS: return
-            await safe_edit(event,
-                f"{PLAN_NAMES[plan_key]}\n{DIV}\n\nChoose duration:",
-                buttons=kb_plan_durations(plan_key, uid)); return
+            await safe_edit(event, f"{PLAN_NAMES[plan_key]}\n{DIV}\n\nChoose duration:",
+                            buttons=kb_plan_durations(plan_key, uid)); return
         if data.startswith("pland:"):
             parts = data.split(":"); plan_key = parts[1]; days = int(parts[2])
             if plan_key not in PLAN_LIMITS: return
@@ -2849,15 +2871,12 @@ async def on_cb(event):
                 buttons=kb_payment_methods(plan_key, days, uid)); return
         if data.startswith("pay:"):
             parts = data.split(":"); plan_key = parts[1]; days = int(parts[2]); method_id = int(parts[3])
-            price = get_plan_price(plan_key, days)
-            m = db_payment_get(method_id)
-            if not m:
-                await event.answer("❌ Method not found", alert=True); return
+            price = get_plan_price(plan_key, days); m = db_payment_get(method_id)
+            if not m: await event.answer("❌", alert=True); return
             mid, key, name, number, holder, icon, instr, act, so = m
             await safe_edit(event,
                 f"💳 **PAYMENT**\n{DIV}\n\n📦 {PLAN_NAMES[plan_key]} — {DURATIONS[days]}\n"
-                f"💰 **{price}rs**\n\n{icon} **{name}**\n"
-                f"🔢 `{number}`\n👤 {holder}\n"
+                f"💰 **{price}rs**\n\n{icon} **{name}**\n🔢 `{number}`\n👤 {holder}\n"
                 + (f"\n📝 {instr}\n" if instr else "") +
                 f"\n📸 Payment karke screenshot bhejein.",
                 buttons=[[btn("📸 Send Screenshot",
@@ -3068,33 +3087,27 @@ async def on_cb(event):
             await event.answer("👑")
             busy = sum(1 for t, i in BOT_POOL.items() if isinstance(i, dict) and i.get("busy_until") and i["busy_until"] > datetime.now())
             flooded = sum(1 for t in FLOOD_UNTIL if FLOOD_UNTIL[t] > datetime.now())
-            gh = github_sync.get_stats()
             await safe_edit(event,
                 f"👑 **OWNER PANEL**\n{DIV}\n\n"
                 f"👥 Users: **{db_total_users()}**\n💫 Reactions: **{db_total_reactions()}**\n"
                 f"📅 Today: **{db_reactions_today()}**\n🤖 Bots: **{db_count_visible_bots()}**\n"
-                f"👤 Sessions: **{real_count_available()}/{len(discover_session_files())}**\n"
                 f"🔴 Busy: **{busy}**  🌊 Flooded: **{flooded}**\n"
                 f"📡 Watchers: **{len(db_list_watchers())}**\n"
                 f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n"
-                f"💳 Payment: **{len(db_payment_list())}**\n"
-                f"🔄 GitHub: **⬆️{gh['uploads']} ⬇️{gh['downloads']} 👤{gh['sessions_dl']}**\n"
                 f"🔓 Auto: **{'✅' if is_auto_approve() else '❌'}**\n"
                 f"🎁 Free: **{get_free_count()}**",
                 buttons=kb_owner()); return
 
-        # Owner Info
         if data == "op:owner_info":
             if not OWNER_IS(uid): return
             await safe_edit(event,
                 f"👤 **OWNER INFO**\n{DIV}\n\n"
                 f"👑 Username: @{get_owner_username()}\n"
                 f"🆔 Owner ID: `{get_owner_id()}`\n\n"
-                f"Ye info welcome message aur admin-needed message mein use hoti hai.",
-                buttons=[
-                    [btn("✏️ Edit Username", data=b"oi:edit_uname", style="primary")],
-                    [btn("✏️ Edit Owner ID", data=b"oi:edit_oid", style="primary")],
-                    [btn("🔙 Back", data=b"owner_panel", style="primary")]])
+                f"Ye info welcome aur admin-needed messages mein use hoti hai.",
+                buttons=[[btn("✏️ Edit Username", data=b"oi:edit_uname", style="primary")],
+                         [btn("✏️ Edit Owner ID", data=b"oi:edit_oid", style="primary")],
+                         [btn("🔙 Back", data=b"owner_panel", style="primary")]])
             return
         if data == "oi:edit_uname":
             if not OWNER_IS(uid): return
@@ -3103,7 +3116,7 @@ async def on_cb(event):
         if data == "oi:edit_oid":
             if not OWNER_IS(uid): return
             USER_STATES[uid] = {"step": "oi_wait_oid"}
-            await safe_edit(event, "✏️ Send new owner Telegram ID (numeric):", buttons=kb_owner()); return
+            await safe_edit(event, "✏️ Send new owner Telegram ID:", buttons=kb_owner()); return
 
         # Payment Methods
         if data == "op:pm":
@@ -3114,15 +3127,13 @@ async def on_cb(event):
         if data == "pm:add":
             if not OWNER_IS(uid): return
             USER_STATES[uid] = {"step": "pm_wait_name"}
-            await safe_edit(event, "✏️ Send payment method **name** (e.g., JazzCash):",
+            await safe_edit(event, "✏️ Payment method **name** (e.g., JazzCash):",
                             buttons=[[btn("🔙 Cancel", data=b"op:pm", style="danger")]])
             return
         if data.startswith("pm:view:"):
             if not OWNER_IS(uid): return
-            mid = int(data.split(":")[2])
-            m = db_payment_get(mid)
-            if not m:
-                await event.answer("❌", alert=True); return
+            mid = int(data.split(":")[2]); m = db_payment_get(mid)
+            if not m: await event.answer("❌", alert=True); return
             mid, key, name, number, holder, icon, instr, act, so = m
             await safe_edit(event,
                 f"💳 **METHOD #{mid}**\n{DIV}\n\n"
@@ -3135,72 +3146,59 @@ async def on_cb(event):
             if not OWNER_IS(uid): return
             mid = int(data.split(":")[2])
             USER_STATES[uid] = {"step": "pm_edit_name", "mid": mid}
-            await safe_edit(event, "✏️ Send new name:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]])
-            return
+            await safe_edit(event, "✏️ New name:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]]); return
         if data.startswith("pm:edit_number:"):
             if not OWNER_IS(uid): return
             mid = int(data.split(":")[2])
             USER_STATES[uid] = {"step": "pm_edit_number", "mid": mid}
-            await safe_edit(event, "✏️ Send new number/address:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]])
-            return
+            await safe_edit(event, "✏️ New number/address:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]]); return
         if data.startswith("pm:edit_holder:"):
             if not OWNER_IS(uid): return
             mid = int(data.split(":")[2])
             USER_STATES[uid] = {"step": "pm_edit_holder", "mid": mid}
-            await safe_edit(event, "✏️ Send new holder name:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]])
-            return
+            await safe_edit(event, "✏️ New holder name:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]]); return
         if data.startswith("pm:edit_icon:"):
             if not OWNER_IS(uid): return
             mid = int(data.split(":")[2])
             USER_STATES[uid] = {"step": "pm_edit_icon", "mid": mid}
-            await safe_edit(event, "✏️ Send new icon emoji:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]])
-            return
+            await safe_edit(event, "✏️ New icon emoji:", buttons=[[btn("🔙", data=f"pm:view:{mid}".encode(), style="primary")]]); return
         if data.startswith("pm:toggle:"):
             if not OWNER_IS(uid): return
-            mid = int(data.split(":")[2])
-            db_payment_toggle(mid)
+            mid = int(data.split(":")[2]); db_payment_toggle(mid)
             await event.answer("✅", alert=True)
             m = db_payment_get(mid)
             mid, key, name, number, holder, icon, instr, act, so = m
             await safe_edit(event,
-                f"💳 **METHOD #{mid}**\n{DIV}\n\n{icon} Name: **{name}**\n"
+                f"💳 **METHOD #{mid}**\n{DIV}\n\n{icon} **{name}**\n"
                 f"🔢 `{number}`\n👤 {holder}\n🟢 Active: **{'YES' if act else 'NO'}**",
                 buttons=kb_payment_method_edit(mid)); return
         if data.startswith("pm:del:"):
             if not OWNER_IS(uid): return
-            mid = int(data.split(":")[2])
-            db_payment_delete(mid)
+            mid = int(data.split(":")[2]); db_payment_delete(mid)
             await event.answer("🗑️ Deleted", alert=True)
-            await safe_edit(event, "Deleted",
-                buttons=kb_payment_methods_manage()); return
+            await safe_edit(event, "Deleted", buttons=kb_payment_methods_manage()); return
 
         # Real Accounts
         if data == "op:ra":
             if not OWNER_IS(uid): return
-            files = discover_session_files()
-            total = len(files); avail = real_count_available()
+            files = discover_session_files(); total = len(files); avail = real_count_available()
             flooded = sum(1 for f in files if is_real_flooded(f))
             await safe_edit(event,
-                f"👤 **REAL ACCOUNTS**\n{DIV}\n\n"
-                f"📁 Repo: `jedop62502-hue/Sessions`\n"
+                f"👤 **SESSIONS**\n{DIV}\n\n"
                 f"📊 Total: **{total}**\n🟢 Available: **{avail}**\n🌊 Flooded: **{flooded}**\n\n"
-                f"⚙️ Feature: **{'✅ ON' if feat_realaccounts() else '❌ OFF'}**\n"
-                f"💎 Paid: **{'✅' if is_paid_feature('realaccounts') else '❌'}**\n\n"
-                f"_Add/remove .session files in Sessions repo. Bot auto-pulls on boot._",
+                f"⚙️ Feature: **{'✅ ON' if feat_realaccounts() else '❌ OFF'}**",
                 buttons=[
-                    [btn("🔄 Re-Download", data=b"op:ra_redl", style="success"),
+                    [btn("🔄 Refresh", data=b"op:ra", style="success"),
                      btn("🧪 Test All", data=b"ra:testall", style="primary")],
-                    [btn(f"⚙️ Feature {'OFF' if feat_realaccounts() else 'ON'}",
-                          data=b"ra:toggle", style="danger"),
-                     btn(f"💎 {'FREE' if not is_paid_feature('realaccounts') else 'PAID'}",
-                          data=b"ra:toggle_paid", style="success")],
+                    [btn(f"⚙️ {'OFF' if feat_realaccounts() else 'ON'}",
+                          data=b"ra:toggle", style="danger")],
                     [btn("📋 List", data=b"ra:list", style="primary"),
                      btn("🧹 Clear Flood", data=b"ra:clearflood", style="danger")],
                     [btn("🔙 Back", data=b"owner_panel", style="primary")]])
             return
         if data == "op:ra_redl":
             if not OWNER_IS(uid): return
-            await event.answer("🔄 Downloading...", alert=True)
+            await event.answer("🔄", alert=True)
             ok, msg = github_sync.download_sessions()
             await safe_edit(event, f"✅ **{msg}**",
                 buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
@@ -3215,8 +3213,7 @@ async def on_cb(event):
                 st = "🌊" if is_real_flooded(f) else "🟢"
                 txt += f"{st} `{f}`\n"
             if len(files) > 30: txt += f"\n...+{len(files) - 30}"
-            await safe_edit(event, txt[:4000],
-                buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
+            await safe_edit(event, txt[:4000], buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
         if data == "ra:testall":
             if not OWNER_IS(uid): return
             await event.answer("🧪 Testing...", alert=True)
@@ -3224,8 +3221,7 @@ async def on_cb(event):
             if not files:
                 await safe_edit(event, "❌ No sessions.",
                     buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
-            txt = f"🧪 **TEST RESULTS**\n{DIV}\n\n"
-            ok_n = 0
+            txt = f"🧪 **TEST RESULTS**\n{DIV}\n\n"; ok_n = 0
             for f in files[:15]:
                 c = await get_real_client(f)
                 if c:
@@ -3236,25 +3232,18 @@ async def on_cb(event):
                     except Exception as e: txt += f"⚠️ `{f}` — {str(e)[:30]}\n"
                 else: txt += f"❌ `{f}` — Login failed\n"
             txt += f"\n\n**Working: {ok_n}/{min(len(files), 15)}**"
-            await safe_edit(event, txt[:4000],
-                buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
+            await safe_edit(event, txt[:4000], buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
         if data == "ra:toggle":
             if not OWNER_IS(uid): return
             nv = cfg_toggle("realaccounts_enabled")
             await event.answer(f"{'✅ ON' if nv else '❌ OFF'}", alert=True)
             await safe_edit(event, "Updated", buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
-        if data == "ra:toggle_paid":
-            if not OWNER_IS(uid): return
-            nv = cfg_toggle("paid_realaccounts")
-            await event.answer(f"{'💎 PAID' if nv else '🆓 FREE'}", alert=True)
-            await safe_edit(event, "Updated", buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
         if data == "ra:clearflood":
             if not OWNER_IS(uid): return
             REAL_FLOOD_UNTIL.clear()
-            await event.answer("✅ Cleared", alert=True)
-            await safe_edit(event, "🧹 Flood cleared", buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
+            await event.answer("✅", alert=True)
+            await safe_edit(event, "🧹 Cleared", buttons=[[btn("🔙", data=b"op:ra", style="primary")]]); return
 
-        # RA Plan access
         if data == "op:ra_plans":
             if not OWNER_IS(uid): return
             rows = []
@@ -3266,8 +3255,7 @@ async def on_cb(event):
                                   style="success" if has else "danger")])
             rows.append([btn("🔙 Back", data=b"owner_panel", style="primary")])
             await safe_edit(event,
-                f"⚙️ **PLAN ACCESS + LIMITS**\n{DIV}\n\n"
-                f"Tap plan → ON/OFF + Limit",
+                f"⚙️ **PLAN ACCESS**\n{DIV}\n\nTap plan → ON/OFF + Limit",
                 buttons=rows); return
         if data.startswith("ra:p:"):
             if not OWNER_IS(uid): return
@@ -3275,18 +3263,15 @@ async def on_cb(event):
             has = plan_has_realaccounts(plan); lim = plan_ra_limit(plan)
             await safe_edit(event,
                 f"⚙️ **{PLAN_NAMES[plan]}**\n{DIV}\n\n"
-                f"Feature: **{'✅ ON' if has else '❌ OFF'}**\n"
-                f"Session Limit: **{lim}**",
-                buttons=[[btn(f"{'❌ OFF' if has else '✅ ON'}",
-                              data=f"ra:ptog:{plan}".encode(),
+                f"Feature: **{'✅ ON' if has else '❌ OFF'}**\nSession Limit: **{lim}**",
+                buttons=[[btn(f"{'❌ OFF' if has else '✅ ON'}", data=f"ra:ptog:{plan}".encode(),
                               style="danger" if has else "success")],
                          [btn("✏️ Set Limit", data=f"ra:plim:{plan}".encode(), style="primary")],
                          [btn("🔙 Back", data=b"op:ra_plans", style="primary")]])
             return
         if data.startswith("ra:ptog:"):
             if not OWNER_IS(uid): return
-            plan = data.split(":")[2]
-            nv = toggle_plan_realaccounts(plan)
+            plan = data.split(":")[2]; nv = toggle_plan_realaccounts(plan)
             await event.answer(f"{'✅' if nv else '❌'}", alert=True)
             await safe_edit(event, "Updated",
                 buttons=[[btn("🔙", data=f"ra:p:{plan}".encode(), style="primary")]]); return
@@ -3294,29 +3279,24 @@ async def on_cb(event):
             if not OWNER_IS(uid): return
             plan = data.split(":")[2]
             USER_STATES[uid] = {"step": "ra_set_plan_limit", "plan": plan}
-            await safe_edit(event, f"✏️ Send limit for {PLAN_NAMES[plan]} (0-100):",
+            await safe_edit(event, f"✏️ Limit for {PLAN_NAMES[plan]} (0-100):",
                 buttons=[[btn("🔙 Cancel", data=f"ra:p:{plan}".encode(), style="danger")]]); return
 
-        # GitHub Sync
+        # GitHub (generic label — no mention of real repo names to users)
         if data == "op:ghsync":
             if not OWNER_IS(uid): return
             s = github_sync.get_stats()
             await safe_edit(event,
-                f"🔄 **GITHUB SYNC**\n{DIV}\n\n"
-                f"📦 DB Repo: `{s['repo']}`\n"
-                f"📁 Path: `{s['path']}`\n"
-                f"👤 Sessions: `{s['sessions_repo']}`\n"
-                f"📂 Local dir: `{s['sessions_dir']}`\n\n"
+                f"🔄 **AUTO BACKUP**\n{DIV}\n\n"
                 f"📊 Uploads: **{s['uploads']}**\n"
-                f"📥 DB Downloads: **{s['downloads']}**\n"
-                f"👤 Sessions DL: **{s['sessions_dl']}**\n"
+                f"📥 Downloads: **{s['downloads']}**\n"
                 f"❌ Errors: **{s['errors']}**\n"
                 f"🕒 Last: **{s['last_sync'] or '—'}**\n"
                 f"📝 `{s['last_msg']}`\n"
                 f"🟡 Dirty: **{'YES' if s['dirty'] else 'NO'}**",
-                buttons=[[btn("⬆️ Push", data=b"gh:push", style="success"),
-                          btn("⬇️ Pull DB", data=b"gh:pull", style="primary")],
-                         [btn("👤 Re-DL Sessions", data=b"op:ra_redl", style="success")],
+                buttons=[[btn("⬆️ Push Now", data=b"gh:push", style="success"),
+                          btn("⬇️ Pull Now", data=b"gh:pull", style="primary")],
+                         [btn("👤 Re-Download Sessions", data=b"op:ra_redl", style="success")],
                          [btn("🔙 Back", data=b"owner_panel", style="primary")]])
             return
         if data == "gh:push":
@@ -3332,10 +3312,9 @@ async def on_cb(event):
             await safe_edit(event, f"{'✅' if ok else '❌'} {msg}",
                 buttons=[[btn("🔙", data=b"op:ghsync", style="primary")]]); return
 
-        # Analytics / Revenue / Payments
         if data == "op:analytics":
             if not OWNER_IS(uid): return
-            dd = db_reactions_by_day(7); tu = db_top_users_by_reactions(5); tg = db_top_groups(5)
+            dd = db_reactions_by_day(7); tu = db_top_users_by_reactions(5)
             chart = ""; mx = max([n for _, n in dd], default=1)
             for d, n in dd:
                 bl = int((n / mx) * 10) if mx > 0 else 0
@@ -3382,7 +3361,6 @@ async def on_cb(event):
                 await event.answer("❌", alert=True)
             return
 
-        # Other owner callbacks
         if data == "op:queue":
             if not OWNER_IS(uid): return
             pend = db_list_queue(status="pending")
@@ -3443,8 +3421,7 @@ async def on_cb(event):
             await safe_edit(event, f"🎛️ **FEATURES**\n{DIV}", buttons=kb_features()); return
         if data.startswith("ft:toggle:"):
             if not OWNER_IS(uid): return
-            key = data.split(":", 2)[2]
-            nv = cfg_toggle(key)
+            key = data.split(":", 2)[2]; nv = cfg_toggle(key)
             await event.answer(f"{'✅' if nv else '❌'}", alert=True)
             await safe_edit(event, f"🎛️ **FEATURES**\n{DIV}", buttons=kb_features()); return
         if data == "op:plan_prices":
@@ -3464,8 +3441,7 @@ async def on_cb(event):
             await safe_edit(event, f"💎 **PAID FEATURES**\n{DIV}", buttons=kb_paid_features()); return
         if data.startswith("pf:toggle:"):
             if not OWNER_IS(uid): return
-            feature = data.split(":", 2)[2]
-            nv = cfg_toggle(f"paid_{feature}")
+            feature = data.split(":", 2)[2]; nv = cfg_toggle(f"paid_{feature}")
             await event.answer("💎 PAID" if nv else "🆓 FREE", alert=True)
             await safe_edit(event, f"💎 **PAID**\n{DIV}", buttons=kb_paid_features()); return
         if data == "op:referrals":
@@ -3585,10 +3561,8 @@ async def on_cb(event):
             eff = override if override >= 0 else plan_lim
             await safe_edit(event,
                 f"👤 **RA LIMIT** for `{target}`\n{DIV}\n\n"
-                f"Plan: {PLAN_NAMES.get(plan, plan)}\n"
-                f"Plan limit: **{plan_lim}**\n"
-                f"Override: **{ov_txt}**\n"
-                f"Effective: **{eff}**",
+                f"Plan: {PLAN_NAMES.get(plan, plan)}\nPlan limit: **{plan_lim}**\n"
+                f"Override: **{ov_txt}**\nEffective: **{eff}**",
                 buttons=[[btn("✏️ Set Custom", data=f"um:ra_set:{target}".encode(), style="primary")],
                          [btn("🔄 Reset", data=f"um:ra_reset:{target}".encode(), style="danger")],
                          [btn("🔙", data=f"um:panel:{target}".encode(), style="success")]])
@@ -3601,8 +3575,7 @@ async def on_cb(event):
                 buttons=[[btn("🔙", data=f"um:ra:{target}".encode(), style="danger")]]); return
         if data.startswith("um:ra_reset:"):
             if not OWNER_IS(uid): return
-            target = int(data.split(":")[2])
-            set_user_ra_limit(target, -1)
+            target = int(data.split(":")[2]); set_user_ra_limit(target, -1)
             await event.answer("✅", alert=True)
             await safe_edit(event, "✅ Reset",
                 buttons=[[btn("🔙", data=f"um:ra:{target}".encode(), style="primary")]]); return
@@ -3716,14 +3689,11 @@ async def on_msg(event):
 
             if step == "oi_wait_uname":
                 text = event.text.strip().lstrip("@")
-                if not text:
-                    await event.reply("❌ Invalid"); return
+                if not text: await event.reply("❌ Invalid"); return
                 cfg_set("owner_username", text)
-                OWNER_ENTITY_CACHE["entity"] = None
-                OWNER_ENTITY_CACHE["expires_at"] = None
+                OWNER_ENTITY_CACHE["entity"] = None; OWNER_ENTITY_CACHE["expires_at"] = None
                 del USER_STATES[uid]
                 await event.reply(f"✅ Username set: @{text}", buttons=kb_owner()); return
-
             if step == "oi_wait_oid":
                 text = event.text.strip()
                 if not text.lstrip("-").isdigit():
@@ -3731,20 +3701,16 @@ async def on_msg(event):
                 cfg_set("owner_id", int(text))
                 del USER_STATES[uid]
                 await event.reply(f"✅ Owner ID: `{text}`", buttons=kb_owner()); return
-
             if step == "pm_wait_name":
-                state["pm_name"] = event.text.strip()[:40]
-                state["step"] = "pm_wait_number"
+                state["pm_name"] = event.text.strip()[:40]; state["step"] = "pm_wait_number"
                 USER_STATES[uid] = state
                 await event.reply("✏️ Send **number / address**:"); return
             if step == "pm_wait_number":
-                state["pm_number"] = event.text.strip()[:100]
-                state["step"] = "pm_wait_holder"
+                state["pm_number"] = event.text.strip()[:100]; state["step"] = "pm_wait_holder"
                 USER_STATES[uid] = state
                 await event.reply("✏️ Send **holder name**:"); return
             if step == "pm_wait_holder":
-                state["pm_holder"] = event.text.strip()[:60]
-                state["step"] = "pm_wait_icon"
+                state["pm_holder"] = event.text.strip()[:60]; state["step"] = "pm_wait_icon"
                 USER_STATES[uid] = state
                 await event.reply("✏️ Send **icon emoji** (or 'skip' for 💳):"); return
             if step == "pm_wait_icon":
@@ -3754,96 +3720,70 @@ async def on_msg(event):
                 mid = db_payment_add(key, state["pm_name"], state["pm_number"], state["pm_holder"], icon)
                 del USER_STATES[uid]
                 await event.reply(f"✅ Method added (#{mid})", buttons=kb_payment_methods_manage()); return
-
             if step == "pm_edit_name":
-                text = event.text.strip()
-                mid = state["mid"]
-                db_payment_update(mid, name=text[:40])
-                del USER_STATES[uid]
-                m = db_payment_get(mid)
-                await event.reply(f"✅ Name updated", buttons=kb_payment_method_edit(mid)); return
+                text = event.text.strip(); mid = state["mid"]
+                db_payment_update(mid, name=text[:40]); del USER_STATES[uid]
+                await event.reply(f"✅ Updated", buttons=kb_payment_method_edit(mid)); return
             if step == "pm_edit_number":
-                text = event.text.strip()
-                mid = state["mid"]
-                db_payment_update(mid, number=text[:100])
-                del USER_STATES[uid]
-                await event.reply(f"✅ Number updated", buttons=kb_payment_method_edit(mid)); return
+                text = event.text.strip(); mid = state["mid"]
+                db_payment_update(mid, number=text[:100]); del USER_STATES[uid]
+                await event.reply(f"✅ Updated", buttons=kb_payment_method_edit(mid)); return
             if step == "pm_edit_holder":
-                text = event.text.strip()
-                mid = state["mid"]
-                db_payment_update(mid, holder=text[:60])
-                del USER_STATES[uid]
-                await event.reply(f"✅ Holder updated", buttons=kb_payment_method_edit(mid)); return
+                text = event.text.strip(); mid = state["mid"]
+                db_payment_update(mid, holder=text[:60]); del USER_STATES[uid]
+                await event.reply(f"✅ Updated", buttons=kb_payment_method_edit(mid)); return
             if step == "pm_edit_icon":
-                text = event.text.strip()
-                mid = state["mid"]
-                db_payment_update(mid, icon=text[:4])
-                del USER_STATES[uid]
-                await event.reply(f"✅ Icon updated", buttons=kb_payment_method_edit(mid)); return
-
+                text = event.text.strip(); mid = state["mid"]
+                db_payment_update(mid, icon=text[:4]); del USER_STATES[uid]
+                await event.reply(f"✅ Updated", buttons=kb_payment_method_edit(mid)); return
             if step == "ra_set_plan_limit":
                 text = event.text.strip()
-                if not text.isdigit():
-                    await event.reply("❌ Number"); return
-                plan = state["plan"]
-                cfg_set(f"plan_ra_limit_{plan}", int(text))
+                if not text.isdigit(): await event.reply("❌ Number"); return
+                plan = state["plan"]; cfg_set(f"plan_ra_limit_{plan}", int(text))
                 del USER_STATES[uid]
-                await event.reply(f"✅ {PLAN_NAMES[plan]}: {text}",
-                    buttons=[[btn("🔙", data=f"ra:p:{plan}".encode(), style="primary")]]); return
+                await event.reply(f"✅ Set: {text}", buttons=[[btn("🔙", data=f"ra:p:{plan}".encode(), style="primary")]]); return
             if step == "ra_set_user_limit":
                 text = event.text.strip()
-                if not text.lstrip("-").isdigit():
-                    await event.reply("❌ Number"); return
-                target = state["target"]
-                set_user_ra_limit(target, int(text))
+                if not text.lstrip("-").isdigit(): await event.reply("❌ Number"); return
+                target = state["target"]; set_user_ra_limit(target, int(text))
                 del USER_STATES[uid]
-                await event.reply(f"✅ Set {text}",
-                    buttons=[[btn("🔙", data=f"um:ra:{target}".encode(), style="primary")]]); return
-
+                await event.reply(f"✅ Set {text}", buttons=[[btn("🔙", data=f"um:ra:{target}".encode(), style="primary")]]); return
             if step == "pp_edit_price":
                 text = event.text.strip()
-                if not text.isdigit():
-                    await event.reply("❌ Number"); return
+                if not text.isdigit(): await event.reply("❌ Number"); return
                 cfg_set(f"price_{state['plan']}_{state['days']}", text)
                 del USER_STATES[uid]
                 await event.reply("✅ Updated!", buttons=kb_plan_prices_durations(state['plan'])); return
             if step == "fc_wait_channel":
                 ch = event.text.strip()
-                if not ch.startswith("@"):
-                    await event.reply("❌ @"); return
+                if not ch.startswith("@"): await event.reply("❌ @"); return
                 db_add_force_channel(ch, f"https://t.me/{ch[1:]}", ch)
                 del USER_STATES[uid]
                 await event.reply(f"✅ Added", buttons=kb_force_channels()); return
             if step == "team_wait_id":
                 text = event.text.strip()
-                if not text.lstrip("-").isdigit():
-                    await event.reply("❌ ID"); return
+                if not text.lstrip("-").isdigit(): await event.reply("❌ ID"); return
                 USER_STATES[uid] = {"step": "team_wait_commission", "target": int(text)}
-                await event.reply("Send commission %:", buttons=kb_owner()); return
+                await event.reply("Commission %:", buttons=kb_owner()); return
             if step == "team_wait_commission":
                 text = event.text.strip()
-                if not text.isdigit():
-                    await event.reply("❌ Number"); return
+                if not text.isdigit(): await event.reply("❌ Number"); return
                 db_add_team_member(state['target'], "reseller", int(text))
                 del USER_STATES[uid]
                 await event.reply("✅ Added", buttons=kb_team()); return
             if step == "cp_wait_name":
-                state["cp_name"] = event.text.strip()[:20]
-                state["step"] = "cp_wait_emojis"
+                state["cp_name"] = event.text.strip()[:20]; state["step"] = "cp_wait_emojis"
                 USER_STATES[uid] = state
                 await event.reply("✏️ Emojis:"); return
             if step == "cp_wait_emojis":
                 emojis = [p.strip() for p in re.split(r"[,\s]+", event.text.strip()) if p.strip() in ALL_REACTIONS]
-                if not emojis:
-                    await event.reply("❌ No emojis."); return
-                state["cp_emojis"] = emojis[:30]
-                state["step"] = "cp_wait_price"
+                if not emojis: await event.reply("❌ No emojis."); return
+                state["cp_emojis"] = emojis[:30]; state["step"] = "cp_wait_price"
                 USER_STATES[uid] = state
-                await event.reply("💰 Price in Rs (0 free):"); return
+                await event.reply("💰 Price (0 free):"); return
             if step == "cp_wait_price":
                 text = event.text.strip()
-                if not text.isdigit():
-                    await event.reply("❌ Number"); return
+                if not text.isdigit(): await event.reply("❌ Number"); return
                 price = int(text)
                 db_add_custom_pack(state.get("cp_name", "Custom"), state.get("cp_emojis", []),
                                     price, 1 if price > 0 else 0)
@@ -3861,29 +3801,24 @@ async def on_msg(event):
                 await msg.edit(f"✅ {total} | ✅{ok} | ❌{fail}"); return
             if step == "wait_setfree":
                 text = event.text.strip()
-                if not text.isdigit():
-                    await event.reply("❌ Number"); return
-                cfg_set("free_count", int(text))
-                del USER_STATES[uid]
+                if not text.isdigit(): await event.reply("❌ Number"); return
+                cfg_set("free_count", int(text)); del USER_STATES[uid]
                 await event.reply(f"✅ Free: {text}", buttons=kb_owner()); return
             if step == "wait_add_user_id":
                 text = event.text.strip()
-                if not text.lstrip("-").isdigit():
-                    await event.reply("❌ ID"); return
+                if not text.lstrip("-").isdigit(): await event.reply("❌ ID"); return
                 db_set_approval(int(text), "approved", approved_by=get_owner_id())
                 del USER_STATES[uid]
                 await event.reply(f"✅ Granted", buttons=kb_owner()); return
             if step == "user_set_limit":
                 text = event.text.strip()
-                if not text.isdigit():
-                    await event.reply("❌ Number"); return
+                if not text.isdigit(): await event.reply("❌ Number"); return
                 db_set_user_limit(state['target'], int(text))
                 del USER_STATES[uid]
                 await event.reply("✅ Set", buttons=kb_user_manage(state['target'])); return
             if step == "user_add_balance":
                 text = event.text.strip()
-                if not text.lstrip("-").isdigit():
-                    await event.reply("❌ Number"); return
+                if not text.lstrip("-").isdigit(): await event.reply("❌ Number"); return
                 db_add_free_balance(state['target'], int(text))
                 del USER_STATES[uid]
                 await event.reply("✅ Added", buttons=kb_user_manage(state['target'])); return
@@ -3921,8 +3856,7 @@ async def on_msg(event):
                 del USER_STATES[uid]
                 await event.reply(f"✅ Job #{qid} for {target.strftime('%d %b %H:%M')}",
                                     buttons=kb_queue_menu(uid))
-            except Exception as e:
-                await event.reply(f"❌ {str(e)[:60]}")
+            except Exception as e: await event.reply(f"❌ {str(e)[:60]}")
             return
         if step == "bulk_wait_chat":
             state["b_chat"] = event.text.strip(); state["step"] = "bulk_wait_posts"
@@ -3930,15 +3864,13 @@ async def on_msg(event):
             await event.reply("✅ Post links (one per line):", buttons=kb_back(uid)); return
         if step == "bulk_wait_posts":
             posts = [p.strip() for p in re.split(r"[,\n]+", event.text.strip()) if p.strip()]
-            if not posts:
-                await event.reply("❌ No posts"); return
+            if not posts: await event.reply("❌ No posts"); return
             state["b_posts"] = posts; state["step"] = "bulk_wait_count"
             USER_STATES[uid] = state
             await event.reply(f"✅ {len(posts)} posts. Reactions per post?:", buttons=kb_reaction_count(uid)); return
         if step == "wait_payment_screenshot":
             plan = state.get("plan"); days = state.get("days"); mid = state.get("method_id")
-            price = get_plan_price(plan, days)
-            m = db_payment_get(mid)
+            price = get_plan_price(plan, days); m = db_payment_get(mid)
             method_name = m[2] if m else f"#{mid}"
             text = event.text.strip()
             ss = "photo" if (event.photo or event.document) else text
@@ -3958,15 +3890,14 @@ async def on_msg(event):
             await event.reply("✏️ Emojis:"); return
         if step == "tpl_wait_emojis":
             emojis = [p.strip() for p in re.split(r"[,\s]+", event.text.strip()) if p.strip() in ALL_REACTIONS]
-            if not emojis:
-                await event.reply("❌ No emojis."); return
+            if not emojis: await event.reply("❌ No emojis."); return
             db_add_template(uid, state.get("tpl_name", "Template"), emojis[:20])
             del USER_STATES[uid]
             await event.reply("✅ Saved!", buttons=kb_templates_menu(uid)); return
         if step == "wait_channel":
             state["channel_link"] = event.text.strip(); state["step"] = "wait_post"
             USER_STATES[uid] = state
-            await event.reply(f"✅ Post link:", buttons=kb_back(uid)); return
+            await event.reply("✅ Post link:", buttons=kb_back(uid)); return
         if step == "wait_post":
             state["post_link"] = event.text.strip(); state["step"] = "wait_count"
             USER_STATES[uid] = state
@@ -3977,8 +3908,7 @@ async def on_msg(event):
             for p in re.split(r"[,\s]+", event.text.strip()):
                 p = p.strip()
                 if p and p in ALL_REACTIONS and p not in emojis: emojis.append(p)
-            if not emojis:
-                await event.reply("❌ No emojis.", buttons=kb_back(uid)); return
+            if not emojis: await event.reply("❌ No emojis.", buttons=kb_back(uid)); return
             state["custom_emojis"] = emojis[:30]; state["emoji_mode"] = "custom"
             USER_STATES[uid] = state
             await event.reply("✨ Starting...")
@@ -3990,8 +3920,7 @@ async def on_msg(event):
             await event.reply("✅ Count (1-50):", buttons=kb_back(uid)); return
         if step == "watch_wait_count":
             text = event.text.strip()
-            if not text.isdigit():
-                await event.reply("❌ Number"); return
+            if not text.isdigit(): await event.reply("❌ Number"); return
             state["watch_count"] = min(int(text), 50); state["step"] = "watch_wait_emoji"
             USER_STATES[uid] = state
             await event.reply(f"✅ Count: {state['watch_count']}",
@@ -4001,21 +3930,18 @@ async def on_msg(event):
             return
         if step == "watch_wait_custom_emoji":
             emojis = [p.strip() for p in re.split(r"[,\s]+", event.text.strip()) if p.strip() in ALL_REACTIONS]
-            if not emojis:
-                await event.reply("❌ No emojis."); return
+            if not emojis: await event.reply("❌ No emojis."); return
             state["watch_custom_emojis"] = emojis[:30]; USER_STATES[uid] = state
             await _finalize_watch_add(event, uid); return
         if step == "watch_edit_count":
             text = event.text.strip()
-            if not text.isdigit():
-                await event.reply("❌ Number"); return
+            if not text.isdigit(): await event.reply("❌ Number"); return
             wid = state["wid"]; db_update_watcher(wid, reaction_count=min(int(text), 200))
             del USER_STATES[uid]
             await event.reply("✅ Updated!", buttons=[[btn("🔙", data=f"watch:manage:{wid}".encode(), style="primary")]]); return
         if step == "watch_edit_emoji":
             emojis = [p.strip() for p in re.split(r"[,\s]+", event.text.strip()) if p.strip() in ALL_REACTIONS]
-            if not emojis:
-                await event.reply("❌ No emojis."); return
+            if not emojis: await event.reply("❌ No emojis."); return
             wid = state["wid"]; db_update_watcher(wid, emoji_mode="custom", custom_emojis=",".join(emojis[:30]))
             del USER_STATES[uid]
             await event.reply("✅ Updated!", buttons=[[btn("🔙", data=f"watch:manage:{wid}".encode(), style="primary")]]); return
@@ -4077,7 +4003,6 @@ async def _run_reactions(event, uid):
         await event.answer("❌ Missing data", alert=True); return
     USER_LAST_REQUEST[uid] = now
 
-    # ✅ Real Accounts check
     user_ra_limit, ra_src = get_user_ra_limit(uid)
     use_real = user_has_realaccounts(uid) and real_count_available() > 0 and user_ra_limit > 0
 
@@ -4098,24 +4023,16 @@ async def _run_reactions(event, uid):
             await safe_edit(event,
                 f"👤 **REAL ACCOUNTS MODE**\n{DIV}\n\n"
                 f"🎯 Sending **{real_count}** reactions\n"
-                f"🔓 No admin needed ✅\n"
-                f"👥 Available: **{real_count_available()}**\n"
-                f"⚙️ Your limit: **{user_ra_limit}** ({ra_src})\n\n"
-                f"⚡ Processing...")
+                f"🔓 No admin needed ✅\n\n⚡ Processing...")
             async def on_prog(i, total, ok):
                 if i % 5 == 0 or i == total:
-                    bar = progress_bar(i, total)
-                    try:
-                        await event.edit(f"👤 **REAL ACCOUNTS**\n{DIV}\n\n"
-                                          f"📊 `{bar}` {i}/{total}\n✅ Success: **{ok}**")
-                    except Exception: pass
+                    await anim_progress(event, i, total, "✨", f"✅ Success: {ok}")
             res = await send_reactions_real(target, msg_id, real_count,
                                             emoji_pool=emoji_pool, on_progress=on_prog)
             bar = progress_bar(res["ok"], max(real_count, 1))
             await safe_edit(event,
-                f"🎉 **COMPLETE!** 🎉\n{STAR_LINE}\n\n"
-                f"👤 Mode: **Real Accounts**\n📩 Post: **#{msg_id}**\n\n"
-                f"{DIV}\n🎯 Requested: **{real_count}**\n"
+                f"🎉 **COMPLETE!** 🎉\n{STAR_LINE}\n\n👤 Mode: **Real Accounts**\n"
+                f"📩 Post: **#{msg_id}**\n\n{DIV}\n🎯 Requested: **{real_count}**\n"
                 f"✅ Success: **{res['ok']}**\n❌ Failed: **{res['fail']}**\n"
                 f"🌊 Flooded: **{res['flooded']}**\n{DIV}\n\n"
                 f"🚀 **{bar}** {res['ok']}/{real_count}",
@@ -4135,16 +4052,13 @@ async def _run_reactions(event, uid):
 async def start_health_server():
     async def health_handler(request):
         return web.Response(text="OK", status=200)
-
     async def status_handler(request):
         return web.json_response({
             "status": "online",
             "uptime": int(time.time() - _start_time),
             "task_running": TASK_RUNNING,
             "users": db_total_users(),
-            "sessions": real_count_available(),
         })
-
     app = web.Application()
     app.router.add_get("/", health_handler)
     app.router.add_get("/health", health_handler)
@@ -4159,16 +4073,12 @@ async def start_health_server():
 
 # ══════════════════════ MAIN ══════════════════════
 async def main():
-    global admin_client, backup_client, TASK_RUNNING, TASK_OWNER_UID, bot
+    global admin_client, backup_client, TASK_RUNNING, TASK_OWNER_UID
     try:
         loop = asyncio.get_running_loop()
         loop.set_exception_handler(global_exception_handler)
     except Exception: pass
     db_init()
-
-    # Re-init bot after DB (owner_id now available)
-    bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
-
     BOT_POOL.clear(); FLOOD_UNTIL.clear()
     TASK_RUNNING = False; TASK_OWNER_UID = None
     D("Cleared stale state", "pool")
@@ -4188,14 +4098,13 @@ async def main():
     me = await admin_client.get_me()
     bots, added = sync_bots()
     gh = github_sync.get_stats()
-    D_sep("GHOST REACTION BOT — v64 FULL")
+    D_sep("GHOST REACTION BOT — v65 FINAL")
     D(f"Owner: {me.first_name} (@{me.username})", "ok")
     D(f"Owner from cfg: @{get_owner_username()} (ID {get_owner_id()})", "ok")
     D(f"Bots: {db_count_visible_bots()} / {db_count_bots()}", "ok")
     D(f"Sessions: {real_count_available()}/{len(discover_session_files())}", "real")
     D(f"Payment Methods: {len(db_payment_list(active_only=False))}", "pay")
-    D(f"GitHub DB: {'✅' if gh['enabled'] else '❌'} ({gh['repo']})", "gh")
-    D(f"GitHub Sessions: {gh['sessions_repo']} ({gh['sessions_dl']} files)", "gh")
+    D(f"GitHub DB: {'✅' if gh['enabled'] else '❌'}", "gh")
     D(f"Languages: {len(LANGUAGES)}", "lang")
     D("Bot online ✨", "ok")
 
@@ -4206,19 +4115,17 @@ async def main():
     asyncio.create_task(queue_loop())
     asyncio.create_task(daily_summary_loop())
 
-    # FloodWait-safe start
     while True:
         try:
             await bot.start(bot_token=BOT_TOKEN)
             break
         except FloodWaitError as e:
             wait_sec = e.seconds + 30
-            D(f"⚠️ Bot FloodWait — {wait_sec}s ({wait_sec//60}min)", "flood")
+            D(f"⚠️ Bot FloodWait — {wait_sec}s", "flood")
             await asyncio.sleep(wait_sec)
         except Exception as e:
             D(f"⚠️ Bot start error: {str(e)[:100]}", "fail")
             await asyncio.sleep(30)
-
     try:
         await bot.run_until_disconnected()
     finally:
