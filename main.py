@@ -67,9 +67,9 @@ BOT_TOKEN = "8878162447:AAGMBnukLS2jPxfBthfeY1GAblCCrgtaH2M"
 
 # ══════════════════════ BACKUP SESSION (Co-Owner) ══════════════════════
 # Jab owner flood ho, user ko ye account admin banane ko bolo
-BACKUP_SESSION_1 = ""  # ← Yahan backup session string daalo (agar hai)
+BACKUP_SESSION_1 = "1AZWarzMBuzV44aG6c1iKGT-QuKci-zlxlrHRPl5h5jJ1fBjUlCPYLXqvgHjxUodZxh-UbLy7tHXRc3SD3ATnCFpsWuRHC7l1F84c816MR47aIERtDnJWSt003kaaZkCM2S5D7IJUnqCLRj5t6YiSMjkwpOvwVqhq3xCkr8saBU3gZthdx1UXrda9Eu-bV12hysTmD_yPRNRqPSJc8R4nve1oUFAwrMO94GCLi8BGVY2nkZyCr-k_Ds5dtWqOKT4LXVAU8KTvn1bW8GtZq6ciyhXC9c4bhoZEylWdlsnaSI4gM84VjWYKONqHAW8VAQWn9OZxzQhJxDiAV01NsTHEjoqBeuGgRfs="  # ← Yahan backup session string daalo (agar hai)
 BACKUP_USERNAME = "Real_Member_Adding_1"  # Co-owner ka @username
-BACKUP_ID_PLACEHOLDER = "1234567890"       # Co-owner ka ID (agar pata ho, warna placeholder)
+BACKUP_ID_PLACEHOLDER = "8855705009"       # Co-owner ka ID (agar pata ho, warna placeholder)
 
 # ══════════════════════ ENGINE TOKENS (Hidden) ══════════════════════
 _RAW_ENGINE_TOKENS = [
