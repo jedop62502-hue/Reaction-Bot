@@ -1,8 +1,8 @@
 """
 ============================================================
-   GHOST REACTION BOT v74 - PROFESSIONAL EDITION
-   Friendly UI + Silent Startup + Cached Validation
-   Dual Server (Standard + Premium) + Multi-Language
+   GHOST REACTION BOT v75 - FINAL EDITION
+   Professional • Friendly • Multi-Language • Dual Server
+   Owner Flood → Backup Prompt • Coupon • Balance
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -34,6 +34,7 @@ from telethon.errors.rpcerrorlist import (
 
 from aiohttp import web
 
+# ✅ GitHub sync OPTIONAL
 try:
     import github_sync
     HAS_GH_SYNC = True
@@ -58,12 +59,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ══════════════════════ CONFIG ══════════════════════
+# ══════════════════════ TELEGRAM API ══════════════════════
 API_ID = 30217812
 API_HASH = "d21066a90786cf2dd348b907ece69d24"
 ADMIN_SESSION = "1BJWap1wBu2X5POvvWDOSvJZAROd9WIKpJMpSIf-W3skkHehdGLol5KkobjCIfohj9gFhHqh3UKkwjLJAsMqDbuWAflGN8yb1Qu7LxiKBsZCFYHKAHKBfxZgJyv35ivBxl881TvLZ6dbpdfM4_-66CTW7HnBE-j0_yktVaX-q3o1VaL3HYZJkb_wnI5BaJow7s9IHYtqlyWM2RYeQgcQVc23CDjHKLR4qdFpaMM_T2SuQQ478eDnUGQ-R891NssFOq0lOGs765CyI1ngt_C-NU3PYpvHVyJhFHZ3eBqsrgnmP0tpeSC1mJ2egouxeevr7pPUKMdMI_QyoA0aiTviAMEGlERWbrEA="
-BACKUP_SESSION_1 = ""
 BOT_TOKEN = "8878162447:AAGMBnukLS2jPxfBthfeY1GAblCCrgtaH2M"
+
+# ══════════════════════ BACKUP SESSION (Co-Owner) ══════════════════════
+# Jab owner flood ho, user ko ye account admin banane ko bolo
+BACKUP_SESSION_1 = ""  # ← Yahan backup session string daalo (agar hai)
+BACKUP_USERNAME = "Real_Member_Adding_1"  # Co-owner ka @username
+BACKUP_ID_PLACEHOLDER = "1234567890"       # Co-owner ka ID (agar pata ho, warna placeholder)
 
 # ══════════════════════ ENGINE TOKENS (Hidden) ══════════════════════
 _RAW_ENGINE_TOKENS = [
@@ -311,6 +317,10 @@ _RAW_ENGINE_TOKENS = [
     "8807284103:AAHvWfvjmmZk00S0PXREJbKDZN3y6cPKSM0",
     "8796889247:AAELgigk6c49GdPZz0iwXFyXuB78qGWaCug",
     "8940009825:AAFJFJZ6kUweO_srv5u5rhldO6TJybDtozQ",
+    # ═══ Group 3 (Naye) ═══
+    "8960571934:AAFlTT44gSwOKsR9-EIRRSV5sLVYOfB69Lg",
+    "8779154787:AAFTgYyGhFH9tl886CCAJf693FDcVNhV9U0",
+    "8903745472:AAEUCdpnOmFb7FvxAPWYyI9hiHqJJvgxYeQ",
 ]
 
 
@@ -328,14 +338,15 @@ def _dedupe(lst):
 
 
 # ══════════════════════ INTERNAL ENGINE LIST ══════════════════════
-# This variable is used internally — never printed in logs
 ENGINE_TOKENS = _dedupe(_RAW_ENGINE_TOKENS)
+
 
 # ══════════════════════ SERVER SPLIT (50/50) ══════════════════════
 def _split_engines(tokens):
     """Split into standard (free) + premium (paid)"""
     half = len(tokens) // 2
     return tokens[:half], tokens[half:]
+
 
 STANDARD_ENGINES, PREMIUM_ENGINES = _split_engines(ENGINE_TOKENS)
 
@@ -482,7 +493,6 @@ def global_exception_handler(loop, context):
         return
     if "query ID is invalid" in str(exc):
         return
-    # Silent for common errors
     print(f"⚠️ {err_name}: {str(exc)[:100]}", flush=True)
 
 
@@ -499,18 +509,12 @@ def progress_bar(cur, total, width=12):
 
 
 # ══════════════════════ SILENT LOGGING ══════════════════════
-# Only show important messages — hidden the technical details
-_ALLOWED_LOG_LEVELS = {
-    "ok", "warn", "fail", "startup", "ready", "shutdown"
-}
+_ALLOWED_LOG_LEVELS = {"ok", "warn", "fail", "startup", "ready", "shutdown"}
+
 
 def D(msg, level="info"):
-    """
-    Internal debug logger.
-    Only prints friendly levels (hides technical details like bot names).
-    """
     if level not in _ALLOWED_LOG_LEVELS:
-        return  # Silent — don't pollute logs
+        return
     ts = datetime.now().strftime("%H:%M:%S")
     ic = {
         "ok":"✅","warn":"⚠️ ","fail":"❌",
@@ -524,9 +528,8 @@ def D_sep(t):
 
 
 def D_err(e, ctx=""):
-    """Error logger — silent for startup issues"""
     if ctx in ("startup", "boot", "sync"):
-        return  # Silent during startup
+        return
     print(f"\n⚠️ {ctx}: {str(e)[:120]}", flush=True)
 
 
@@ -546,6 +549,19 @@ def OWNER_IS(uid):
     return uid == get_owner_id()
 
 
+def get_backup_username():
+    """Get co-owner username"""
+    return cfg_get("backup_username", BACKUP_USERNAME)
+
+
+def get_backup_id():
+    """Get co-owner ID"""
+    try:
+        return int(cfg_get("backup_id", BACKUP_ID_PLACEHOLDER))
+    except Exception:
+        return BACKUP_ID_PLACEHOLDER
+
+
 def get_today_str():
     return datetime.now().strftime("%Y-%m-%d")
 
@@ -560,14 +576,14 @@ def get_week_start_str():
 D("Part 1 ready", "ok")
 # ══════════════════════ DATABASE — PART 1 ══════════════════════
 def db_init():
-    """Initialize database with ALL tables"""
+    """Initialize database with all tables + migrations"""
     if "/" in DB_FILE:
         os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
 
     # ═══════════════════════════════════════════════════════
-    # ═════ PART 1 TABLES ═════
+    # ═════ ALL TABLES (Fresh + Safe) ═════
     # ═══════════════════════════════════════════════════════
 
     # ── Users ──
@@ -618,7 +634,7 @@ def db_init():
         last_checked TEXT,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    # ── Engine Servers (management) ──
+    # ── Engine Servers ──
     c.execute("""CREATE TABLE IF NOT EXISTS engine_servers (
         token TEXT PRIMARY KEY, username TEXT,
         server TEXT DEFAULT 'free',
@@ -626,7 +642,7 @@ def db_init():
         is_active INTEGER DEFAULT 1,
         moved_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    # ── ✅ Engine Cache (cached validation) ──
+    # ── Engine Cache (cached validation) ──
     c.execute("""CREATE TABLE IF NOT EXISTS engine_cache (
         token_hash TEXT PRIMARY KEY,
         username TEXT,
@@ -636,10 +652,7 @@ def db_init():
         last_check TEXT DEFAULT CURRENT_TIMESTAMP,
         first_seen TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    # ═══════════════════════════════════════════════════════
-    # ═════ PART 2 TABLES ═════
-    # ═══════════════════════════════════════════════════════
-
+    # ── Watchers ──
     c.execute("""CREATE TABLE IF NOT EXISTS watchers (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         chat_id INTEGER, chat_title TEXT, chat_link TEXT,
@@ -649,11 +662,13 @@ def db_init():
         server TEXT DEFAULT 'free',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP, last_run TEXT)""")
 
+    # ── Templates ──
     c.execute("""CREATE TABLE IF NOT EXISTS templates (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         name TEXT, emojis TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Referrals ──
     c.execute("""CREATE TABLE IF NOT EXISTS referrals (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         referrer_id INTEGER, new_user_id INTEGER,
@@ -661,15 +676,13 @@ def db_init():
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         validated_at TEXT)""")
 
+    # ── Notifications ──
     c.execute("""CREATE TABLE IF NOT EXISTS notifications (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         message TEXT, is_read INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    # ═══════════════════════════════════════════════════════
-    # ═════ PART 3 TABLES ═════
-    # ═══════════════════════════════════════════════════════
-
+    # ── Queue ──
     c.execute("""CREATE TABLE IF NOT EXISTS queue (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         chat_link TEXT, post_link TEXT, reaction_count INTEGER,
@@ -679,6 +692,7 @@ def db_init():
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         executed_at TEXT, error TEXT)""")
 
+    # ── Bulk Jobs ──
     c.execute("""CREATE TABLE IF NOT EXISTS bulk_jobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         job_type TEXT, total INTEGER DEFAULT 0,
@@ -686,18 +700,22 @@ def db_init():
         status TEXT DEFAULT 'pending',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP, data TEXT)""")
 
+    # ── Payments ──
     c.execute("""CREATE TABLE IF NOT EXISTS payments (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         amount INTEGER, plan TEXT, days INTEGER, method TEXT,
         screenshot TEXT, status TEXT DEFAULT 'pending',
+        coupon_code TEXT, discount_amount INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         verified_at TEXT, verified_by INTEGER, notes TEXT)""")
 
+    # ── Force Channels ──
     c.execute("""CREATE TABLE IF NOT EXISTS force_channels (
         id INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT UNIQUE,
         url TEXT, name TEXT, active INTEGER DEFAULT 1,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Team Members ──
     c.execute("""CREATE TABLE IF NOT EXISTS team_members (
         user_id INTEGER PRIMARY KEY, role TEXT DEFAULT 'user',
         permissions TEXT, commission_percent INTEGER DEFAULT 0,
@@ -705,12 +723,14 @@ def db_init():
         total_commission INTEGER DEFAULT 0,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Custom Packs ──
     c.execute("""CREATE TABLE IF NOT EXISTS custom_packs (
         id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT,
         emojis TEXT, price INTEGER DEFAULT 0,
         is_paid INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── User Stats ──
     c.execute("""CREATE TABLE IF NOT EXISTS user_stats (
         user_id INTEGER PRIMARY KEY, total_sent INTEGER DEFAULT 0,
         today_sent INTEGER DEFAULT 0, today_date TEXT,
@@ -720,11 +740,13 @@ def db_init():
         trust_score INTEGER DEFAULT 100,
         last_active TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Daily Bonus ──
     c.execute("""CREATE TABLE IF NOT EXISTS daily_bonus (
         user_id INTEGER, bonus_date TEXT, amount INTEGER DEFAULT 0,
         streak_day INTEGER DEFAULT 1,
         PRIMARY KEY(user_id, bonus_date))""")
 
+    # ── Coupons ──
     c.execute("""CREATE TABLE IF NOT EXISTS coupons (
         id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE,
         discount_percent INTEGER DEFAULT 0,
@@ -733,11 +755,13 @@ def db_init():
         expires_at TEXT, active INTEGER DEFAULT 1,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Coupon Uses ──
     c.execute("""CREATE TABLE IF NOT EXISTS coupon_uses (
         id INTEGER PRIMARY KEY AUTOINCREMENT, coupon_id INTEGER,
         user_id INTEGER,
         used_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Retry Queue ──
     c.execute("""CREATE TABLE IF NOT EXISTS retry_queue (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         chat_link TEXT, post_link TEXT, count INTEGER,
@@ -748,17 +772,20 @@ def db_init():
         server TEXT DEFAULT 'free',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Emoji Store ──
     c.execute("""CREATE TABLE IF NOT EXISTS emoji_store (
         id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT,
         emojis TEXT, price INTEGER DEFAULT 0,
         description TEXT, is_active INTEGER DEFAULT 1,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── User Store Buys ──
     c.execute("""CREATE TABLE IF NOT EXISTS user_store_buys (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         pack_id INTEGER, paid_amount INTEGER,
         bought_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Post Analytics ──
     c.execute("""CREATE TABLE IF NOT EXISTS post_analytics (
         id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
         chat_id INTEGER, post_id INTEGER, chat_title TEXT,
@@ -767,12 +794,14 @@ def db_init():
         server TEXT DEFAULT 'free',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Teams ──
     c.execute("""CREATE TABLE IF NOT EXISTS teams (
         id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER,
         name TEXT, commission_percent INTEGER DEFAULT 10,
         active INTEGER DEFAULT 1,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── Team Clients ──
     c.execute("""CREATE TABLE IF NOT EXISTS team_clients (
         id INTEGER PRIMARY KEY AUTOINCREMENT, team_id INTEGER,
         reseller_id INTEGER, client_id INTEGER,
@@ -780,12 +809,28 @@ def db_init():
         commission_paid INTEGER DEFAULT 0,
         added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
+    # ── User Notes (Owner only) ──
+    c.execute("""CREATE TABLE IF NOT EXISTS user_notes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER, note TEXT,
+        added_by INTEGER,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Ban Appeals ──
+    c.execute("""CREATE TABLE IF NOT EXISTS ban_appeals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER, reason TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        decided_at TEXT, decided_by INTEGER)""")
+
     # ══════════════════════ SQLITE OPTIMIZATIONS ══════════════════════
     try:
         c.execute("PRAGMA journal_mode=WAL")
         c.execute("PRAGMA synchronous=NORMAL")
         c.execute("PRAGMA cache_size=2000")
         c.execute("PRAGMA temp_store=MEMORY")
+        c.execute("PRAGMA foreign_keys=ON")
     except Exception:
         pass
 
@@ -807,6 +852,8 @@ def db_init():
         "CREATE INDEX IF NOT EXISTS idx_stats_today ON user_stats(today_date)",
         "CREATE INDEX IF NOT EXISTS idx_engines_server ON engines(server)",
         "CREATE INDEX IF NOT EXISTS idx_engine_cache_valid ON engine_cache(is_valid)",
+        "CREATE INDEX IF NOT EXISTS idx_user_notes_uid ON user_notes(user_id)",
+        "CREATE INDEX IF NOT EXISTS idx_appeals_status ON ban_appeals(status)",
     ]
     for sql in indices:
         try:
@@ -814,10 +861,85 @@ def db_init():
         except Exception:
             pass
 
+    # ══════════════════════ 🔥 FIX MIGRATIONS (server columns) ══════════════════════
+    # Ye purane DB ke liye zaroori hai
+
+    # Watchers
+    for col, dflt in [("server","TEXT DEFAULT 'free'")]:
+        try:
+            c.execute(f"ALTER TABLE watchers ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Reactions
+    for col, dflt in [("server","TEXT DEFAULT 'free'"),
+                      ("method","TEXT DEFAULT 'bot'")]:
+        try:
+            c.execute(f"ALTER TABLE reactions ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Engines
+    for col, dflt in [("server","TEXT DEFAULT 'free'"),
+                      ("is_valid","INTEGER DEFAULT 1"),
+                      ("last_checked","TEXT")]:
+        try:
+            c.execute(f"ALTER TABLE engines ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Queue
+    try:
+        c.execute("ALTER TABLE queue ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Retry
+    try:
+        c.execute("ALTER TABLE retry_queue ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Post Analytics
+    try:
+        c.execute("ALTER TABLE post_analytics ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Users
+    for col, dflt in [("ra_limit_override","INTEGER DEFAULT -1"),
+                      ("server_override","TEXT DEFAULT NULL")]:
+        try:
+            c.execute(f"ALTER TABLE users ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Payments
+    for col, dflt in [("coupon_code","TEXT"),
+                      ("discount_amount","INTEGER DEFAULT 0")]:
+        try:
+            c.execute(f"ALTER TABLE payments ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # ✅ Rename "bots" to "engines" if engines doesn't exist
+    try:
+        r = c.execute("""SELECT name FROM sqlite_master
+            WHERE type='table' AND name='engines'""").fetchone()
+        if not r:
+            try:
+                c.execute("ALTER TABLE bots RENAME TO engines")
+            except sqlite3.OperationalError:
+                pass
+    except Exception:
+        pass
+
     # ══════════════════════ CONFIG DEFAULTS ══════════════════════
     cfg_defaults = [
         ("owner_username", OWNER_USERNAME_DEFAULT),
         ("owner_id", str(OWNER_ID_DEFAULT)),
+        ("backup_username", BACKUP_USERNAME),
+        ("backup_id", str(BACKUP_ID_PLACEHOLDER)),
         ("free_count", str(DEFAULT_FREE_COUNT)),
         ("auto_approve", "1"),
         ("channel_enabled", "1"), ("group_enabled", "1"),
@@ -849,9 +971,14 @@ def db_init():
         ("team_reseller_enabled", "1"), ("upsell_enabled", "1"),
         ("smart_reaction_enabled", "1"), ("fallback_enabled", "1"),
         ("dual_server_enabled", "1"),
-        # Engine cache settings
         ("engine_cache_enabled", "1"),
         ("engine_recheck_days", "7"),
+        # New features
+        ("balance_reactions_enabled", "1"),
+        ("balance_to_reactions_rate", "1"),   # 1 balance = 1 extra reaction
+        ("backup_prompt_enabled", "1"),
+        ("user_notes_enabled", "1"),
+        ("ban_appeals_enabled", "1"),
     ]
     for plan, prices in DEFAULT_PRICES.items():
         for days, price in prices.items():
@@ -861,39 +988,10 @@ def db_init():
         c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)",
                   (k, v))
 
-    # ══════════════════════ MIGRATION COLUMNS ══════════════════════
-    for col, dflt in [
-        ("is_banned","INTEGER DEFAULT 0"),
-        ("total_reactions","INTEGER DEFAULT 0"),
-        ("total_bots","INTEGER DEFAULT 0"),
-        ("custom_limit","INTEGER DEFAULT 0"),
-        ("auto_watch_unlocked","INTEGER DEFAULT 0"),
-        ("allow_channel","INTEGER DEFAULT 1"),
-        ("allow_group","INTEGER DEFAULT 1"),
-        ("allow_manual","INTEGER DEFAULT 1"),
-        ("allow_autowatch","INTEGER DEFAULT 0"),
-        ("allow_custom_emoji","INTEGER DEFAULT 1"),
-        ("plan","TEXT DEFAULT 'free'"), ("plan_expires","TEXT"),
-        ("free_balance","INTEGER DEFAULT 0"),
-        ("language","TEXT DEFAULT 'en'"), ("referral_code","TEXT"),
-        ("referred_by","INTEGER DEFAULT 0"),
-        ("referral_count","INTEGER DEFAULT 0"),
-        ("referral_earned","INTEGER DEFAULT 0"),
-        ("team_role","TEXT DEFAULT 'user'"),
-        ("team_commission","INTEGER DEFAULT 0"),
-        ("total_spent","INTEGER DEFAULT 0"),
-        ("ra_limit_override","INTEGER DEFAULT -1"),
-        ("server_override","TEXT DEFAULT NULL"),
-    ]:
-        try:
-            c.execute(f"ALTER TABLE users ADD COLUMN {col} {dflt}")
-        except sqlite3.OperationalError:
-            pass
-
     conn.commit()
     conn.close()
     _dirty()
-    D(f"Memory ready", "ok")
+    D("Memory ready", "ok")
 
 
 # ══════════════════════ CONFIG HELPERS ══════════════════════
@@ -971,6 +1069,10 @@ def feat_smart_reaction(): return cfg_bool("smart_reaction_enabled")
 def feat_fallback():       return cfg_bool("fallback_enabled")
 def feat_dual_server():    return cfg_bool("dual_server_enabled")
 def feat_engine_cache():   return cfg_bool("engine_cache_enabled")
+def feat_balance_reactions(): return cfg_bool("balance_reactions_enabled")
+def feat_backup_prompt():  return cfg_bool("backup_prompt_enabled")
+def feat_user_notes():     return cfg_bool("user_notes_enabled")
+def feat_ban_appeals():    return cfg_bool("ban_appeals_enabled")
 
 
 def is_paid_feature(f):
@@ -1148,7 +1250,6 @@ def get_server_tokens(server):
 
 
 def get_server_label(server):
-    """Friendly server label"""
     if server == "paid":
         return "💎 Premium"
     return "🆓 Standard"
@@ -1319,6 +1420,14 @@ def db_spend_free_balance(uid, amount):
         conn.close()
 
 
+def db_get_free_balance(uid):
+    try:
+        u = db_get_user_full(uid)
+        return u[17] if u else 0
+    except Exception:
+        return 0
+
+
 def db_total_users():
     conn = sqlite3.connect(DB_FILE)
     try:
@@ -1479,14 +1588,12 @@ def db_revenue_stats():
         return 0, 0, 0
 
 
-# ══════════════════════ DB — ENGINE CACHE 🔥 ══════════════════════
+# ══════════════════════ DB — ENGINE CACHE ══════════════════════
 def _hash_token(token):
-    """Hash token for cache storage (privacy)"""
     return hashlib.sha256(token.encode()).hexdigest()[:16]
 
 
 def cache_get(token):
-    """Get cached validation for a token"""
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
@@ -1501,7 +1608,6 @@ def cache_get(token):
 
 
 def cache_set(token, username, bot_id, is_valid, fail_inc=False):
-    """Save validation to cache"""
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
@@ -1531,32 +1637,25 @@ def cache_set(token, username, bot_id, is_valid, fail_inc=False):
 
 
 def cache_is_valid(token):
-    """
-    Check if token is cached as valid.
-    Returns: (cached, is_valid, username, bot_id)
-    """
     cached = cache_get(token)
     if cached is None:
         return False, False, None, None
     username, bot_id, is_valid, fail_count, last_check = cached
-    # If failed 3+ times, consider permanently invalid
     if not is_valid and fail_count >= 3:
         return True, False, username, bot_id
-    # If last check was long ago, recheck
     if last_check:
         try:
             last_dt = datetime.strptime(last_check, "%Y-%m-%d %H:%M:%S")
             days_old = (datetime.now() - last_dt).days
             recheck_days = int(cfg_get("engine_recheck_days", "7"))
             if days_old >= recheck_days:
-                return False, False, None, None  # Force recheck
+                return False, False, None, None
         except Exception:
             pass
     return True, bool(is_valid), username, bot_id
 
 
 def cache_stats():
-    """Get cache statistics"""
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
@@ -1564,8 +1663,8 @@ def cache_stats():
                                  ).fetchone()[0]
             valid = conn.execute("""SELECT COUNT(*) FROM engine_cache
                 WHERE is_valid=1""").fetchone()[0]
-            invalid = total - valid
-            return {"total": total, "valid": valid, "invalid": invalid}
+            return {"total": total, "valid": valid,
+                    "invalid": total - valid}
         finally:
             conn.close()
     except Exception:
@@ -1573,7 +1672,6 @@ def cache_stats():
 
 
 def cache_clear_invalid():
-    """Remove permanently invalid tokens from cache"""
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
@@ -2047,7 +2145,6 @@ def db_broadcast_notification(message):
 
 # ══════════════════════ DB — ENGINES ══════════════════════
 def db_add_engine(token, username, bot_id, server="free"):
-    """Add engine to DB"""
     conn = sqlite3.connect(DB_FILE)
     try:
         conn.execute("""INSERT OR REPLACE INTO engines
@@ -2067,7 +2164,6 @@ def db_add_engine(token, username, bot_id, server="free"):
 
 
 def db_list_engines(server=None):
-    """List engines (optionally filtered by server)"""
     conn = sqlite3.connect(DB_FILE)
     try:
         if server:
@@ -2083,7 +2179,6 @@ def db_list_engines(server=None):
 
 
 def db_list_visible_engines(server=None):
-    """Engines except permanent admins"""
     return [b for b in db_list_engines(server)
             if not is_permanent_admin(b[1])]
 
@@ -2275,14 +2370,15 @@ def db_count_queue(status=None):
 
 
 # ══════════════════════ DB — PAYMENTS ══════════════════════
-def db_add_payment(uid, amt, plan, days, method, ss=""):
+def db_add_payment(uid, amt, plan, days, method, ss="",
+                   coupon_code=None, discount=0):
     conn = sqlite3.connect(DB_FILE)
     try:
         c = conn.cursor()
         c.execute("""INSERT INTO payments (user_id, amount, plan, days,
-            method, screenshot, status)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending')""",
-            (uid, amt, plan, days, method, ss))
+            method, screenshot, status, coupon_code, discount_amount)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)""",
+            (uid, amt, plan, days, method, ss, coupon_code, discount))
         conn.commit()
         _dirty()
         return c.lastrowid
@@ -2295,7 +2391,7 @@ def db_list_payments(user_id=None, status=None, l=50):
     try:
         base = """SELECT id, user_id, amount, plan, days, method,
             screenshot, status, created_at, verified_at, verified_by,
-            notes FROM payments"""
+            notes, coupon_code, discount_amount FROM payments"""
         if user_id and status:
             return conn.execute(base + """ WHERE user_id=? AND status=?
                 ORDER BY id DESC LIMIT ?""",
@@ -2317,7 +2413,8 @@ def db_get_payment(pid):
     try:
         return conn.execute("""SELECT id, user_id, amount, plan, days,
             method, screenshot, status, created_at, verified_at,
-            verified_by, notes FROM payments WHERE id=?""", (pid,)).fetchone()
+            verified_by, notes, coupon_code, discount_amount
+            FROM payments WHERE id=?""", (pid,)).fetchone()
     finally:
         conn.close()
 
@@ -2710,9 +2807,7 @@ def bonus_get_streak(uid):
             if not r:
                 return 0
             streak, last = r
-            if last == today:
-                return streak or 0
-            if last == yesterday:
+            if last == today or last == yesterday:
                 return streak or 0
             return 0
         finally:
@@ -2785,7 +2880,8 @@ def retry_add(uid, chat_link, post_link, count, em="default",
     try:
         c = conn.cursor()
         es = ",".join(ce) if ce else None
-        next_retry = (datetime.now() + timedelta(seconds=RETRY_FAILED_INTERVAL)
+        next_retry = (datetime.now()
+                      + timedelta(seconds=RETRY_FAILED_INTERVAL)
                       ).strftime("%Y-%m-%d %H:%M:%S")
         c.execute("""INSERT INTO retry_queue (user_id, chat_link,
             post_link, count, emoji_mode, custom_emojis, next_retry,
@@ -2913,7 +3009,7 @@ def coupon_apply(code, original_price, uid):
         return None, "Coupon not found"
     cid, code_, pct, flat, max_u, used, expires, active = c
     if not active:
-        return None, "Coupon disabled"
+        return None, "Coupon is disabled"
     if max_u > 0 and used >= max_u:
         return None, "Coupon fully used"
     if expires:
@@ -3127,7 +3223,8 @@ def post_analytics_add(uid, chat_id, post_id, chat_title, sent,
             c.execute("""INSERT INTO post_analytics (user_id, chat_id,
                 post_id, chat_title, sent_count, requested_count, server)
                 VALUES(?, ?, ?, ?, ?, ?, ?)""",
-                (uid, chat_id, post_id, chat_title, sent, requested, server))
+                (uid, chat_id, post_id, chat_title, sent,
+                 requested, server))
             conn.commit()
             _dirty()
         finally:
@@ -3154,13 +3251,14 @@ def post_analytics_stats(uid):
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
-            r = conn.execute("""SELECT COUNT(*), COALESCE(SUM(sent_count),0),
-                COALESCE(SUM(requested_count),0) FROM post_analytics
-                WHERE user_id=?""", (uid,)).fetchone()
-            total_posts, total_sent, total_req = r if r else (0, 0, 0)
-            rate = int(total_sent / max(1, total_req) * 100)
-            return {"posts": total_posts, "sent": total_sent,
-                    "requested": total_req, "rate": rate}
+            r = conn.execute("""SELECT COUNT(*),
+                COALESCE(SUM(sent_count),0),
+                COALESCE(SUM(requested_count),0)
+                FROM post_analytics WHERE user_id=?""", (uid,)).fetchone()
+            posts, sent, req = r if r else (0, 0, 0)
+            rate = int(sent / max(1, req) * 100)
+            return {"posts": posts, "sent": sent,
+                    "requested": req, "rate": rate}
         finally:
             conn.close()
     except Exception:
@@ -3229,6 +3327,131 @@ def team_count_clients():
         try:
             return conn.execute("SELECT COUNT(*) FROM team_clients"
                                 ).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
+
+
+# ══════════════════════ DB — USER NOTES (Owner only) ══════════════════════
+def db_add_user_note(uid, note, added_by=None):
+    if not feat_user_notes():
+        return False
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+            c.execute("""INSERT INTO user_notes (user_id, note, added_by)
+                VALUES(?, ?, ?)""", (uid, note[:500], added_by))
+            conn.commit()
+            _dirty()
+            return c.lastrowid
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def db_list_user_notes(uid):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, note, added_by, created_at
+                FROM user_notes WHERE user_id=?
+                ORDER BY id DESC""", (uid,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
+
+
+def db_delete_user_note(nid):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        conn.execute("DELETE FROM user_notes WHERE id=?", (nid,))
+        conn.commit()
+        _dirty()
+    finally:
+        conn.close()
+
+
+def db_count_user_notes(uid):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM user_notes
+                WHERE user_id=?""", (uid,)).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
+
+
+# ══════════════════════ DB — BAN APPEALS ══════════════════════
+def db_add_ban_appeal(uid, reason):
+    if not feat_ban_appeals():
+        return False
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+            c.execute("""INSERT INTO ban_appeals (user_id, reason)
+                VALUES(?, ?)""", (uid, reason[:500]))
+            conn.commit()
+            _dirty()
+            return c.lastrowid
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def db_list_ban_appeals(status="pending", l=50):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, user_id, reason, status,
+                created_at, decided_at, decided_by FROM ban_appeals
+                WHERE status=? ORDER BY id DESC LIMIT ?""",
+                (status, l)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
+
+
+def db_get_user_appeal(uid):
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, reason, status, created_at
+                FROM ban_appeals WHERE user_id=?
+                ORDER BY id DESC LIMIT 1""", (uid,)).fetchone()
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def db_decide_ban_appeal(aid, status, decided_by=None):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        conn.execute("""UPDATE ban_appeals SET status=?,
+            decided_at=CURRENT_TIMESTAMP, decided_by=? WHERE id=?""",
+            (status, decided_by, aid))
+        conn.commit()
+        _dirty()
+        return True
+    finally:
+        conn.close()
+
+
+def db_count_pending_appeals():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM ban_appeals
+                WHERE status='pending'""").fetchone()[0]
         finally:
             conn.close()
     except Exception:
@@ -3376,7 +3599,7 @@ LANG_STRINGS = {
         "language_changed":"Язык изменён!",
         "your_limit":"Лимит", "per_post":"на пост",
         "plan":"План", "free_plan":"Бесплатный",
-        "my_watches":"Мои отслеживания", "add_watch":"Добавить",
+        "my_watches":"Мои наблюдения", "add_watch":"Добавить",
         "contact_owner":"Связаться", "retry":"Повтор",
         "how_many":"Сколько?", "emoji_mode":"Режим",
         "post_link":"Ссылка на пост", "chat_link":"Ссылка чата",
@@ -3459,7 +3682,6 @@ LANG_STRINGS = {
 
 
 def L(uid, key):
-    """Get translated string for user's language"""
     if not feat_multilang():
         return LANG_STRINGS["en"].get(key, key)
     if uid is None:
@@ -3478,9 +3700,8 @@ def L_static(lang, key):
     return LANG_STRINGS.get(lang, LANG_STRINGS["en"]).get(key, key)
 
 
-# ══════════════════════ HELP TEXT (Friendly + Multi-Lang) ══════════════════════
+# ══════════════════════ HELP TEXT (Multi-Lang) ══════════════════════
 def get_help_text(uid=None):
-    """Complete guide for making owner admin — friendly"""
     uname = get_owner_username()
     oid = get_owner_id()
 
@@ -3532,87 +3753,21 @@ def get_help_text(uid=None):
             f"🆔 आईडी: `{oid}`\n\n"
             f"{DIV}\n📋 **एडमिन कैसे बनाएं?**\n{DIV}\n\n"
             f"**1️⃣ अपना चैनल/ग्रुप खोलें**\n\n"
-            f"**2️⃣ एडमिनिस्ट्रेटर्स में जाएं**\n"
-            f"   नाम दबाएं → Administrators\n\n"
+            f"**2️⃣ एडमिनिस्ट्रेटर्स में जाएं**\n\n"
             f"**3️⃣ नया एडमिन जोड़ें**\n"
             f"   🔍 सर्च: `@{uname}`\n"
             f"   या आईडी: `{oid}`\n\n"
             f"**4️⃣ सभी परमिशन दें** ⚠️\n"
             f"   ✅ Change Info / Add Admins / Post / Edit / Delete\n"
-            f"   ✅ Invite / Pin / Manage Voice / Ban Users\n\n"
+            f"   ✅ Invite / Pin / Manage Voice / Ban\n\n"
             f"**5️⃣ सेव करें** ✅\n\n"
             f"{DIV}\n💡 **ज़रूरी बात**\n{DIV}\n"
             f"• सिर्फ **एक बार** करना है\n"
-            f"• मालिक को **एडमिन रहने दें**\n"
-            f"• आपके असली एडमिन **सुरक्षित** रहेंगे\n\n"
+            f"• मालिक को **एडमिन रहने दें**\n\n"
             f"💬 संपर्क: @{uname}"
         )
 
-    if lang == "ar":
-        return (
-            f"{STAR_LINE}\n📖 **مساعدة — جعل المالك مشرفًا** 📖\n{STAR_LINE}\n\n"
-            f"❌ **هذا مطلوب أولاً!**\n\n"
-            f"{DIV}\n👑 **بيانات المالك**\n{DIV}\n"
-            f"👤 @{uname}\n"
-            f"🆔 `{oid}`\n\n"
-            f"**1️⃣ افتح قناتك/مجموعتك**\n"
-            f"**2️⃣ اذهب إلى المشرفين**\n"
-            f"**3️⃣ أضف مشرفًا**\n"
-            f"   `@{uname}` أو `{oid}`\n"
-            f"**4️⃣ امنح جميع الصلاحيات** ✅\n"
-            f"**5️⃣ احفظ** ✅\n\n"
-            f"💬 @{uname}"
-        )
-
-    if lang == "ru":
-        return (
-            f"{STAR_LINE}\n📖 **Помощь — владелец админом** 📖\n{STAR_LINE}\n\n"
-            f"❌ **Обязательно!**\n\n"
-            f"{DIV}\n👑 **Владелец**\n{DIV}\n"
-            f"👤 @{uname}\n"
-            f"🆔 `{oid}`\n\n"
-            f"**1️⃣ Откройте канал/группу**\n"
-            f"**2️⃣ Администраторы**\n"
-            f"**3️⃣ Добавить админа**\n"
-            f"   `@{uname}` или `{oid}`\n"
-            f"**4️⃣ Все права** ✅\n"
-            f"**5️⃣ Сохранить** ✅\n\n"
-            f"💬 @{uname}"
-        )
-
-    if lang == "es":
-        return (
-            f"{STAR_LINE}\n📖 **Ayuda — Hacer admin al dueño** 📖\n{STAR_LINE}\n\n"
-            f"❌ **¡Obligatorio!**\n\n"
-            f"{DIV}\n👑 **Dueño**\n{DIV}\n"
-            f"👤 @{uname}\n"
-            f"🆔 `{oid}`\n\n"
-            f"**1️⃣ Abre tu canal/grupo**\n"
-            f"**2️⃣ Administradores**\n"
-            f"**3️⃣ Añadir admin**\n"
-            f"   `@{uname}` o `{oid}`\n"
-            f"**4️⃣ TODOS los permisos** ✅\n"
-            f"**5️⃣ Guardar** ✅\n\n"
-            f"💬 @{uname}"
-        )
-
-    if lang == "id":
-        return (
-            f"{STAR_LINE}\n📖 **Bantuan — Pemilik jadi admin** 📖\n{STAR_LINE}\n\n"
-            f"❌ **Wajib dulu!**\n\n"
-            f"{DIV}\n👑 **Pemilik**\n{DIV}\n"
-            f"👤 @{uname}\n"
-            f"🆔 `{oid}`\n\n"
-            f"**1️⃣ Buka channel/grup**\n"
-            f"**2️⃣ Administrator**\n"
-            f"**3️⃣ Tambah admin**\n"
-            f"   `@{uname}` atau `{oid}`\n"
-            f"**4️⃣ SEMUA izin** ✅\n"
-            f"**5️⃣ Simpan** ✅\n\n"
-            f"💬 @{uname}"
-        )
-
-    # English default
+    # Default English
     return (
         f"{STAR_LINE}\n📖 **HELP — Make Owner Admin** 📖\n{STAR_LINE}\n\n"
         f"❌ **Required first!**\n"
@@ -3643,111 +3798,262 @@ def get_help_text(uid=None):
         f"   Tap Save ✅\n\n"
         f"{DIV}\n💡 **IMPORTANT NOTES**\n{DIV}\n"
         f"• Do this **ONLY ONCE**\n"
-        f"• Keep the owner as **admin** — don't remove\n"
+        f"• Keep the owner as **admin**\n"
         f"• Your original admins stay **SAFE**\n\n"
         f"{DIV}\n❓ Need help?\n{DIV}\n"
         f"💬 @{uname}"
     )
 
 
-# ══════════════════════ FEATURE GUIDE (Friendly) ══════════════════════
-def get_feature_guide(uid, feature):
-    """Detailed guide for a specific feature"""
-    u = db_get_user_full(uid) if uid else None
-    lang = "en"
-    if u and len(u) > 18 and u[18]:
-        lang = u[18]
+# ══════════════════════ 🔥 BACKUP PROMPT MESSAGE ══════════════════════
+def get_backup_prompt_message(chat_title, uid=None):
+    """
+    Shown when owner session is flooded.
+    Tells user to add co-owner as admin.
+    """
+    backup_uname = get_backup_username()
+    backup_id = get_backup_id()
 
-    guides = {
+    u = db_get_user_full(uid) if uid else None
+    lang = u[18] if u and len(u) > 18 and u[18] else "en"
+
+    if lang == "ur":
+        return (
+            f"⚠️ **اونر اس وقت مصروف ہے** ⚠️\n"
+            f"{STAR_LINE}\n\n"
+            f"📢 **{chat_title}**\n\n"
+            f"ہمارا مرکزی اکاؤنٹ عارضی طور پر دستیاب نہیں ہے۔\n"
+            f"براہ کرم ایک بیک اپ ایڈمن شامل کریں:\n\n"
+            f"{DIV}\n"
+            f"📋 **ایک بار کا سیٹ اپ**\n"
+            f"{DIV}\n\n"
+            f"1️⃣ اپنا چینل/گروپ کھولیں\n"
+            f"2️⃣ ایڈمنسٹریٹرز → نیا ایڈمن\n"
+            f"3️⃣ یہ اکاؤنٹ شامل کریں:\n\n"
+            f"   👤 یوزرنیم: `@{backup_uname}`\n"
+            f"   🆔 آئی ڈی: `{backup_id}`\n\n"
+            f"4️⃣ تمام اجازتیں دیں\n"
+            f"5️⃣ محفوظ کریں\n\n"
+            f"{DIV}\n"
+            f"پھر نیچے **دوبارہ کوشش کریں** دبائیں۔\n\n"
+            f"💡 یہ محفوظ ہے اور صرف ایک بار کی ضرورت ہے۔"
+        )
+
+    if lang == "hi":
+        return (
+            f"⚠️ **मालिक इस समय व्यस्त है** ⚠️\n"
+            f"{STAR_LINE}\n\n"
+            f"📢 **{chat_title}**\n\n"
+            f"हमारा मुख्य खाता अस्थायी रूप से उपलब्ध नहीं है।\n"
+            f"कृपया एक बैकअप एडमिन जोड़ें:\n\n"
+            f"{DIV}\n"
+            f"📋 **एक बार का सेटअप**\n"
+            f"{DIV}\n\n"
+            f"1️⃣ अपना चैनल/ग्रुप खोलें\n"
+            f"2️⃣ एडमिनिस्ट्रेटर्स → नया एडमिन\n"
+            f"3️⃣ यह खाता जोड़ें:\n\n"
+            f"   👤 यूज़रनेम: `@{backup_uname}`\n"
+            f"   🆔 आईडी: `{backup_id}`\n\n"
+            f"4️⃣ सभी परमिशन दें\n"
+            f"5️⃣ सेव करें\n\n"
+            f"{DIV}\n"
+            f"फिर नीचे **दोबारा कोशिश करें** दबाएं।\n\n"
+            f"💡 यह सुरक्षित है और सिर्फ एक बार की ज़रूरत है।"
+        )
+
+    # Default English
+    return (
+        f"⚠️ **Owner is Currently Busy** ⚠️\n"
+        f"{STAR_LINE}\n\n"
+        f"📢 **{chat_title}**\n\n"
+        f"Our main account is temporarily unavailable.\n"
+        f"Please add a backup admin to continue:\n\n"
+        f"{DIV}\n"
+        f"📋 **One-Time Setup**\n"
+        f"{DIV}\n\n"
+        f"1️⃣ Open your channel/group\n"
+        f"2️⃣ Go to Administrators → Add Admin\n"
+        f"3️⃣ Add this backup account:\n\n"
+        f"   👤 Username: `@{backup_uname}`\n"
+        f"   🆔 ID: `{backup_id}`\n\n"
+        f"4️⃣ Give all permissions\n"
+        f"5️⃣ Save\n\n"
+        f"{DIV}\n"
+        f"Then tap **Retry** below.\n\n"
+        f"💡 This is safe and only needed once."
+    )
+
+
+# ══════════════════════ FEATURE INFO CARDS ══════════════════════
+def get_feature_info(feature, uid=None):
+    u = db_get_user_full(uid) if uid else None
+    lang = u[18] if u and len(u) > 18 and u[18] else "en"
+
+    infos = {
         "en": {
             "manual": (
-                "💫 **SEND REACTIONS** — Manual Mode\n"
-                "━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "ℹ️ **What it does:**\n"
-                "Sends reactions to any post you choose.\n\n"
-                "🎯 **How to use:**\n"
-                "1. Send channel/group link\n"
-                "2. Send post link\n"
-                "3. Choose count (1-200)\n"
-                "4. Select emoji mode\n"
-                "5. Watch it work!\n\n"
-                "💡 **Tip:** Owner must be admin first!\n\n"
-                "📖 Full guide: /help"
+                f"💫 **SEND REACTIONS**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What it does:**\n"
+                f"Sends reactions to any post you choose.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Choose mode (👑 With Admin / 🔓 Without)\n"
+                f"2. Send chat link\n"
+                f"3. Send post link\n"
+                f"4. Pick reaction count\n"
+                f"5. Choose emoji style\n\n"
+                f"💡 **Tip:** Owner must be admin first!\n\n"
+                f"⚡ **Speed:** 30-60 seconds for 50 reactions"
             ),
             "autowatch": (
-                "📡 **AUTO-TRACK**\n"
-                "━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "ℹ️ **What it does:**\n"
-                "Automatically sends reactions when new posts\n"
-                "appear in your channel/group.\n\n"
-                "🎯 **How to use:**\n"
-                "1. Tap 'Add Watch'\n"
-                "2. Send channel/group link\n"
-                "3. Set reactions per post (1-200)\n"
-                "4. Choose emoji style\n"
-                "5. Done! Works 24/7\n\n"
-                "💡 **Tip:** Premium users get priority!\n\n"
-                "⚠️ **Requires:** Owner admin in the chat"
+                f"📡 **AUTO-TRACK**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What it does:**\n"
+                f"Automatically sends reactions whenever a new "
+                f"post appears in your channel or group.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Tap 'Add Watch'\n"
+                f"2. Choose chat type\n"
+                f"3. Send channel/group link\n"
+                f"4. Set reactions per post (1-200)\n"
+                f"5. Pick emoji style\n"
+                f"6. Done! Works 24/7\n\n"
+                f"💡 **Tip:** Perfect for busy channels!"
             ),
             "queue": (
-                "⏰ **QUEUE** — Schedule for Later\n"
-                "━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "ℹ️ **What it does:**\n"
-                "Schedules reactions to run at a specific time.\n\n"
-                "🎯 **How to use:**\n"
-                "1. Tap 'New Job'\n"
-                "2. Send chat link\n"
-                "3. Send post link\n"
-                "4. Choose count\n"
-                "5. Set time (auto/manual)\n\n"
-                "💡 **Tip:** Perfect for scheduled posts!"
+                f"⏰ **SCHEDULE**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What it does:**\n"
+                f"Queues reactions to run at a later time.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Tap 'New Job'\n"
+                f"2. Send chat link\n"
+                f"3. Send post link\n"
+                f"4. Choose count\n"
+                f"5. Set date/time\n\n"
+                f"💡 **Tip:** Great for scheduled posts!"
             ),
             "bulk": (
-                "📦 **BULK** — Multi Posts\n"
-                "━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "ℹ️ **What it does:**\n"
-                "Send reactions to multiple posts at once.\n\n"
-                "🎯 **How to use:**\n"
-                "1. Tap 'Multi Posts'\n"
-                "2. Send chat link\n"
-                "3. Send post links (one per line)\n"
-                "4. Choose count per post\n\n"
-                "💡 **Tip:** Save time on many posts!"
+                f"📦 **BULK MODE**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What it does:**\n"
+                f"Sends reactions to multiple posts in one go.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Tap 'Multi Posts'\n"
+                f"2. Send chat link\n"
+                f"3. Send post links (one per line)\n"
+                f"4. Set count per post\n\n"
+                f"💡 **Tip:** Save time on many posts!"
+            ),
+            "store": (
+                f"🏪 **EMOJI STORE**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What it does:**\n"
+                f"Buy premium emoji packs using your balance.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Browse available packs\n"
+                f"2. Check price\n"
+                f"3. Tap 'Buy'\n"
+                f"4. Load and use!\n\n"
+                f"💡 **Tip:** Earn free balance via referrals!"
+            ),
+            "referral": (
+                f"🎁 **REFERRAL PROGRAM**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What it does:**\n"
+                f"Earn free balance by inviting friends.\n\n"
+                f"💰 **Rewards:**\n"
+                f"• You get: **{REFERRAL_REWARD + FRIEND_VALID_REWARD}**\n"
+                f"• Friend gets: **{FRIEND_VALID_REWARD}**\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Tap 'My Link'\n"
+                f"2. Share with friends\n"
+                f"3. When they join — you earn!\n\n"
+                f"💡 **Tip:** Balance can be used for extra reactions!"
+            ),
+            "balance": (
+                f"💰 **BALANCE SYSTEM**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What is balance:**\n"
+                f"Free points you earn from referrals and daily bonus.\n\n"
+                f"🎯 **How to earn:**\n"
+                f"• 🎁 Daily bonus: +1/day\n"
+                f"• 🎉 7-day streak: +5 bonus\n"
+                f"• 🎁 Referrals: +15 per friend\n\n"
+                f"💎 **How to use:**\n"
+                f"1. Buy emoji packs from Store\n"
+                f"2. Get extra reactions beyond plan limit\n"
+                f"   (1 balance = 1 extra reaction)\n\n"
+                f"💡 **Tip:** Save up for premium packs!"
+            ),
+            "coupon": (
+                f"🎟️ **COUPONS**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What are coupons:**\n"
+                f"Special discount codes for plan purchases.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Buy Plan → Select duration\n"
+                f"2. Tap 'Apply Coupon'\n"
+                f"3. Enter your code\n"
+                f"4. Get instant discount!\n\n"
+                f"💡 **Tip:** Watch for coupon announcements!"
             ),
         },
         "ur": {
             "manual": (
-                "💫 **ری ایکشن بھیجیں** — مینوئل موڈ\n"
-                "━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "ℹ️ **کیا کرتا ہے:**\n"
-                "آپ کی منتخب کردہ پوسٹ پر ری ایکشن بھیجتا ہے۔\n\n"
-                "🎯 **کیسے استعمال کریں:**\n"
-                "1. چینل/گروپ لنک بھیجیں\n"
-                "2. پوسٹ لنک بھیجیں\n"
-                "3. تعداد منتخب کریں (1-200)\n"
-                "4. ایموجی موڈ منتخب کریں\n"
-                "5. کام ہوتا دیکھیں!\n\n"
-                "💡 **ٹپ:** پہلے اونر کو ایڈمن بنائیں!"
+                f"💫 **ری ایکشن بھیجیں**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **کیا کرتا ہے:**\n"
+                f"آپ کی منتخب کردہ پوسٹ پر ری ایکشن بھیجتا ہے۔\n\n"
+                f"🎯 **کیسے استعمال کریں:**\n"
+                f"1. موڈ منتخب کریں\n"
+                f"2. چیٹ لنک بھیجیں\n"
+                f"3. پوسٹ لنک بھیجیں\n"
+                f"4. تعداد منتخب کریں\n"
+                f"5. ایموجی اسٹائل منتخب کریں"
             ),
             "autowatch": (
-                "📡 **آٹو ٹریک**\n"
-                "━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                "ℹ️ **کیا کرتا ہے:**\n"
-                "جب آپ کے چینل/گروپ میں نئی پوسٹ آتی ہے،\n"
-                "خودکار طور پر ری ایکشن بھیجتا ہے۔\n\n"
-                "🎯 **کیسے استعمال کریں:**\n"
-                "1. 'واچ شامل کریں' دبائیں\n"
-                "2. چینل/گروپ لنک بھیجیں\n"
-                "3. فی پوسٹ تعداد سیٹ کریں\n"
-                "4. ایموجی اسٹائل منتخب کریں\n"
-                "5. مکمل! 24/7 کام کرتا ہے\n\n"
-                "💡 **ٹپ:** پریمیم صارفین کو ترجیح ملتی ہے!"
+                f"📡 **آٹو ٹریک**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **کیا کرتا ہے:**\n"
+                f"جب آپ کے چینل/گروپ میں نئی پوسٹ آتی ہے، "
+                f"خودکار طور پر ری ایکشن بھیجتا ہے۔\n\n"
+                f"🎯 **کیسے استعمال کریں:**\n"
+                f"1. 'واچ شامل کریں' دبائیں\n"
+                f"2. چیٹ کی قسم منتخب کریں\n"
+                f"3. لنک بھیجیں\n"
+                f"4. فی پوسٹ تعداد سیٹ کریں\n"
+                f"5. ایموجی اسٹائل منتخب کریں"
+            ),
+            "balance": (
+                f"💰 **بیلنس سسٹم**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **بیلنس کیا ہے:**\n"
+                f"مفت پوائنٹس جو ریفرل اور روزانہ بونس سے ملتے ہیں۔\n\n"
+                f"🎯 **کیسے کمائیں:**\n"
+                f"• 🎁 روزانہ بونس: +1\n"
+                f"• 🎉 7 دن سٹریک: +5\n"
+                f"• 🎁 ریفرل: ہر دوست پر +15\n\n"
+                f"💎 **کیسے استعمال کریں:**\n"
+                f"1. اسٹور سے ایموجی پیکس خریدیں\n"
+                f"2. اضافی ری ایکشن حاصل کریں"
+            ),
+            "coupon": (
+                f"🎟️ **کوپن**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **کوپن کیا ہے:**\n"
+                f"پلان خریدنے پر خصوصی رعایت کوڈ۔\n\n"
+                f"🎯 **کیسے استعمال کریں:**\n"
+                f"1. پلان خریدیں → دورانیہ منتخب کریں\n"
+                f"2. 'کوپن لگائیں' دبائیں\n"
+                f"3. کوڈ درج کریں\n"
+                f"4. فوری رعایت حاصل کریں!"
             ),
         },
     }
 
-    lang_guides = guides.get(lang, guides["en"])
-    return lang_guides.get(feature, "")
+    lang_infos = infos.get(lang, infos["en"])
+    return lang_infos.get(feature, "")
 
 
 # ══════════════════════ BOT API HELPERS ══════════════════════
@@ -3931,11 +4237,24 @@ async def safe_answer(event, text=None, alert=False):
         pass
 
 
-# ══════════════════════ SAFE ENTITY ══════════════════════
+# ══════════════════════ SAFE ENTITY (Immediate Backup Fallback) ══════════════════════
 async def safe_get_entity(ref, cache_key=None, cache_store=None):
     global RESOLVE_FLOOD_UNTIL
     if RESOLVE_FLOOD_UNTIL and datetime.now() < RESOLVE_FLOOD_UNTIL:
-        raise Exception("Resolve flood")
+        # ✅ Try backup immediately
+        if backup_client:
+            try:
+                entity = await asyncio.wait_for(
+                    backup_client.get_entity(ref), timeout=15)
+                if cache_key and cache_store:
+                    cache_store[cache_key] = (
+                        entity,
+                        datetime.now() + timedelta(seconds=ENTITY_CACHE_TTL))
+                return entity
+            except Exception:
+                pass
+        raise Exception("Flood")
+
     if cache_key is None:
         cache_key = str(ref)
     if cache_store is None:
@@ -3947,6 +4266,7 @@ async def safe_get_entity(ref, cache_key=None, cache_store=None):
         if now < expires_at:
             return entity
         cache_store.pop(cache_key, None)
+
     try:
         entity = await asyncio.wait_for(admin_client.get_entity(ref),
                                         timeout=15)
@@ -3955,12 +4275,13 @@ async def safe_get_entity(ref, cache_key=None, cache_store=None):
         return entity
     except FloodWaitError as e:
         wait_sec = min(e.seconds + 10, 3600)
+        # ✅ Try backup immediately
         if backup_client:
             try:
                 entity = await asyncio.wait_for(
                     backup_client.get_entity(ref), timeout=15)
-                cache_store[cache_key] = (entity,
-                                          now + timedelta(seconds=ENTITY_CACHE_TTL))
+                cache_store[cache_key] = (
+                    entity, now + timedelta(seconds=ENTITY_CACHE_TTL))
                 return entity
             except Exception:
                 pass
@@ -3971,8 +4292,8 @@ async def safe_get_entity(ref, cache_key=None, cache_store=None):
             try:
                 entity = await asyncio.wait_for(
                     backup_client.get_entity(ref), timeout=15)
-                cache_store[cache_key] = (entity,
-                                          now + timedelta(seconds=ENTITY_CACHE_TTL))
+                cache_store[cache_key] = (
+                    entity, now + timedelta(seconds=ENTITY_CACHE_TTL))
                 return entity
             except Exception:
                 pass
@@ -4005,6 +4326,24 @@ async def safe_get_owner_entity():
     OWNER_ENTITY_CACHE["entity"] = entity
     OWNER_ENTITY_CACHE["expires_at"] = now + timedelta(seconds=OWNER_CACHE_TTL)
     return entity
+
+
+async def safe_get_backup_entity():
+    """Get backup (co-owner) entity"""
+    try:
+        backup_uname = get_backup_username()
+        entity = await asyncio.wait_for(
+            admin_client.get_entity(backup_uname), timeout=15)
+        return entity
+    except Exception:
+        if backup_client:
+            try:
+                return await asyncio.wait_for(
+                    backup_client.get_entity(get_backup_username()),
+                    timeout=15)
+            except Exception:
+                pass
+        return None
 
 
 def clear_owner_cache():
@@ -4178,42 +4517,30 @@ def reset_engine_pool(server=None):
     return op, of
 
 
-# ══════════════════════ 🔥 CACHED ENGINE SYNC ══════════════════════
+# ══════════════════════ CACHED ENGINE SYNC (Non-Blocking) ══════════════════════
 async def sync_engines_cached():
-    """
-    Sync engines from config to DB using cache.
-    - Checks cache first (no API call if cached)
-    - Only calls getMe for uncached tokens
-    - Non-blocking: runs in background
-    """
+    """Sync engines from config → DB using cache (fast)"""
     try:
-        await asyncio.sleep(2)  # let bot start
+        await asyncio.sleep(2)
         if not feat_engine_cache():
             return
 
         existing = {r[0] for r in db_list_engines()}
         added_free = 0
         added_paid = 0
-        cached_count = 0
-        checked_count = 0
-        failed_count = 0
 
-        # ═══ Process Standard engines ═══
+        # Standard engines
         for tok in STANDARD_ENGINES:
             if tok in existing:
                 continue
-            # Check cache first
             cached, is_valid, uname, bid = cache_is_valid(tok)
             if cached:
-                cached_count += 1
                 if is_valid and uname and bid:
                     if db_add_engine(tok, uname, bid, server="free"):
                         added_free += 1
                         existing.add(tok)
                 continue
-            # Not cached — call API
             info = bot_get_me(tok)
-            checked_count += 1
             if info:
                 cache_set(tok, info["username"], info["id"], True)
                 if db_add_engine(tok, info["username"], info["id"],
@@ -4221,24 +4548,21 @@ async def sync_engines_cached():
                     added_free += 1
                     existing.add(tok)
             else:
-                failed_count += 1
                 cache_set(tok, "", 0, False, fail_inc=True)
             await asyncio.sleep(0.12)
 
-        # ═══ Process Premium engines ═══
+        # Premium engines
         for tok in PREMIUM_ENGINES:
             if tok in existing:
                 continue
             cached, is_valid, uname, bid = cache_is_valid(tok)
             if cached:
-                cached_count += 1
                 if is_valid and uname and bid:
                     if db_add_engine(tok, uname, bid, server="paid"):
                         added_paid += 1
                         existing.add(tok)
                 continue
             info = bot_get_me(tok)
-            checked_count += 1
             if info:
                 cache_set(tok, info["username"], info["id"], True)
                 if db_add_engine(tok, info["username"], info["id"],
@@ -4246,14 +4570,14 @@ async def sync_engines_cached():
                     added_paid += 1
                     existing.add(tok)
             else:
-                failed_count += 1
                 cache_set(tok, "", 0, False, fail_inc=True)
             await asyncio.sleep(0.12)
 
-        D(f"Engines ready: +{added_free} std, +{added_paid} premium",
-          "ok")
-    except Exception as e:
-        D_err(e, "sync_engines_cached")
+        if added_free or added_paid:
+            D(f"Engines ready: +{added_free} std, +{added_paid} premium",
+              "ok")
+    except Exception:
+        pass
 
 
 # ══════════════════════ REAL ACCOUNTS ══════════════════════
@@ -4462,6 +4786,17 @@ async def check_owner_admin(entity):
         return False
 
 
+async def check_backup_admin(entity):
+    """Check if co-owner (backup) is admin in entity"""
+    try:
+        backup_entity = await safe_get_backup_entity()
+        if not backup_entity:
+            return False
+        return await is_admin_in(entity, backup_entity.id)
+    except Exception:
+        return False
+
+
 async def get_current_admin_bots(entity):
     admins = []
     try:
@@ -4515,7 +4850,8 @@ async def get_non_our_admin_bots(entity):
 
 
 # ══════════════════════ MAKE / REMOVE ADMIN ══════════════════════
-async def make_engine_admin(entity, bot_entity, atype):
+async def make_engine_admin(entity, bot_entity, atype, use_backup=False):
+    """Make a bot admin. Optionally use backup session."""
     if atype == "channel":
         rights = ChatAdminRights(
             change_info=False, post_messages=True, edit_messages=False,
@@ -4528,9 +4864,11 @@ async def make_engine_admin(entity, bot_entity, atype):
             delete_messages=True, ban_users=True, invite_users=True,
             pin_messages=True, add_admins=False, anonymous=False,
             manage_call=True, other=False)
+
+    client = backup_client if (use_backup and backup_client) else admin_client
     try:
         await asyncio.wait_for(
-            admin_client(EditAdminRequest(
+            client(EditAdminRequest(
                 channel=entity, user_id=bot_entity,
                 admin_rights=rights, rank="")),
             timeout=15)
@@ -4544,7 +4882,7 @@ async def make_engine_admin(entity, bot_entity, atype):
         return False, f"admin: {str(e)[:60]}"
 
 
-async def remove_admin_rights(entity, user_id, username):
+async def remove_admin_rights(entity, user_id, username, use_backup=False):
     if is_permanent_admin(username):
         return True
     empty = ChatAdminRights(
@@ -4552,9 +4890,10 @@ async def remove_admin_rights(entity, user_id, username):
         delete_messages=False, ban_users=False, invite_users=False,
         pin_messages=False, add_admins=False, anonymous=False,
         manage_call=False, other=False)
+    client = backup_client if (use_backup and backup_client) else admin_client
     try:
         await asyncio.wait_for(
-            admin_client(EditAdminRequest(
+            client(EditAdminRequest(
                 channel=entity, user_id=user_id,
                 admin_rights=empty, rank="")),
             timeout=15)
@@ -4566,7 +4905,7 @@ async def remove_admin_rights(entity, user_id, username):
         return False
 
 
-async def remove_admin_by_username(entity, username):
+async def remove_admin_by_username(entity, username, use_backup=False):
     if is_permanent_admin(username):
         return False
     bot_row = db_get_engine_by_username(username)
@@ -4576,13 +4915,15 @@ async def remove_admin_by_username(entity, username):
         be = await safe_get_entity(
             username, cache_key=f"bot:{username}",
             cache_store=BOT_ENTITY_CACHE)
-        return await remove_admin_rights(entity, be.id, username)
+        return await remove_admin_rights(entity, be.id, username,
+                                          use_backup=use_backup)
     except Exception:
         return False
 
 
 # ══════════════════════ ADD ONE ENGINE ══════════════════════
-async def add_one_engine(entity, bot_token, atype, cache_key):
+async def add_one_engine(entity, bot_token, atype, cache_key,
+                          use_backup=False):
     info = bot_get_me(bot_token)
     if not info:
         return False, "invalid"
@@ -4597,7 +4938,8 @@ async def add_one_engine(entity, bot_token, atype, cache_key):
     if atype == "channel":
         if await is_admin_in(entity, be.id):
             return True, "already_admin"
-        return await make_engine_admin(entity, be, "channel")
+        return await make_engine_admin(entity, be, "channel",
+                                        use_backup=use_backup)
 
     try:
         await asyncio.wait_for(
@@ -4605,16 +4947,17 @@ async def add_one_engine(entity, bot_token, atype, cache_key):
                 channel=entity, participant=be.id)),
             timeout=10)
     except UserNotParticipantError:
+        client = backup_client if (use_backup and backup_client) else admin_client
         try:
             await asyncio.wait_for(
-                admin_client(InviteToChannelRequest(
+                client(InviteToChannelRequest(
                     channel=entity, users=[be])),
                 timeout=15)
             await asyncio.sleep(2)
         except Exception:
             try:
                 await asyncio.wait_for(
-                    admin_client(AddChatUserRequest(
+                    client(AddChatUserRequest(
                         chat_id=entity.id, user_id=be, fwd_limit=10)),
                     timeout=15)
                 await asyncio.sleep(2)
@@ -4625,22 +4968,44 @@ async def add_one_engine(entity, bot_token, atype, cache_key):
 
     if await is_admin_in(entity, be.id):
         return True, "already_admin"
-    return await make_engine_admin(entity, be, "group")
+    return await make_engine_admin(entity, be, "group",
+                                    use_backup=use_backup)
 
 
-# ══════════════════════ ENSURE OWNER ADMIN ══════════════════════
+# ══════════════════════ ENSURE OWNER ADMIN (with Flood Detection) ══════════════════════
 async def ensure_owner_admin(entity, cache_key):
+    """
+    Ensure owner is admin.
+    Returns (ok, reason)
+    - ok=True → success
+    - ok=False, reason='owner_flood' → owner flooded, need backup
+    - ok=False, reason='...' → other error
+    """
     if cache_key and ADMIN_CACHE.get(cache_key, {}).get("owner_done"):
         return True, "cached"
+
+    # Try owner
     try:
         oe = await safe_get_owner_entity()
         oid = oe.id
     except Exception as e:
+        err = str(e).lower()
+        if "flood" in err or "wait" in err:
+            return False, "owner_flood"
         return False, f"owner: {str(e)[:40]}"
-    if await is_admin_in(entity, oid):
-        if cache_key:
-            ADMIN_CACHE.setdefault(cache_key, {})["owner_done"] = True
-        return True, "already"
+
+    # Check if already admin
+    try:
+        if await is_admin_in(entity, oid):
+            if cache_key:
+                ADMIN_CACHE.setdefault(cache_key, {})["owner_done"] = True
+            return True, "already"
+    except FloodWaitError:
+        return False, "owner_flood"
+    except Exception:
+        pass
+
+    # Try to promote
     rights = ChatAdminRights(
         change_info=True, post_messages=True, edit_messages=True,
         delete_messages=True, ban_users=True, invite_users=True,
@@ -4656,6 +5021,9 @@ async def ensure_owner_admin(entity, cache_key):
         if cache_key:
             ADMIN_CACHE.setdefault(cache_key, {})["owner_done"] = True
         return True, "promoted"
+    except FloodWaitError as e:
+        # ✅ Owner flooded — signal caller
+        return False, f"owner_flood:{e.seconds}"
     except Exception as e:
         m = str(e).lower()
         if "already" in m:
@@ -4692,7 +5060,6 @@ def clear_failed_engines(task_key):
 # ══════════════════════ SINGLE REACTION WITH FALLBACK ══════════════════════
 def send_reaction_with_fallback(token, chat_id, msg_id, primary_emoji,
                                  server=None):
-    """Send reaction with fallback chain"""
     ok, desc, retry = bot_reaction(token, chat_id, msg_id, primary_emoji)
     if ok:
         return True, primary_emoji, ""
@@ -4716,10 +5083,6 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
                                 emoji_mode="default",
                                 custom_emojis=None, task_key=None,
                                 on_progress=None):
-    """
-    Send reactions from a batch with fallback + tracking.
-    Returns (ok_count, skip_count, failed_bots_list)
-    """
     if not bot_batch:
         return 0, 0, []
 
@@ -4792,19 +5155,22 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
     return ok, skip, failed_bots
 
 
-# ══════════════════════ MAIN SMART ENGINE ══════════════════════
+# ══════════════════════ 🔥 MAIN SMART ENGINE ══════════════════════
 async def process_reactions_rotating(event, uid, chat_link, post_link,
                                       count, emoji_mode="default",
                                       custom_emojis=None,
-                                      is_auto_watch=False):
+                                      is_auto_watch=False,
+                                      use_backup=False):
     """
-    🔥 SMART REACTION ENGINE
-    Phases:
-    1. Existing our-admin-engines (server-specific)
-    2. Adaptive batch add
-    3. React from batch (with fallback)
-    4. Remove our engines (SAFE)
-    5. Failed engines retry
+    🔥 SMART REACTION ENGINE with Backup Support
+
+    Key features:
+    - Server auto-detect (free/paid)
+    - Owner flood detection → prompt for backup admin
+    - Adaptive batch sizes
+    - Fallback emojis
+    - Failed bot tracking
+    - use_backup=True → use backup session for admin ops
     """
     global TASK_RUNNING, TASK_OWNER_UID
 
@@ -4843,7 +5209,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         except Exception:
             pass
 
-    # Resolve chat
+    # ═════ Resolve chat ═════
     try:
         if invite_hash and not post_ref:
             try:
@@ -4858,14 +5224,20 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             entity = await safe_get_entity(
                 target_ref, cache_key=f"chat:{target_ref}")
     except Exception as e:
+        err_msg = str(e).lower()
+        # ✅ Check if flood
+        if "flood" in err_msg or "wait" in err_msg:
+            if event:
+                await show_backup_prompt_to_user(
+                    event, uid, chat_link.split("/")[-1] or "chat")
+            return 0
         if event:
             await safe_edit(
                 event,
                 f"😕 **Couldn't find that chat**\n\n"
                 f"💡 Make sure:\n"
                 f"• The link is correct\n"
-                f"• Owner has admin rights\n\n"
-                f"_Details: {str(e)[:80]}_",
+                f"• Owner has admin rights",
                 buttons=kb_back(uid))
         return 0
 
@@ -4874,7 +5246,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
     actual_type = ("channel" if is_channel(entity)
                    else ("group" if is_group(entity) else chat_type))
 
-    # Verify post exists
+    # ═════ Verify post exists ═════
     try:
         post_msg = await asyncio.wait_for(
             admin_client.get_messages(entity, ids=msg_id), timeout=15)
@@ -4884,10 +5256,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                                 f"😕 Post #{msg_id} not found",
                                 buttons=kb_back(uid))
             return 0
+    except FloodWaitError:
+        if event:
+            await show_backup_prompt_to_user(event, uid, chat_title)
+        return 0
     except Exception:
         pass
 
-    # Owner admin check
+    # ═════ Owner admin check (skip for auto-watch) ═════
     if not is_auto_watch and ADMIN_CHECK_ENABLED and not OWNER_IS(uid):
         if event:
             try:
@@ -4896,30 +5272,56 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 pass
         owner_is_admin = await check_owner_admin(entity)
         if not owner_is_admin:
+            # Check if backup is admin (maybe already added)
+            backup_is_admin = await check_backup_admin(entity)
+            if not backup_is_admin:
+                if event:
+                    await safe_edit(
+                        event,
+                        get_admin_needed_message(chat_title, uid),
+                        buttons=kb_owner_needed(uid))
+                if uid in USER_STATES:
+                    USER_STATES[uid] = {}
+                return 0
+
+    # ═════ 🔥 ENSURE OWNER ADMIN (with flood detection) ═════
+    cache_key = str(real_id)
+    ok_owner, reason_owner = await ensure_owner_admin(entity, cache_key)
+
+    if not ok_owner:
+        # ✅ Owner flooded? Show backup prompt
+        if reason_owner == "owner_flood" or \
+           reason_owner.startswith("owner_flood:"):
+            # If we're already using backup, don't re-prompt
+            if use_backup:
+                if event:
+                    await safe_edit(
+                        event,
+                        f"😕 **Backup is not admin yet**\n\n"
+                        f"Please add @{get_backup_username()} as admin "
+                        f"first, then retry.",
+                        buttons=kb_back(uid))
+                return 0
+            # Show backup prompt
+            if event:
+                await show_backup_prompt_to_user(event, uid, chat_title)
+            return 0
+        else:
+            # Other error
             if event:
                 await safe_edit(
                     event,
-                    get_admin_needed_message(chat_title, uid),
-                    buttons=kb_owner_needed(uid))
-            if uid in USER_STATES:
-                USER_STATES[uid] = {}
+                    f"😕 **Setup failed**\n\n"
+                    f"Owner needs admin permissions.\n\n"
+                    f"_Details: {reason_owner[:80]}_",
+                    buttons=kb_back(uid))
             return 0
 
-    cache_key = str(real_id)
-    ok_owner, reason_owner = await ensure_owner_admin(entity, cache_key)
-    if not ok_owner:
-        if event:
-            await safe_edit(
-                event,
-                f"😕 **Setup failed**\n\n"
-                f"Owner needs admin permissions.\n\n"
-                f"_Details: {reason_owner}_",
-                buttons=kb_back(uid))
-        return 0
-
+    # ═════ Task key ═════
     task_key = f"{uid}:{real_id}:{msg_id}:{server}"
     clear_failed_engines(task_key)
 
+    # ═════ Main loop ═════
     reactions_done = 0
     cycle = 0
     failed_batches = 0
@@ -4940,7 +5342,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 f"📊 `{bar}` {reactions_done}/{want}\n"
                 f"⏳ Remaining: **{remaining}**")
 
-        # Phase 1: existing admins
+        # ═════ PHASE 1: existing admins ═════
         our_admins = await get_our_admin_engines(entity, server=server)
         phase1_bots = []
         for tok, uname, bid in our_admins:
@@ -4991,7 +5393,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             for tok, uname in phase1_bots:
                 try:
                     await asyncio.wait_for(
-                        remove_admin_by_username(entity, uname),
+                        remove_admin_by_username(
+                            entity, uname, use_backup=use_backup),
                         timeout=PER_BOT_TIMEOUT)
                     await asyncio.sleep(0.3)
                 except Exception:
@@ -5001,7 +5404,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             if reactions_done >= want:
                 break
 
-        # Phase 2: add new batch
+        # ═════ PHASE 2: add new batch ═════
         remaining = want - reactions_done
         if cycle <= 2:
             batch_size = min(BATCH_SIZE, remaining + 5)
@@ -5052,7 +5455,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         for tok, uname in to_add:
             try:
                 ok, rmsg = await asyncio.wait_for(
-                    add_one_engine(entity, tok, actual_type, cache_key),
+                    add_one_engine(entity, tok, actual_type, cache_key,
+                                    use_backup=use_backup),
                     timeout=PER_BOT_TIMEOUT)
                 if ok:
                     promoted.append((tok, uname))
@@ -5074,7 +5478,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 break
             continue
 
-        # Phase 3: react
+        # ═════ PHASE 3: react ═════
         if event:
             await safe_edit(
                 event,
@@ -5101,11 +5505,12 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         reactions_done += ok2
         all_failed_bots.extend(fail2)
 
-        # Phase 4: remove
+        # ═════ PHASE 4: remove admins ═════
         for tok, uname in promoted:
             try:
                 await asyncio.wait_for(
-                    remove_admin_by_username(entity, uname),
+                    remove_admin_by_username(
+                        entity, uname, use_backup=use_backup),
                     timeout=PER_BOT_TIMEOUT)
                 await asyncio.sleep(0.3)
             except Exception:
@@ -5122,7 +5527,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
 
         cycle_log.append((cycle, ok2))
 
-    # Phase 5: failed retry
+    # ═════ PHASE 5: failed retry ═════
     remaining = want - reactions_done
     if remaining > 0 and all_failed_bots and FAILED_BOT_RETRY:
         if event:
@@ -5141,7 +5546,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
             for tok, uname in failed_tokens:
                 try:
                     ok, rmsg = await asyncio.wait_for(
-                        add_one_engine(entity, tok, actual_type, cache_key),
+                        add_one_engine(entity, tok, actual_type, cache_key,
+                                        use_backup=use_backup),
                         timeout=PER_BOT_TIMEOUT)
                     if ok:
                         re_added.append((tok, uname))
@@ -5158,13 +5564,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
                 for tok, uname in re_added:
                     try:
                         await asyncio.wait_for(
-                            remove_admin_by_username(entity, uname),
+                            remove_admin_by_username(
+                                entity, uname, use_backup=use_backup),
                             timeout=PER_BOT_TIMEOUT)
                     except Exception:
                         pass
                 await release_engines(re_added, server)
 
-    # Final report
+    # ═════ Final report ═════
     if event:
         bar = progress_bar(reactions_done, max(want, reactions_done, 1))
         cycles_txt = "".join(
@@ -5183,11 +5590,16 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         else:
             title = "😕 **TRY AGAIN**"
 
+        backup_note = ""
+        if use_backup:
+            backup_note = f"\n🔐 Used backup account"
+
         txt = (
             f"{title}\n{STAR_LINE}\n\n"
             f"📢 **{chat_title}**\n"
             f"📩 Post: **#{msg_id}**\n"
-            f"🖥️ Engine: **{get_server_label(server)}**\n\n"
+            f"🖥️ Engine: **{get_server_label(server)}**"
+            f"{backup_note}\n\n"
             f"{DIV}\n"
             f"🎯 Requested: **{count}**\n"
             f"✅ Sent: **{reactions_done}**\n"
@@ -5207,6 +5619,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
 
         await safe_edit(event, txt, buttons=kb_back(uid))
 
+    # ═════ Analytics ═════
     try:
         post_analytics_add(uid, real_id, msg_id, chat_title,
                            reactions_done, count, server=server)
@@ -5218,6 +5631,113 @@ async def process_reactions_rotating(event, uid, chat_link, post_link,
         USER_STATES[uid] = {}
 
     return reactions_done
+
+
+# ══════════════════════ 🔥 BACKUP PROMPT TO USER ══════════════════════
+async def show_backup_prompt_to_user(event, uid, chat_title):
+    """
+    Show backup (co-owner) prompt when owner is flooded.
+    User adds backup admin, then taps Retry.
+    """
+    if not feat_backup_prompt():
+        await safe_edit(
+            event,
+            f"😕 **Owner is Busy**\n\n"
+            f"Please try again in 5-10 minutes.",
+            buttons=kb_back(uid))
+        return
+
+    backup_uname = get_backup_username()
+    backup_id = get_backup_id()
+
+    # Save context for retry
+    state = USER_STATES.get(uid, {})
+    state["backup_pending"] = True
+    state["backup_chat_title"] = chat_title
+    USER_STATES[uid] = state
+
+    txt = get_backup_prompt_message(chat_title, uid)
+
+    buttons = [
+        [btn("✅ I've Added — Retry", data=b"backup_retry",
+             style="success")],
+        [btn("❓ Help", data=b"backup_help",
+             style="primary")],
+        [btn("❌ Cancel", data=b"home", style="danger")],
+    ]
+
+    await safe_edit(event, txt, buttons=buttons)
+
+
+async def process_reactions_with_backup(event, uid):
+    """
+    Retry reactions using backup session.
+    Called when user confirms they added backup admin.
+    """
+    state = USER_STATES.get(uid, {})
+    cl = state.get("channel_link")
+    pl = state.get("post_link")
+    count = state.get("reaction_count", 0)
+    em = state.get("emoji_mode", "default")
+    ce = state.get("custom_emojis")
+
+    if not cl or not pl or count <= 0:
+        await safe_answer(event, "❌ No pending task", alert=True)
+        return
+
+    # Check if backup session exists
+    if not backup_client:
+        await safe_edit(
+            event,
+            f"😕 **Backup Not Available**\n\n"
+            f"The backup account session is not configured.\n\n"
+            f"Please wait 5-10 minutes for the owner to be free.",
+            buttons=kb_back(uid))
+        return
+
+    # Verify backup is admin in the chat
+    try:
+        chat_ref, invite = parse_channel_link(cl)
+        post_ref, msg_id = parse_post_link(pl)
+        target_ref = post_ref or chat_ref
+        entity = await safe_get_entity(
+            target_ref, cache_key=f"chat:{target_ref}")
+
+        backup_is_admin = await check_backup_admin(entity)
+        if not backup_is_admin:
+            await safe_edit(
+                event,
+                f"❌ **Backup is Not Admin Yet**\n\n"
+                f"Please add @{get_backup_username()} as admin "
+                f"in your chat first.\n\n"
+                f"Then tap Retry again.",
+                buttons=[
+                    [btn("🔄 Retry", data=b"backup_retry",
+                         style="success")],
+                    [btn("❌ Cancel", data=b"home",
+                         style="danger")],
+                ])
+            return
+    except Exception:
+        pass
+
+    # ✅ Backup is admin — proceed with backup session
+    await safe_edit(
+        event,
+        f"✅ **Backup Session Active**\n"
+        f"{DIV}\n\n"
+        f"Continuing with backup account...\n"
+        f"⚡ Processing...")
+
+    # Clear backup pending state
+    state.pop("backup_pending", None)
+    USER_STATES[uid] = state
+
+    # Run with use_backup=True
+    await process_reactions_rotating(
+        event, uid, cl, pl, count,
+        emoji_mode=em, custom_emojis=ce,
+        use_backup=True)
 
 
 # ══════════════════════ END OF PART 7 ══════════════════════
@@ -5459,13 +5979,9 @@ async def pool_cleaner_loop():
 async def health_check_loop():
     while True:
         try:
-            await asyncio.sleep(120)
+            await asyncio.sleep(600)  # every 10 min
             uptime = int(time.time() - _start_time)
-            fs = get_pool_status("free")
-            ps = get_pool_status("paid")
-            # Silent log
-            if uptime % 600 < 120:  # every ~10 min
-                D(f"System healthy ({uptime}s uptime)", "ok")
+            D(f"System healthy ({uptime}s uptime)", "ok")
         except asyncio.CancelledError:
             return
         except Exception:
@@ -5492,6 +6008,7 @@ async def daily_summary_loop():
                 ps = get_pool_status("paid")
                 real = real_get_status()
                 stats = db_engine_stats()
+                cache_s = cache_stats()
 
                 txt = (
                     f"📊 **Daily Summary** — {today}\n"
@@ -5499,7 +6016,8 @@ async def daily_summary_loop():
                     f"👥 Users: **{db_total_users()}**\n"
                     f"✅ Approved: **{db_count_approved_users()}**\n"
                     f"⏳ Pending: **{db_count_pending_approvals()}**\n"
-                    f"🚫 Banned: **{db_count_banned_users()}**\n\n"
+                    f"🚫 Banned: **{db_count_banned_users()}**\n"
+                    f"📮 Appeals: **{db_count_pending_appeals()}**\n\n"
                     f"💫 Today: **{db_reactions_today()}**\n"
                     f"💫 Total: **{db_total_reactions()}**\n"
                     f"🎁 Referrals: **{ref_stats['valid']}**\n\n"
@@ -5509,9 +6027,10 @@ async def daily_summary_loop():
                     f"💎 **Premium Engine**\n"
                     f"   ⚙️ {ps['visible']} workers\n"
                     f"   🟢 {ps['free']} / 🔴 {ps['busy']} / 🌊 {ps['flooded']}\n\n"
-                    f"📊 Total workers: **{stats['total']}**\n\n"
-                    f"👤 Access keys: "
-                    f"**{real['available']}/{real['total']}**\n\n"
+                    f"📊 Total: **{stats['total']}** workers\n"
+                    f"💾 Cache: **{cache_s['valid']}** valid\n\n"
+                    f"🔐 Access Keys: "
+                    f"**{real['available']}/{real['total']}**\n"
                     f"📡 Auto-Tracks: **{len(db_list_watchers())}**\n"
                     f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n"
                     f"🔄 Retries: **{retry_count_pending()}**\n\n"
@@ -5529,9 +6048,9 @@ async def daily_summary_loop():
             await asyncio.sleep(60)
 
 
-# ══════════════════════ STARTUP BOT SYNC LOOP ══════════════════════
+# ══════════════════════ STARTUP ENGINE SYNC LOOP ══════════════════════
 async def startup_engine_sync():
-    """One-time: fix any missing server assignments"""
+    """One-time: fix missing server assignments"""
     try:
         await asyncio.sleep(5)
         conn = sqlite3.connect(DB_FILE)
@@ -5576,6 +6095,78 @@ async def cache_cleanup_loop():
             pass
 
 
+# ══════════════════════ 🤖 AUTO BOT VALIDATOR ══════════════════════
+async def auto_bot_validator_loop():
+    """
+    Periodically validates engines.
+    - Checks valid=True engines occasionally
+    - Marks invalid engines
+    - Disables them from pool
+    """
+    while True:
+        try:
+            await asyncio.sleep(21600)  # every 6 hours
+            if not feat_engine_cache():
+                continue
+            D("Auto-validating engines...", "ok")
+
+            # Check random sample of 20 engines
+            all_engines = db_list_engines()
+            if not all_engines:
+                continue
+
+            random.shuffle(all_engines)
+            sample = all_engines[:20]
+
+            invalid_count = 0
+            for tok, uname, bid, added, valid in sample:
+                try:
+                    info = bot_get_me(tok)
+                    if info:
+                        cache_set(tok, info["username"], info["id"], True)
+                    else:
+                        cache_set(tok, "", 0, False, fail_inc=True)
+                        invalid_count += 1
+                        db_mark_engine_invalid(tok)
+                except Exception:
+                    pass
+                await asyncio.sleep(0.15)
+
+            if invalid_count > 0:
+                D(f"Auto-validator: {invalid_count} invalid engines", "warn")
+        except asyncio.CancelledError:
+            return
+        except Exception:
+            await asyncio.sleep(3600)
+
+
+# ══════════════════════ USER NOTES CLEANUP (owner-only, weekly) ══════════════════════
+async def user_notes_cleanup_loop():
+    """Optional: cleans up very old notes (optional)"""
+    while True:
+        try:
+            await asyncio.sleep(604800)  # 7 days
+            # Optional: clean notes older than 1 year
+            try:
+                conn = sqlite3.connect(DB_FILE)
+                try:
+                    c = conn.cursor()
+                    c.execute("""DELETE FROM user_notes
+                        WHERE created_at < datetime('now', '-1 year')""")
+                    n = c.rowcount
+                    conn.commit()
+                    if n > 0:
+                        D(f"Cleaned {n} old notes", "ok")
+                finally:
+                    conn.close()
+            except Exception:
+                pass
+        except asyncio.CancelledError:
+            return
+        except Exception:
+            pass
+
+
 # ══════════════════════ END OF PART 8 ══════════════════════
 D("Part 8 ready", "ok")
 # ══════════════════════ USER KEYBOARDS ══════════════════════
@@ -5597,43 +6188,39 @@ def kb_request_access(uid=None):
 def kb_welcome(uid=None):
     """Main welcome menu — friendly layout"""
     rows = [
-        # Row 1: Main feature
         [btn(f"💫 {L(uid, 'send_reactions')}", data=b"react_flow",
              style="success")],
-        # Row 2: Dashboard + Bonus
         [btn(f"📊 {L(uid, 'dashboard')}", data=b"dashboard",
              style="primary"),
          btn(f"🎁 {L(uid, 'daily_bonus')}", data=b"daily_bonus",
              style="success")],
-        # Row 3: Queue + Bulk
         [btn(f"⏰ {L(uid, 'queue')} 💎", data=b"queue_menu",
              style="primary"),
          btn(f"📦 {L(uid, 'bulk')} 💎", data=b"bulk_menu",
              style="primary")],
-        # Row 4: Auto-Watch + Templates
         [btn(f"📡 {L(uid, 'auto_watch')} 💎", data=b"watch_flow",
              style="primary"),
          btn(f"📝 {L(uid, 'templates')} 💎", data=b"templates_menu",
              style="primary")],
-        # Row 5: Store + Post History
         [btn(f"🏪 {L(uid, 'store')}", data=b"store_menu",
              style="success"),
+         btn(f"💰 {L(uid, 'referral')}", data=b"referral_menu",
+             style="success")],
+        [btn(f"🎁 {L(uid, 'daily_bonus')} / Balance",
+             data=b"balance_menu", style="primary"),
          btn(f"📜 {L(uid, 'post_history')}", data=b"post_history",
              style="primary")],
-        # Row 6: Referral + Buy Plan
-        [btn(f"🎁 {L(uid, 'referral')}", data=b"referral_menu",
+        [btn(f"💰 {L(uid, 'buy_plan')}", data=b"plans_menu",
              style="success"),
-         btn(f"💰 {L(uid, 'buy_plan')}", data=b"plans_menu",
-             style="success")],
-        # Row 7: Notifications + Language
+         btn(f"🎟️ Coupons", data=b"coupon_info",
+             style="primary")],
         [btn(f"🔔 {L(uid, 'notifications')}", data=b"notif_menu",
              style="primary"),
          btn(f"🌍 {L(uid, 'language')}", data=b"lang_menu",
              style="primary")],
-        # Row 8: Help + Info
         [btn(f"❓ {L(uid, 'help')}", data=b"help", style="success"),
-         btn(f"ℹ️ {L(uid, 'info')}", data=b"info", style="primary")],
-        # Row 9: Support
+         btn(f"ℹ️ {L(uid, 'info')}", data=b"info",
+             style="primary")],
         [btn(f"💬 {L(uid, 'support')}", data=b"support",
              style="primary")],
     ]
@@ -5818,6 +6405,34 @@ def kb_referral_menu(uid):
              style="primary")],
         [btn(f"🏆 {L(uid, 'leaderboard')}", data=b"ref:leaderboard",
              style="primary")],
+        [btn(f"💡 Balance Info", data=b"balance_info",
+             style="success")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"home",
+             style="primary")],
+    ]
+
+
+def kb_balance_menu(uid):
+    """Balance management menu"""
+    return [
+        [btn("💰 View Balance", data=b"balance_view",
+             style="success")],
+        [btn("📜 History", data=b"balance_history",
+             style="primary")],
+        [btn("💡 How to Use", data=b"balance_info",
+             style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}", data=b"home",
+             style="primary")],
+    ]
+
+
+def kb_coupon_info(uid=None):
+    """Coupon info menu"""
+    return [
+        [btn("🎟️ Enter Coupon Code", data=b"coupon_entry",
+             style="success")],
+        [btn("💡 How Coupons Work", data=b"coupon_info_help",
+             style="primary")],
         [btn(f"🔙 {L(uid, 'back')}", data=b"home",
              style="primary")],
     ]
@@ -5847,6 +6462,35 @@ def kb_plan_durations(plan, uid=None):
                      data=f"plan:{plan}".encode(),
                      style="primary")])
     return rows
+
+
+def kb_plan_coupon_prompt(plan, days, uid=None):
+    """Show after selecting plan duration — with coupon option"""
+    price = get_plan_price(plan, days)
+    return [
+        [btn(f"🎟️ Apply Coupon", 
+             data=f"pland_coupon:{plan}:{days}".encode(),
+             style="success")],
+        [btn(f"💬 Buy Now ({price}rs)",
+             url=f"https://t.me/{get_owner_username()}",
+             style="primary")],
+        [btn(f"🔙 {L(uid, 'back')}",
+             data=f"plan:{plan}".encode(),
+             style="danger")],
+    ]
+
+
+def kb_after_coupon(plan, days, coupon_code, uid=None):
+    """After coupon applied — buy button"""
+    return [
+        [btn("💬 Complete Purchase",
+             url=f"https://t.me/{get_owner_username()}",
+             style="success")],
+        [btn("🎟️ Change Coupon",
+             data=f"pland_coupon:{plan}:{days}".encode(),
+             style="primary")],
+        [btn("🔙 Back", data=b"plans_menu", style="danger")],
+    ]
 
 
 def kb_lang_menu(uid):
@@ -5881,7 +6525,7 @@ def kb_back(uid=None):
 
 
 def kb_mode_choice(uid=None):
-    """Reaction mode — server-aware with friendly labels"""
+    """Reaction mode selection"""
     has_real = user_has_realaccounts(uid) if uid else False
     server = get_user_server(uid) if uid else "free"
     server_label = get_server_label(server)
@@ -5987,85 +6631,214 @@ def kb_store_mine(uid):
 D("Part 9 ready", "ok")
 # ══════════════════════ OWNER KEYBOARDS ══════════════════════
 def kb_owner():
-    """Main owner panel — professional layout"""
+    """Main owner panel"""
     auto = "✅" if is_auto_approve() else "❌"
     stats = db_engine_stats()
     real_status = real_get_status()
-    fs = get_pool_status("free")
-    ps = get_pool_status("paid")
 
     return [
-        # ── Analytics ──
+        # Analytics
         [btn("📊 Analytics", data=b"op:analytics", style="success"),
          btn("👥 Users", data=b"op:users", style="primary")],
-        # ── Revenue ──
+        # Revenue
         [btn("💰 Revenue", data=b"op:revenue", style="primary"),
          btn("💳 Payments", data=b"op:payments", style="danger")],
-        # ── Engines + Broadcast ──
+        # Engines + Broadcast
         [btn(f"⚙️ Engines: {stats['total']}",
               data=b"op:engines", style="primary"),
          btn("📢 Broadcast", data=b"op:broadcast", style="danger")],
-        # ── Dual Server ──
+        # Dual Server
         [btn(f"🆓 Standard ({stats['free']})",
               data=b"srv:panel:free", style="success"),
          btn(f"💎 Premium ({stats['paid']})",
               data=b"srv:panel:paid", style="primary")],
-        # ── Access Keys + RA Plans ──
+        # Access Keys + RA Plans
         [btn(f"🔐 Access Keys ({real_status['available']}/"
               f"{real_status['total']})",
               data=b"op:ra", style="success"),
          btn("⚙️ RA Plans", data=b"op:ra_plans", style="primary")],
-        # ── Owner Info + Coupons ──
-        [btn("👤 Owner Info", data=b"op:owner_info", style="success"),
-         btn("🎟️ Coupons", data=b"op:coupons", style="success")],
-        # ── Store + Retry ──
-        [btn("🏪 Emoji Store", data=b"op:store", style="primary"),
-         btn("🔄 Auto-Retry", data=b"op:retry", style="primary")],
-        # ── Bulk Users + Rate Limits ──
-        [btn("👥 Bulk Users", data=b"op:bulk_users", style="primary"),
-         btn("📈 Rate Limits", data=b"op:rate_limits", style="primary")],
-        # ── Auto-approve + Free count ──
+        # Co-Owner + Owner Info
+        [btn(f"👥 Co-Owner Setup",
+              data=b"op:coowner", style="success"),
+         btn("👤 Owner Info", data=b"op:owner_info",
+              style="primary")],
+        # Coupons + Store
+        [btn("🎟️ Coupons", data=b"op:coupons", style="success"),
+         btn("🏪 Emoji Store", data=b"op:store", style="primary")],
+        # User Notes + Ban Appeals
+        [btn("📝 User Notes", data=b"op:user_notes",
+              style="primary"),
+         btn(f"📮 Ban Appeals ({db_count_pending_appeals()})",
+              data=b"op:appeals", style="danger")],
+        # Retry + Rate Limits
+        [btn("🔄 Auto-Retry", data=b"op:retry", style="primary"),
+         btn("📈 Rate Limits", data=b"op:rate_limits",
+              style="primary")],
+        # Bulk Users + Analytics Export
+        [btn("👥 Bulk Users", data=b"op:bulk_users",
+              style="primary"),
+         btn("📤 Export Data", data=b"op:export",
+              style="success")],
+        # Toggles
         [btn(f"🔓 Auto:{auto}", data=b"op:toggle_auto",
               style="success"),
          btn(f"⚙️ Free:{get_free_count()}", data=b"op:setfree",
               style="primary")],
-        # ── Features + Prices ──
+        # Features + Prices
         [btn("🎛️ Features", data=b"op:features", style="primary"),
-         btn("💰 Prices", data=b"op:plan_prices", style="success")],
-        # ── Paid Features ──
+         btn("💰 Prices", data=b"op:plan_prices",
+              style="success")],
+        # Paid Features
         [btn("💎 PAID FEATURES", data=b"op:paid_features",
               style="danger")],
-        # ── Force Ch + Team ──
+        # Force + Team
         [btn("📢 Force Ch", data=b"op:force_channels",
               style="primary"),
          btn("👥 Team", data=b"op:team", style="success")],
-        # ── Custom Packs + Watchers ──
+        # Custom Packs + Watchers
         [btn("🎨 Custom Packs", data=b"op:emoji_packs",
               style="primary"),
          btn("📡 Auto-Tracks", data=b"op:watchers",
               style="primary")],
-        # ── Referrals + Queue ──
+        # Referrals + Queue
         [btn("🎁 Referrals", data=b"op:referrals",
               style="success"),
          btn("⏰ Queue", data=b"op:queue", style="primary")],
-        # ── Pool Status + Reset ──
+        # Pool Status + Reset
         [btn("📊 Pool Status", data=b"op:pool_status",
               style="primary"),
          btn("🧹 RESET POOL", data=b"op:reset_pool",
               style="danger")],
-        # ── Backup + Add User ──
-        [btn("🔄 Auto Backup", data=b"op:ghsync", style="success"),
+        # Backup + Add User
+        [btn("🔄 Auto Backup", data=b"op:ghsync",
+              style="success"),
          btn("➕ Add User", data=b"op:adduser", style="success")],
-        # ── Pending + Approved ──
+        # Pending + Approved
         [btn("⏳ Pending", data=b"op:pending", style="danger"),
          btn("✅ Approved", data=b"op:approved", style="success")],
-        # ── Recent + Main ──
+        # Recent + Main
         [btn("📜 Recent", data=b"op:recent", style="primary"),
          btn("🔙 Main", data=b"home", style="primary")],
     ]
 
 
-# ══════════════════════ 🖥️ SERVER MANAGEMENT ══════════════════════
+# ══════════════════════ CO-OWNER SETUP PANEL 🆕 ══════════════════════
+def kb_coowner_panel():
+    """Co-owner (backup) configuration panel"""
+    backup_uname = get_backup_username()
+    backup_id = get_backup_id()
+    backup_status = "✅ Active" if backup_client else "⚠️ Not connected"
+
+    return [
+        [btn(f"👥 Current Co-Owner", data=b"coowner_info",
+              style="primary")],
+        [btn(f"📛 Username: @{backup_uname}",
+              data=b"coowner_info", style="success")],
+        [btn(f"🆔 ID: {backup_id}",
+              data=b"coowner_info", style="primary")],
+        [btn(f"🔌 Status: {backup_status}",
+              data=b"coowner_status", style="primary")],
+        [btn("✏️ Change Username",
+              data=b"coowner_edit_uname", style="success")],
+        [btn("✏️ Change ID",
+              data=b"coowner_edit_id", style="primary")],
+        [btn("🧪 Test Backup Session",
+              data=b"coowner_test", style="success")],
+        [btn("📖 How It Works",
+              data=b"coowner_help", style="primary")],
+        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+    ]
+
+
+# ══════════════════════ USER NOTES PANEL 🆕 ══════════════════════
+def kb_user_notes_menu():
+    """User notes management panel"""
+    return [
+        [btn("🔍 Search User", data=b"notes_search",
+              style="primary")],
+        [btn("📊 Notes Stats", data=b"notes_stats",
+              style="success")],
+        [btn("📖 How It Works", data=b"notes_help",
+              style="primary")],
+        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+    ]
+
+
+def kb_user_notes_view(tuid):
+    """View notes for a specific user"""
+    notes = db_list_user_notes(tuid)
+    rows = [
+        [btn(f"👤 User: {tuid}", data=f"um:panel:{tuid}".encode(),
+              style="primary")],
+        [btn(f"📝 {len(notes)} notes", data=b"notes_refresh",
+              style="success")],
+    ]
+    for n in notes[:5]:
+        nid, note, added_by, dt = n
+        rows.append([
+            btn(f"📝 {note[:30]}...",
+                data=f"note:view:{nid}".encode(), style="primary"),
+            btn("🗑️", data=f"note:del:{nid}:{tuid}".encode(),
+                style="danger")
+        ])
+    rows.append([btn("➕ Add Note",
+                     data=f"note:add:{tuid}".encode(),
+                     style="success")])
+    rows.append([btn(f"🔙 Back",
+                     data=f"um:panel:{tuid}".encode(),
+                     style="primary")])
+    return rows
+
+
+# ══════════════════════ BAN APPEALS PANEL 🆕 ══════════════════════
+def kb_ban_appeals():
+    """Ban appeals management"""
+    pending = db_count_pending_appeals()
+    return [
+        [btn(f"📮 Pending Appeals: {pending}",
+              data=b"appeals:pending", style="danger")],
+        [btn("✅ Decided Appeals", data=b"appeals:decided",
+              style="success")],
+        [btn("📖 How It Works", data=b"appeals:help",
+              style="primary")],
+        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+    ]
+
+
+def kb_appeal_actions(aid, uid):
+    """Actions for a specific appeal"""
+    return [
+        [btn("✅ Accept (Unban)", 
+              data=f"appeal:accept:{aid}:{uid}".encode(),
+              style="success")],
+        [btn("❌ Reject",
+              data=f"appeal:reject:{aid}:{uid}".encode(),
+              style="danger")],
+        [btn("🔙 Back", data=b"op:appeals", style="primary")],
+    ]
+
+
+# ══════════════════════ ANALYTICS EXPORT 🆕 ══════════════════════
+def kb_export_menu():
+    """Data export panel"""
+    return [
+        [btn("📊 Users (CSV)", data=b"export:users",
+              style="success")],
+        [btn("💰 Payments (CSV)", data=b"export:payments",
+              style="primary")],
+        [btn("💫 Reactions (CSV)", data=b"export:reactions",
+              style="primary")],
+        [btn("📈 Stats (CSV)", data=b"export:stats",
+              style="success")],
+        [btn("🎁 Referrals (CSV)", data=b"export:referrals",
+              style="primary")],
+        [btn("📮 Appeals (CSV)", data=b"export:appeals",
+              style="primary")],
+        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+    ]
+
+
+# ══════════════════════ SERVER MANAGEMENT ══════════════════════
 def kb_server_panel(server):
     """Detailed server management panel"""
     pool = get_pool_status(server)
@@ -6074,7 +6847,6 @@ def kb_server_panel(server):
     other_label = get_server_label(other)
 
     return [
-        # ── Stats ──
         [btn(f"📊 Total: {pool['total']}",
               data=f"srv:refresh:{server}", style="primary"),
          btn(f"🟢 Free: {pool['free']}",
@@ -6083,7 +6855,6 @@ def kb_server_panel(server):
               data=f"srv:refresh:{server}", style="danger"),
          btn(f"🌊 Resting: {pool['flooded']}",
               data=f"srv:refresh:{server}", style="primary")],
-        # ── Actions ──
         [btn("🔄 Refresh", data=f"srv:refresh:{server}",
               style="success")],
         [btn("📋 List All", data=f"srv:list:{server}",
@@ -6092,12 +6863,10 @@ def kb_server_panel(server):
               data=f"srv:clear_floods:{server}", style="danger")],
         [btn("🧹 Reset Pool", data=f"srv:reset:{server}",
               style="danger")],
-        # ── Move ──
         [btn(f"🔀 Move All → {other_label}",
               data=f"srv:move_all:{server}", style="danger")],
         [btn("📤 Bulk Move", data=f"srv:bulk_move:{server}",
               style="primary")],
-        # ── Add / Test ──
         [btn("➕ Add Engine",
               data=f"srv:add_bot:{server}", style="success")],
         [btn("🧪 Test All",
@@ -6123,7 +6892,6 @@ def kb_bot_list(server, page=0):
     rows = []
     for i, b in enumerate(page_bots, start=start+1):
         tok, uname, bid, added, valid = b[:5]
-        # Status
         st = "🟢"
         if tok in flood_map and flood_map[tok] > now:
             st = "🌊"
@@ -6138,7 +6906,6 @@ def kb_bot_list(server, page=0):
                 style="primary")
         ])
 
-    # Pagination
     nav = []
     if page > 0:
         nav.append(btn("⬅️ Prev",
@@ -6165,7 +6932,6 @@ def kb_bot_list(server, page=0):
 
 
 def kb_bulk_move(server):
-    """Bulk move options"""
     return [
         [btn("🔀 Move ALL engines",
               data=f"srv:move_all:{server}".encode(),
@@ -6195,7 +6961,7 @@ def kb_user_server(tuid):
     override = u[27] if len(u) > 27 else None
 
     return [
-        [btn(f"👤 User: `{tuid}`",
+        [btn(f"👤 User: {tuid}",
               data=f"um:panel:{tuid}".encode(), style="primary")],
         [btn(f"💰 Plan: {plan}",
               data=f"um:panel:{tuid}".encode(), style="success")],
@@ -6211,7 +6977,7 @@ def kb_user_server(tuid):
         [btn("💎 Force Premium",
               data=f"usrv:set:paid:{tuid}".encode(),
               style="success")],
-        [btn("🔄 Reset (Use Plan Default)",
+        [btn("🔄 Reset (Plan Default)",
               data=f"usrv:reset:{tuid}".encode(),
               style="primary")],
         [btn("🔙 Back",
@@ -6268,7 +7034,8 @@ def kb_features():
              data=b"ft:toggle:auto_retry_enabled",
              style="primary")],
         [btn(t("smart_notif_enabled", "Smart Notif"),
-             data=b"ft:toggle:smart_notif_enabled", style="success")],
+             data=b"ft:toggle:smart_notif_enabled",
+             style="success")],
         [btn(t("coupon_enabled", "Coupons"),
              data=b"ft:toggle:coupon_enabled", style="primary")],
         [btn(t("emoji_store_enabled", "Emoji Store"),
@@ -6284,12 +7051,25 @@ def kb_features():
         [btn(t("smart_reaction_enabled", "Smart Reaction"),
              data=b"ft:toggle:smart_reaction_enabled",
              style="success")],
-        [btn(t("fallback_enabled", "Fallback Reactions"),
+        [btn(t("fallback_enabled", "Fallback"),
              data=b"ft:toggle:fallback_enabled", style="primary")],
         [btn(t("dual_server_enabled", "Dual Server"),
              data=b"ft:toggle:dual_server_enabled", style="success")],
         [btn(t("engine_cache_enabled", "Engine Cache"),
              data=b"ft:toggle:engine_cache_enabled",
+             style="primary")],
+        # New features
+        [btn(t("balance_reactions_enabled", "Balance → Reactions"),
+             data=b"ft:toggle:balance_reactions_enabled",
+             style="success")],
+        [btn(t("backup_prompt_enabled", "Backup Prompt"),
+             data=b"ft:toggle:backup_prompt_enabled",
+             style="primary")],
+        [btn(t("user_notes_enabled", "User Notes"),
+             data=b"ft:toggle:user_notes_enabled",
+             style="success")],
+        [btn(t("ban_appeals_enabled", "Ban Appeals"),
+             data=b"ft:toggle:ban_appeals_enabled",
              style="primary")],
         [btn("🔙 Back", data=b"owner_panel", style="danger")],
     ]
@@ -6406,6 +7186,7 @@ def kb_user_manage(uid):
     ra_lbl = ra_ov if ra_ov >= 0 else "Plan"
     current_server = get_user_server(uid)
     server_label = get_server_label(current_server)
+    notes_count = db_count_user_notes(uid)
 
     return [
         [btn(f"{yn(not u[5])} {'BANNED' if u[5] else 'Active'}",
@@ -6415,10 +7196,12 @@ def kb_user_manage(uid):
               data=f"um:limit:{uid}".encode(), style="primary")],
         [btn(f"💰 Plan: {plan}",
               data=f"um:plan:{uid}".encode(), style="success")],
-        [btn(f"🎁 Balance: {fb}",
+        [btn(f"💎 Balance: {fb}",
               data=f"um:balance:{uid}".encode(), style="primary")],
         [btn(f"🖥️ Server: {server_label}",
               data=f"usrv:panel:{uid}".encode(), style="success")],
+        [btn(f"📝 Notes: {notes_count}",
+              data=f"notes:view:{uid}".encode(), style="primary")],
         [btn(f"👤 RA Limit: {ra_lbl}",
               data=f"um:ra:{uid}".encode(), style="success")],
         [btn(f"👥 Team: {u[23] or 'user'}",
@@ -6644,7 +7427,6 @@ def kb_session_info(sf):
 
 # ══════════════════════ ENGINE INFO ══════════════════════
 def kb_engine_info(server, username):
-    """Single engine detail panel"""
     other = "paid" if server == "free" else "free"
     return [
         [btn(f"⚙️ @{username}",
@@ -6672,7 +7454,7 @@ def kb_engine_info(server, username):
 D("Part 10 ready", "ok")
 # ══════════════════════ MESSAGE TEMPLATES ══════════════════════
 def get_admin_needed_message(chat_title, uid=None):
-    """Owner admin required — friendly"""
+    """Owner admin required"""
     u = db_get_user_full(uid) if uid else None
     lang = u[18] if u and len(u) > 18 and u[18] else "en"
 
@@ -6728,7 +7510,6 @@ def get_admin_needed_message(chat_title, uid=None):
             f"📖 पूरी गाइड के लिए **मदद** दबाएं"
         )
 
-    # Default English
     return (
         f"{STAR_LINE}\n"
         f"⚠️ **IMPORTANT — READ FIRST** ⚠️\n"
@@ -6759,7 +7540,7 @@ def get_admin_needed_message(chat_title, uid=None):
 
 
 def get_welcome_message(first_name, uid, auto_approved=True):
-    """Welcome message — friendly + server-aware"""
+    """Welcome — friendly + server-aware"""
     limit = get_user_limit(uid)
     u = db_get_user_full(uid)
     aw = u[9] if u else 0
@@ -6807,7 +7588,6 @@ def get_welcome_message(first_name, uid, auto_approved=True):
 
 
 def get_approved_notify_message(first_name, uid=None):
-    """Approval notification — friendly"""
     limit = get_user_limit(uid) if uid else DEFAULT_FREE_COUNT
     server = get_user_server(uid) if uid else "free"
     server_label = get_server_label(server)
@@ -6860,7 +7640,10 @@ def get_rejected_message(uid=None):
 
 
 def get_banned_message(uid=None):
-    return (
+    """
+    Banned message — shows appeal option if enabled.
+    """
+    base = (
         f"{STAR_LINE}\n"
         f"🚫 **ACCESS REVOKED**\n"
         f"{STAR_LINE}\n\n"
@@ -6869,11 +7652,110 @@ def get_banned_message(uid=None):
         f"📞 Contact: @{get_owner_username()}\n"
         f"{DIV}"
     )
+    if uid and feat_ban_appeals():
+        try:
+            appeal = db_get_user_appeal(uid)
+            if appeal:
+                aid, reason, status, dt = appeal
+                if status == "pending":
+                    base += (
+                        f"\n\n📮 **Appeal Status:** Pending\n"
+                        f"🕒 Submitted: {dt[:16]}\n\n"
+                        f"⏳ Please wait for a decision.")
+                elif status == "accepted":
+                    base += (
+                        f"\n\n✅ **Appeal Accepted!**\n"
+                        f"Send /start to try again.")
+                elif status == "rejected":
+                    base += (
+                        f"\n\n❌ **Appeal Rejected**\n"
+                        f"Reason: {reason[:100]}")
+            else:
+                base += (
+                    f"\n\n💬 **Want to appeal?**\n"
+                    f"Send your reason to the bot:")
+        except Exception:
+            pass
+    return base
+
+
+# ══════════════════════ 🔥 BACKUP PROMPT MESSAGE ══════════════════════
+def get_backup_prompt_message(chat_title, uid=None):
+    """Shown when owner flooded — user adds co-owner"""
+    backup_uname = get_backup_username()
+    backup_id = get_backup_id()
+
+    u = db_get_user_full(uid) if uid else None
+    lang = u[18] if u and len(u) > 18 and u[18] else "en"
+
+    if lang == "ur":
+        return (
+            f"⚠️ **اونر اس وقت مصروف ہے** ⚠️\n"
+            f"{STAR_LINE}\n\n"
+            f"📢 **{chat_title}**\n\n"
+            f"ہمارا مرکزی اکاؤنٹ عارضی طور پر دستیاب نہیں ہے۔\n"
+            f"براہ کرم ایک بیک اپ ایڈمن شامل کریں:\n\n"
+            f"{DIV}\n"
+            f"📋 **ایک بار کا سیٹ اپ**\n"
+            f"{DIV}\n\n"
+            f"1️⃣ اپنا چینل/گروپ کھولیں\n"
+            f"2️⃣ ایڈمنسٹریٹرز → نیا ایڈمن\n"
+            f"3️⃣ یہ اکاؤنٹ شامل کریں:\n\n"
+            f"   👤 یوزرنیم: `@{backup_uname}`\n"
+            f"   🆔 آئی ڈی: `{backup_id}`\n\n"
+            f"4️⃣ تمام اجازتیں دیں\n"
+            f"5️⃣ محفوظ کریں\n\n"
+            f"{DIV}\n"
+            f"پھر نیچے **دوبارہ کوشش کریں** دبائیں۔\n\n"
+            f"💡 یہ محفوظ ہے اور صرف ایک بار کی ضرورت ہے۔"
+        )
+
+    if lang == "hi":
+        return (
+            f"⚠️ **मालिक इस समय व्यस्त है** ⚠️\n"
+            f"{STAR_LINE}\n\n"
+            f"📢 **{chat_title}**\n\n"
+            f"हमारा मुख्य खाता अस्थायी रूप से उपलब्ध नहीं है।\n"
+            f"कृपया एक बैकअप एडमिन जोड़ें:\n\n"
+            f"{DIV}\n"
+            f"📋 **एक बार का सेटअप**\n"
+            f"{DIV}\n\n"
+            f"1️⃣ अपना चैनल/ग्रुप खोलें\n"
+            f"2️⃣ एडमिनिस्ट्रेटर्स → नया एडमिन\n"
+            f"3️⃣ यह खाता जोड़ें:\n\n"
+            f"   👤 यूज़रनेम: `@{backup_uname}`\n"
+            f"   🆔 आईडी: `{backup_id}`\n\n"
+            f"4️⃣ सभी परमिशन दें\n"
+            f"5️⃣ सेव करें\n\n"
+            f"{DIV}\n"
+            f"फिर नीचे **दोबारा कोशिश करें** दबाएं।\n\n"
+            f"💡 यह सुरक्षित है और सिर्फ एक बार की ज़रूरत है।"
+        )
+
+    return (
+        f"⚠️ **Owner is Currently Busy** ⚠️\n"
+        f"{STAR_LINE}\n\n"
+        f"📢 **{chat_title}**\n\n"
+        f"Our main account is temporarily unavailable.\n"
+        f"Please add a backup admin to continue:\n\n"
+        f"{DIV}\n"
+        f"📋 **One-Time Setup**\n"
+        f"{DIV}\n\n"
+        f"1️⃣ Open your channel/group\n"
+        f"2️⃣ Go to Administrators → Add Admin\n"
+        f"3️⃣ Add this backup account:\n\n"
+        f"   👤 Username: `@{backup_uname}`\n"
+        f"   🆔 ID: `{backup_id}`\n\n"
+        f"4️⃣ Give all permissions\n"
+        f"5️⃣ Save\n\n"
+        f"{DIV}\n"
+        f"Then tap **Retry** below.\n\n"
+        f"💡 This is safe and only needed once."
+    )
 
 
 # ══════════════════════ SERVER / STATUS HELPERS ══════════════════════
 def get_server_summary_text(server):
-    """Short server summary"""
     pool = get_pool_status(server)
     label = get_server_label(server)
     return (
@@ -6886,7 +7768,6 @@ def get_server_summary_text(server):
 
 
 def get_dual_server_status_text():
-    """Full dual-server report"""
     fs = get_pool_status("free")
     ps = get_pool_status("paid")
     stats = db_engine_stats()
@@ -6911,7 +7792,6 @@ def get_dual_server_status_text():
 
 
 def get_user_plan_info_text(uid):
-    """User's plan & server info"""
     u = db_get_user_full(uid)
     if not u:
         return "❌ User not found"
@@ -6939,7 +7819,6 @@ def get_user_plan_info_text(uid):
 
 
 def get_engine_info_text(engine_row):
-    """Single engine info"""
     if not engine_row:
         return "❌ Engine not found"
     tok, uname, bid, added, valid = engine_row[:5]
@@ -6969,7 +7848,6 @@ def get_engine_info_text(engine_row):
 
 # ══════════════════════ FEATURE INFO CARDS ══════════════════════
 def get_feature_info(feature, uid=None):
-    """Feature info card — friendly description"""
     u = db_get_user_full(uid) if uid else None
     lang = u[18] if u and len(u) > 18 and u[18] else "en"
 
@@ -6979,8 +7857,7 @@ def get_feature_info(feature, uid=None):
                 f"💫 **SEND REACTIONS**\n"
                 f"{STAR_LINE}\n\n"
                 f"ℹ️ **What it does:**\n"
-                f"Sends reactions to any post you choose — "
-                f"channels or groups.\n\n"
+                f"Sends reactions to any post you choose.\n\n"
                 f"🎯 **How to use:**\n"
                 f"1. Choose mode (👑 With Admin / 🔓 Without)\n"
                 f"2. Send chat link\n"
@@ -7054,7 +7931,34 @@ def get_feature_info(feature, uid=None):
                 f"1. Tap 'My Link'\n"
                 f"2. Share with friends\n"
                 f"3. When they join — you earn!\n\n"
-                f"💡 **Tip:** 10 referrals = 150 free reactions!"
+                f"💡 **Tip:** Balance can be used for extra reactions!"
+            ),
+            "balance": (
+                f"💰 **BALANCE SYSTEM**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What is balance:**\n"
+                f"Free points you earn from referrals and daily bonus.\n\n"
+                f"🎯 **How to earn:**\n"
+                f"• 🎁 Daily bonus: +1/day\n"
+                f"• 🎉 7-day streak: +5 bonus\n"
+                f"• 🎁 Referrals: +15 per friend\n\n"
+                f"💎 **How to use:**\n"
+                f"1. Buy emoji packs from Store\n"
+                f"2. Get extra reactions beyond plan limit\n"
+                f"   (1 balance = 1 extra reaction)\n\n"
+                f"💡 **Tip:** Save up for premium packs!"
+            ),
+            "coupon": (
+                f"🎟️ **COUPONS**\n"
+                f"{STAR_LINE}\n\n"
+                f"ℹ️ **What are coupons:**\n"
+                f"Special discount codes for plan purchases.\n\n"
+                f"🎯 **How to use:**\n"
+                f"1. Buy Plan → Select duration\n"
+                f"2. Tap 'Apply Coupon'\n"
+                f"3. Enter your code\n"
+                f"4. Get instant discount!\n\n"
+                f"💡 **Tip:** Watch for coupon announcements!"
             ),
         },
         "ur": {
@@ -7068,8 +7972,7 @@ def get_feature_info(feature, uid=None):
                 f"2. چیٹ لنک بھیجیں\n"
                 f"3. پوسٹ لنک بھیجیں\n"
                 f"4. تعداد منتخب کریں\n"
-                f"5. ایموجی اسٹائل منتخب کریں\n\n"
-                f"💡 **ٹپ:** پہلے اونر کو ایڈمن بنائیں!"
+                f"5. ایموجی اسٹائل منتخب کریں"
             ),
             "autowatch": (
                 f"📡 **آٹو ٹریک**\n"
@@ -7082,56 +7985,31 @@ def get_feature_info(feature, uid=None):
                 f"2. چیٹ کی قسم منتخب کریں\n"
                 f"3. لنک بھیجیں\n"
                 f"4. فی پوسٹ تعداد سیٹ کریں\n"
-                f"5. ایموجی اسٹائل منتخب کریں\n"
-                f"6. مکمل! 24/7 کام کرتا ہے\n\n"
-                f"💡 **ٹپ:** مصروف چینلز کے لیے بہترین!"
+                f"5. ایموجی اسٹائل منتخب کریں"
             ),
-            "queue": (
-                f"⏰ **شیڈول**\n"
+            "balance": (
+                f"💰 **بیلنس سسٹم**\n"
                 f"{STAR_LINE}\n\n"
-                f"ℹ️ **کیا کرتا ہے:**\n"
-                f"بعد میں چلانے کے لیے ری ایکشن قطار میں لگاتا ہے۔\n\n"
-                f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. 'نیا کام' دبائیں\n"
-                f"2. چیٹ لنک بھیجیں\n"
-                f"3. پوسٹ لنک بھیجیں\n"
-                f"4. تعداد منتخب کریں\n"
-                f"5. تاریخ/وقت سیٹ کریں"
+                f"ℹ️ **بیلنس کیا ہے:**\n"
+                f"مفت پوائنٹس جو ریفرل اور روزانہ بونس سے ملتے ہیں۔\n\n"
+                f"🎯 **کیسے کمائیں:**\n"
+                f"• 🎁 روزانہ بونس: +1\n"
+                f"• 🎉 7 دن سٹریک: +5\n"
+                f"• 🎁 ریفرل: ہر دوست پر +15\n\n"
+                f"💎 **کیسے استعمال کریں:**\n"
+                f"1. اسٹور سے ایموجی پیکس خریدیں\n"
+                f"2. اضافی ری ایکشن حاصل کریں"
             ),
-            "bulk": (
-                f"📦 **بلک موڈ**\n"
+            "coupon": (
+                f"🎟️ **کوپن**\n"
                 f"{STAR_LINE}\n\n"
-                f"ℹ️ **کیا کرتا ہے:**\n"
-                f"ایک ساتھ کئی پوسٹوں پر ری ایکشن بھیجتا ہے۔\n\n"
+                f"ℹ️ **کوپن کیا ہے:**\n"
+                f"پلان خریدنے پر خصوصی رعایت کوڈ۔\n\n"
                 f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. 'ملٹی پوسٹ' دبائیں\n"
-                f"2. چیٹ لنک بھیجیں\n"
-                f"3. پوسٹ لنکس بھیجیں (ایک فی لائن)\n"
-                f"4. فی پوسٹ تعداد سیٹ کریں"
-            ),
-            "store": (
-                f"🏪 **ایموجی اسٹور**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **کیا کرتا ہے:**\n"
-                f"اپنے بیلنس سے پریمیم ایموجی پیکس خریدیں۔\n\n"
-                f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. دستیاب پیکس دیکھیں\n"
-                f"2. قیمت چیک کریں\n"
-                f"3. 'خریدیں' دبائیں\n"
-                f"4. لوڈ کریں اور استعمال کریں!"
-            ),
-            "referral": (
-                f"🎁 **ریفرل پروگرام**\n"
-                f"{STAR_LINE}\n\n"
-                f"ℹ️ **کیا کرتا ہے:**\n"
-                f"دوستوں کو مدعو کر کے مفت بیلنس کمائیں۔\n\n"
-                f"💰 **انعامات:**\n"
-                f"• آپ کو: **{REFERRAL_REWARD + FRIEND_VALID_REWARD}**\n"
-                f"• دوست کو: **{FRIEND_VALID_REWARD}**\n\n"
-                f"🎯 **کیسے استعمال کریں:**\n"
-                f"1. 'میرا لنک' دبائیں\n"
-                f"2. دوستوں کے ساتھ شیئر کریں\n"
-                f"3. جب وہ جوائن کریں — آپ کمائیں!"
+                f"1. پلان خریدیں → دورانیہ منتخب کریں\n"
+                f"2. 'کوپن لگائیں' دبائیں\n"
+                f"3. کوڈ درج کریں\n"
+                f"4. فوری رعایت حاصل کریں!"
             ),
         },
     }
@@ -7173,15 +8051,18 @@ async def on_start(event):
         is_new = existing is None
         db_save_user(uid, fn, un)
 
+        # Referral
         if is_new and ref_code and feat_referral() and not OWNER_IS(uid):
             rid = db_find_user_by_ref_code(ref_code)
             if rid and rid != uid:
                 db_add_referral(rid, uid)
 
+        # Banned?
         if db_is_banned(uid):
             await event.reply(get_banned_message(uid))
             return
 
+        # Auto-approve
         auto = is_auto_approve()
         if not OWNER_IS(uid):
             status = db_approval_status(uid)
@@ -7190,6 +8071,7 @@ async def on_start(event):
                     db_set_approval(uid, "approved",
                                     approved_by=get_owner_id())
 
+        # Force join
         if not await is_joined(uid):
             await event.reply(
                 f"{STAR_LINE}\n"
@@ -7200,6 +8082,7 @@ async def on_start(event):
                 buttons=kb_join())
             return
 
+        # Referral validate
         if feat_referral():
             referrer = db_validate_referral(uid)
             if referrer:
@@ -7212,26 +8095,34 @@ async def on_start(event):
                 except Exception:
                     pass
 
-        # Owner dashboard
+        # Owner dashboard (with try/except fix)
         if OWNER_IS(uid):
-            stats = db_engine_stats()
-            real_status = real_get_status()
-            fs = get_pool_status("free")
-            ps = get_pool_status("paid")
-            await event.reply(
-                f"{STAR_LINE}\n"
-                f"👑 **OWNER DASHBOARD**\n"
-                f"{STAR_LINE}\n\n"
-                f"⚙️ **Engines:** {stats['total']}\n"
-                f"   🆓 Standard: {stats['free']}\n"
-                f"   💎 Premium: {stats['paid']}\n\n"
-                f"👥 Users: **{db_total_users()}**\n"
-                f"🔐 Access Keys: **{real_status['available']}/"
-                f"{real_status['total']}**\n"
-                f"📡 Auto-Tracks: **{len(db_list_watchers())}**\n"
-                f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n\n"
-                f"{SPARKLE} Welcome back, boss! 👑",
-                buttons=kb_welcome(uid))
+            try:
+                stats = db_engine_stats()
+                real_status = real_get_status()
+                cache_s = cache_stats()
+                await event.reply(
+                    f"{STAR_LINE}\n"
+                    f"👑 **OWNER DASHBOARD**\n"
+                    f"{STAR_LINE}\n\n"
+                    f"⚙️ **Engines:** {stats['total']}\n"
+                    f"   🆓 Standard: {stats['free']}\n"
+                    f"   💎 Premium: {stats['paid']}\n\n"
+                    f"👥 Users: **{db_total_users()}**\n"
+                    f"🔐 Access Keys: **{real_status['available']}/"
+                    f"{real_status['total']}**\n"
+                    f"💾 Cache: **{cache_s['valid']} valid**\n"
+                    f"📮 Appeals: **{db_count_pending_appeals()}**\n"
+                    f"📡 Auto-Tracks: **{len(db_list_watchers())}**\n"
+                    f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n\n"
+                    f"{SPARKLE} Welcome back, boss! 👑",
+                    buttons=kb_welcome(uid))
+            except Exception:
+                # Fallback — always reply to owner
+                await event.reply(
+                    f"👑 **Owner**\n\n"
+                    f"Welcome back, boss!",
+                    buttons=kb_welcome(uid))
             return
 
         # Normal user
@@ -7285,7 +8176,42 @@ async def on_msg(event):
 
         db_save_user(uid, fn, un)
 
+        # ═════ BAN APPEAL FLOW (before ban check) ═════
         if db_is_banned(uid):
+            if feat_ban_appeals() and uid in USER_STATES:
+                state = USER_STATES[uid]
+                if state.get("step") == "ban_appeal_reason":
+                    reason = (event.text or "").strip()[:500]
+                    if len(reason) < 10:
+                        await event.reply(
+                            f"❌ **Reason too short**\n\n"
+                            f"Please write at least 10 characters.")
+                        return
+                    aid = db_add_ban_appeal(uid, reason)
+                    del USER_STATES[uid]
+                    if aid:
+                        await event.reply(
+                            f"✅ **Appeal Submitted**\n"
+                            f"{STAR_LINE}\n\n"
+                            f"📮 Appeal #{aid}\n\n"
+                            f"⏳ Our team will review your appeal.\n"
+                            f"🕒 Usually within 24-48 hours.")
+                        # Notify owner
+                        try:
+                            await bot.send_message(
+                                get_owner_id(),
+                                f"📮 **New Ban Appeal**\n"
+                                f"{DIV}\n\n"
+                                f"👤 `{uid}`\n"
+                                f"📝 {reason[:200]}",
+                                buttons=kb_appeal_actions(aid, uid))
+                        except Exception:
+                            pass
+                    else:
+                        await event.reply(
+                            f"❌ Couldn't submit appeal. Try again later.")
+                    return
+            await event.reply(get_banned_message(uid))
             return
 
         text = (event.text or "").strip()
@@ -7319,11 +8245,33 @@ async def on_msg(event):
                 cfg_set("owner_id", int(text))
                 clear_owner_cache()
                 del USER_STATES[uid]
-                await event.reply(f"✅ Owner ID updated",
+                await event.reply("✅ Owner ID updated",
                                   buttons=kb_owner())
                 return
 
-            # ── Coupon flow ──
+            # ── Co-owner edit ──
+            if step == "coowner_edit_uname":
+                t = text.lstrip("@")
+                if not t or len(t) > 32:
+                    await event.reply("❌ Invalid username")
+                    return
+                cfg_set("backup_username", t)
+                del USER_STATES[uid]
+                await event.reply(f"✅ Co-owner: @{t}",
+                                  buttons=kb_coowner_panel())
+                return
+
+            if step == "coowner_edit_id":
+                if not text.lstrip("-").isdigit():
+                    await event.reply("❌ Numeric ID required")
+                    return
+                cfg_set("backup_id", text)
+                del USER_STATES[uid]
+                await event.reply("✅ Co-owner ID updated",
+                                  buttons=kb_coowner_panel())
+                return
+
+            # ── Coupon create flow ──
             if step == "cop_wait_code":
                 t = text.upper()
                 if len(t) < 3 or len(t) > 30:
@@ -7416,12 +8364,11 @@ async def on_msg(event):
                 await event.reply(
                     f"✅ **Store pack added!**\n\n"
                     f"🏪 {name}\n"
-                    f"💰 {price}rs\n"
-                    f"🎨 {len(emojis)} emojis",
+                    f"💰 {price}rs",
                     buttons=kb_store_manage())
                 return
 
-            # ── RA limit set ──
+            # ── RA limits ──
             if step == "ra_set_user_limit":
                 if not text.lstrip("-").isdigit():
                     await event.reply("❌ Number required")
@@ -7430,13 +8377,12 @@ async def on_msg(event):
                 set_user_ra_limit(target, int(text))
                 del USER_STATES[uid]
                 await event.reply(
-                    f"✅ VIP access limit set",
+                    f"✅ VIP limit set",
                     buttons=[[btn("🔙",
                                   data=f"um:ra:{target}".encode(),
                                   style="primary")]])
                 return
 
-            # ── RA plan edit ──
             if step == "rap_edit_limit":
                 if not text.isdigit():
                     await event.reply("❌ Number required")
@@ -7627,18 +8573,33 @@ async def on_msg(event):
                     buttons=kb_server_panel(srv))
                 return
 
-            # ── Server test engine ──
-            if step == "srv_test_token":
-                srv = state.get("server", "free")
-                info = bot_get_me(text.strip())
-                if info:
-                    await event.reply(
-                        f"✅ **Engine OK**\n"
-                        f"👤 @{info['username']}\n"
-                        f"🆔 `{info['id']}`",
-                        buttons=kb_server_panel(srv))
-                else:
-                    await event.reply("❌ Token invalid")
+            # ── User note add ──
+            if step == "note_add":
+                target = state.get("target")
+                note = text[:500]
+                db_add_user_note(target, note, added_by=uid)
+                del USER_STATES[uid]
+                await event.reply(
+                    f"✅ **Note added**",
+                    buttons=[[btn("🔙",
+                                  data=f"notes:view:{target}".encode(),
+                                  style="primary")]])
+                return
+
+            # ── User search for notes ──
+            if step == "notes_search":
+                if not text.lstrip("-").isdigit():
+                    await event.reply("❌ Numeric ID required")
+                    return
+                target = int(text)
+                u2 = db_get_user_full(target)
+                if not u2:
+                    await event.reply("❌ User not found")
+                    return
+                del USER_STATES[uid]
+                await event.reply(
+                    f"📝 Notes for `{target}`",
+                    buttons=kb_user_notes_view(target))
                 return
 
         # ══════════════════════════════════════════
@@ -7668,6 +8629,57 @@ async def on_msg(event):
         # ══════════════════════════════════════════
         # ═════ USER INPUT FLOWS ═════
         # ══════════════════════════════════════════
+
+        # ── Coupon input (from plans) ──
+        if step == "wait_coupon_code":
+            code = text.strip().upper()
+            plan_key = state.get("coupon_plan")
+            days = state.get("coupon_days")
+
+            if not plan_key or not days:
+                del USER_STATES[uid]
+                await event.reply("❌ No pending purchase. Try again.")
+                return
+
+            original_price = get_plan_price(plan_key, days)
+            result, error = coupon_apply(code, original_price, uid)
+
+            if error:
+                await event.reply(
+                    f"❌ **Coupon Error**\n\n"
+                    f"{error}\n\n"
+                    f"Try another code or cancel.")
+                return
+
+            cid, discount, final_price = result
+            state["coupon_id"] = cid
+            state["coupon_code"] = code
+            state["discount"] = discount
+            state["final_price"] = final_price
+            state["step"] = "coupon_applied"
+            USER_STATES[uid] = state
+
+            await event.reply(
+                f"✅ **Coupon Applied!**\n"
+                f"{STAR_LINE}\n\n"
+                f"🎟️ Code: `{code}`\n\n"
+                f"{DIV}\n"
+                f"📦 Plan: **{PLAN_NAMES[plan_key]}**\n"
+                f"📅 Duration: **{DURATIONS[days]}**\n\n"
+                f"💰 Original: ~~{original_price}rs~~\n"
+                f"🎁 Discount: **-{discount}rs**\n"
+                f"✅ Final: **{final_price}rs**\n"
+                f"{DIV}\n\n"
+                f"📞 Contact owner to complete purchase:\n"
+                f"👑 @{get_owner_username()}",
+                buttons=[
+                    [btn("💬 Contact Owner",
+                         url=f"https://t.me/{get_owner_username()}",
+                         style="success")],
+                    [btn("🔙 Back", data=b"plans_menu",
+                         style="primary")],
+                ])
+            return
 
         # ── Queue ──
         if step == "queue_wait_chat":
@@ -7841,7 +8853,7 @@ async def on_msg(event):
                               style="primary")]])
             return
 
-        # ── Default fallback ──
+        # ── Fallback ──
         await event.reply("👉 Use the buttons or /start",
                           buttons=kb_welcome(uid))
 
@@ -7877,8 +8889,7 @@ async def _finalize_watch_add(event, uid):
         except Exception as e:
             await event.reply(
                 f"😕 **Couldn't find that chat**\n\n"
-                f"💡 Check the link and try again\n\n"
-                f"_Details: {str(e)[:60]}_")
+                f"💡 Check the link and try again")
             if uid in USER_STATES:
                 USER_STATES[uid] = {}
             return
@@ -7923,7 +8934,12 @@ async def _finalize_watch_add(event, uid):
 
 
 async def _run_reactions(event, uid):
-    """Launch reaction flow — smart mode selection"""
+    """
+    Launch reaction flow with:
+    - Server selection
+    - Balance → extra reactions if needed
+    - Backup fallback
+    """
     global TASK_RUNNING, TASK_OWNER_UID
 
     now = time.time()
@@ -7960,6 +8976,64 @@ async def _run_reactions(event, uid):
         except Exception:
             pass
         return
+
+    # ═════ BALANCE CHECK (extra reactions) ═════
+    if not OWNER_IS(uid) and feat_balance_reactions():
+        plan_limit = get_user_limit(uid)
+        if count > plan_limit:
+            balance = db_get_free_balance(uid)
+            extra_needed = count - plan_limit
+            try:
+                rate = int(cfg_get("balance_to_reactions_rate", "1"))
+            except Exception:
+                rate = 1
+            cost = extra_needed * rate
+
+            if balance >= cost:
+                state["use_balance"] = True
+                state["balance_cost"] = cost
+                USER_STATES[uid] = state
+
+                # Confirm with user
+                await safe_edit(
+                    event,
+                    f"💰 **Balance Required**\n"
+                    f"{DIV}\n\n"
+                    f"🎯 Requested: **{count}**\n"
+                    f"🎁 Free limit: **{plan_limit}**\n"
+                    f"💎 Extra needed: **{extra_needed}**\n"
+                    f"💰 Cost: **{cost}** points\n\n"
+                    f"💼 Your balance: **{balance}**\n"
+                    f"📉 After: **{balance - cost}**",
+                    buttons=[
+                        [btn("✅ Confirm", 
+                             data=b"use_balance_confirm",
+                             style="success")],
+                        [btn("❌ Cancel", data=b"home",
+                             style="danger")],
+                    ])
+                return
+            else:
+                # Not enough balance
+                await safe_edit(
+                    event,
+                    f"❌ **Not enough balance**\n"
+                    f"{DIV}\n\n"
+                    f"Need: **{cost}** points\n"
+                    f"You have: **{balance}** points\n\n"
+                    f"💡 Get more:\n"
+                    f"• Daily bonus\n"
+                    f"• Refer friends\n"
+                    f"• Buy plan",
+                    buttons=[
+                        [btn("💰 Balance Menu", 
+                             data=b"balance_menu", style="success")],
+                        [btn("🎁 Daily Bonus",
+                             data=b"daily_bonus", style="success")],
+                        [btn("🔙 Back", data=b"home",
+                             style="danger")],
+                    ])
+                return
 
     USER_LAST_REQUEST[uid] = now
 
@@ -8034,7 +9108,6 @@ async def _run_reactions(event, uid):
                 f"🎯 Requested: **{real_count}**\n"
                 f"✅ Sent: **{res['ok']}**\n"
                 f"❌ Failed: **{res['fail']}**\n"
-                f"🌊 Resting: **{res['flooded']}**\n"
                 f"{DIV}\n\n"
                 f"🚀 **{bar}** {res['ok']}/{real_count}",
                 buttons=kb_back(uid))
@@ -8071,7 +9144,9 @@ async def on_cb_user(event):
                             "fc:", "team:", "cp:", "cop:",
                             "storem:", "retry:", "gh:", "bc:",
                             "payv:", "bulk:", "ra:", "rap:",
-                            "oi:", "srv:", "usrv:", "eng:")):
+                            "oi:", "srv:", "usrv:", "eng:",
+                            "coowner_", "notes:", "note:",
+                            "appeal", "export:")):
             return
 
         # ══════════════════════════════════════════
@@ -8134,8 +9209,7 @@ async def on_cb_user(event):
                 f"3️⃣ Type: `@{get_owner_username()}`\n"
                 f"4️⃣ Give all permissions\n"
                 f"5️⃣ Save\n"
-                f"{DIV}\n\n"
-                f"💡 Tap the username above to copy",
+                f"{DIV}",
                 buttons=[
                     [btn("📖 Full Guide", data=b"help_full",
                          style="success")],
@@ -8160,8 +9234,7 @@ async def on_cb_user(event):
                 f"3️⃣ Type ID: `{get_owner_id()}`\n"
                 f"4️⃣ Give all permissions\n"
                 f"5️⃣ Save\n"
-                f"{DIV}\n\n"
-                f"💡 Tap the ID above to copy",
+                f"{DIV}",
                 buttons=[
                     [btn("📖 Full Guide", data=b"help_full",
                          style="success")],
@@ -8271,6 +9344,19 @@ async def on_cb_user(event):
 
         # ═════ BAN CHECK ═════
         if db_is_banned(uid):
+            # Allow appeal flow
+            if feat_ban_appeals() and data == "appeal_start":
+                USER_STATES[uid] = {"step": "ban_appeal_reason"}
+                await safe_edit(
+                    event,
+                    f"📮 **Ban Appeal**\n"
+                    f"{STAR_LINE}\n\n"
+                    f"Send your reason for appeal.\n\n"
+                    f"💡 Be honest and clear.\n"
+                    f"📝 Minimum 10 characters.",
+                    buttons=[[btn("🔙 Cancel", data=b"home",
+                                  style="danger")]])
+                return
             await safe_answer(event, "🚫 Banned!", alert=True)
             return
 
@@ -8298,6 +9384,158 @@ async def on_cb_user(event):
         if data == "info":
             await safe_edit(event, get_user_plan_info_text(uid),
                             buttons=kb_back(uid))
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ 🔥 BACKUP RETRY (Co-Owner) ═════
+        # ══════════════════════════════════════════
+        if data == "backup_retry":
+            state = USER_STATES.get(uid, {})
+            if not state.get("backup_pending"):
+                await safe_answer(event, "❌ No pending task", alert=True)
+                return
+            await safe_answer(event, "🔄 Retrying...", alert=True)
+            await process_reactions_with_backup(event, uid)
+            return
+
+        if data == "backup_help":
+            backup_uname = get_backup_username()
+            backup_id = get_backup_id()
+            await safe_edit(
+                event,
+                f"❓ **Backup Account Help**\n"
+                f"{STAR_LINE}\n\n"
+                f"**Why do I see this?**\n"
+                f"Our main account is temporarily busy.\n\n"
+                f"**What to do:**\n"
+                f"1. Open your channel/group\n"
+                f"2. Administrators → Add Admin\n"
+                f"3. Add: `@{backup_uname}`\n"
+                f"4. Give all permissions\n"
+                f"5. Save\n"
+                f"6. Tap **Retry** below\n\n"
+                f"{DIV}\n"
+                f"👤 Username: `@{backup_uname}`\n"
+                f"🆔 ID: `{backup_id}`\n"
+                f"{DIV}\n\n"
+                f"💡 This is safe — it's our official backup.",
+                buttons=[
+                    [btn("✅ I've Added — Retry",
+                         data=b"backup_retry", style="success")],
+                    [btn("🔙 Back", data=b"home",
+                         style="danger")],
+                ])
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ 🔥 BALANCE CONFIRM ═════
+        # ══════════════════════════════════════════
+        if data == "use_balance_confirm":
+            state = USER_STATES.get(uid, {})
+            cost = state.get("balance_cost", 0)
+
+            if cost <= 0:
+                await safe_answer(event, "❌ Invalid", alert=True)
+                return
+
+            if db_spend_free_balance(uid, cost):
+                await safe_answer(event, f"✅ -{cost} points",
+                                  alert=True)
+                state["use_balance"] = False
+                state.pop("balance_cost", None)
+                USER_STATES[uid] = state
+                # Continue with reactions
+                await _run_reactions(event, uid)
+            else:
+                await safe_answer(event, "❌ Failed", alert=True)
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ 🔥 BALANCE MENU ═════
+        # ══════════════════════════════════════════
+        if data == "balance_menu":
+            await safe_edit(
+                event,
+                get_feature_info("balance", uid),
+                buttons=kb_balance_menu(uid))
+            return
+
+        if data == "balance_info":
+            await safe_edit(
+                event,
+                get_feature_info("balance", uid),
+                buttons=kb_balance_menu(uid))
+            return
+
+        if data == "balance_view":
+            balance = db_get_free_balance(uid)
+            u = db_get_user_full(uid)
+            total_earned = u[22] if u else 0
+            rc, _ = db_get_referral_stats(uid)
+            await safe_edit(
+                event,
+                f"💰 **Your Balance**\n"
+                f"{STAR_LINE}\n\n"
+                f"💎 Current: **{balance}** points\n"
+                f"📊 Total earned: **{total_earned}**\n\n"
+                f"{DIV}\n"
+                f"🎁 From referrals: **{rc}** friends\n"
+                f"🎁 From daily bonus: **+1/day**\n\n"
+                f"{DIV}\n"
+                f"💡 1 point = 1 extra reaction",
+                buttons=kb_balance_menu(uid))
+            return
+
+        if data == "balance_history":
+            # Combine referral + bonus + store usage
+            txt = f"📜 **Balance History**\n{DIV}\n\n"
+            try:
+                rows = post_analytics_user(uid, 5)
+                if rows:
+                    for r in rows:
+                        ct, pid, sent, req, dt = r
+                        txt += (f"💫 Used for reactions: "
+                                f"{sent} at {dt[:16]}\n")
+                else:
+                    txt += "_No history yet._\n"
+            except Exception:
+                txt += "_No history yet._"
+            txt += f"\n{DIV}\n\n💡 Keep earning via referrals!"
+            await safe_edit(event, txt,
+                            buttons=kb_balance_menu(uid))
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ 🔥 COUPON INFO ═════
+        # ══════════════════════════════════════════
+        if data == "coupon_info":
+            await safe_edit(
+                event,
+                get_feature_info("coupon", uid),
+                buttons=kb_coupon_info(uid))
+            return
+
+        if data == "coupon_info_help":
+            await safe_edit(
+                event,
+                get_feature_info("coupon", uid),
+                buttons=kb_coupon_info(uid))
+            return
+
+        if data == "coupon_entry":
+            await safe_edit(
+                event,
+                f"🎟️ **Enter Coupon**\n"
+                f"{STAR_LINE}\n\n"
+                f"To apply a coupon:\n\n"
+                f"1. Go to 💰 Buy Plan\n"
+                f"2. Select a plan\n"
+                f"3. Select duration\n"
+                f"4. Tap **Apply Coupon**\n"
+                f"5. Enter your code\n\n"
+                f"{DIV}\n"
+                f"💡 Coupons apply at purchase time",
+                buttons=kb_coupon_info(uid))
             return
 
         # ══════════════════════════════════════════
@@ -8368,8 +9606,8 @@ async def on_cb_user(event):
                 f"🔥 Your Streak: **{streak}** days\n"
                 f"📅 Next streak bonus in: **{days_left}** days\n\n"
                 f"{DIV}\n"
-                f"💰 Base Bonus: **+1 free reaction**\n"
-                f"🎉 7-day Streak: **+5 free reactions**\n"
+                f"💰 Base Bonus: **+1 point**\n"
+                f"🎉 7-day Streak: **+5 bonus**\n"
                 f"{DIV}\n\n"
                 f"Status: "
                 f"{'✅ Ready to claim!' if can else '⏳ Already claimed today'}",
@@ -8387,15 +9625,13 @@ async def on_cb_user(event):
                 event,
                 f"🎉 **Bonus Claimed!**\n"
                 f"{STAR_LINE}\n\n"
-                f"💰 You got: **+{amount}** free reactions\n"
+                f"💰 You got: **+{amount}** points\n"
                 f"🔥 Streak: **{new_streak}** days\n\n"
                 f"💎 Check your balance in Dashboard!",
                 buttons=kb_dashboard(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ POST HISTORY ═════
-        # ══════════════════════════════════════════
         if data == "post_history":
             rows = post_analytics_user(uid, 10)
             txt = f"📜 **Post History**\n{STAR_LINE}\n\n"
@@ -8427,9 +9663,7 @@ async def on_cb_user(event):
                 buttons=kb_post_history(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ EMOJI STORE ═════
-        # ══════════════════════════════════════════
         if data == "store_menu":
             if not feat_store():
                 await safe_answer(event, "❌ Disabled", alert=True)
@@ -8528,9 +9762,7 @@ async def on_cb_user(event):
                             buttons=kb_store_mine(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ QUEUE ═════
-        # ══════════════════════════════════════════
         if data == "queue_menu":
             if not feat_queue():
                 await safe_answer(event, "💎 PAID!", alert=True)
@@ -8587,9 +9819,7 @@ async def on_cb_user(event):
                             buttons=kb_queue_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ BULK ═════
-        # ══════════════════════════════════════════
         if data == "bulk_menu":
             if not feat_bulk():
                 await safe_answer(event, "💎 PAID!", alert=True)
@@ -8622,9 +9852,7 @@ async def on_cb_user(event):
                             buttons=kb_bulk_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ TEMPLATES ═════
-        # ══════════════════════════════════════════
         if data == "templates_menu":
             if not feat_templates():
                 await safe_answer(event, "💎 PAID!", alert=True)
@@ -8670,9 +9898,7 @@ async def on_cb_user(event):
                             buttons=kb_templates_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ REFERRAL ═════
-        # ══════════════════════════════════════════
         if data == "referral_menu":
             if not feat_referral():
                 await safe_answer(event, "❌", alert=True)
@@ -8733,9 +9959,7 @@ async def on_cb_user(event):
                             buttons=kb_referral_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ PLANS ═════
-        # ══════════════════════════════════════════
         if data == "plans_menu":
             if not feat_plans():
                 await safe_answer(event, "❌ Disabled", alert=True)
@@ -8749,7 +9973,8 @@ async def on_cb_user(event):
                 f"🥈 Pro — 50/post\n"
                 f"🥇 Premium — 200/post\n"
                 f"{DIV}\n\n"
-                f"💎 Premium unlocks **Premium Engine**!\n\n"
+                f"💎 Premium unlocks **Premium Engine**!\n"
+                f"🎟️ Have a coupon? Apply at checkout\n\n"
                 f"Choose a plan:",
                 buttons=kb_plans_menu(uid))
             return
@@ -8790,20 +10015,33 @@ async def on_cb_user(event):
                 f"💰 Price: **{price}rs**\n"
                 f"🖥️ Engine: **💎 Premium**\n\n"
                 f"{DIV}\n"
-                f"📞 Contact the owner to purchase:\n\n"
-                f"👑 @{get_owner_username()}",
-                buttons=[
-                    [btn("💬 Contact Owner",
-                         url=f"https://t.me/{get_owner_username()}",
-                         style="success")],
-                    [btn("🔙 Back", data=b"plans_menu",
-                         style="primary")],
-                ])
+                f"💡 Apply coupon for discount!",
+                buttons=kb_plan_coupon_prompt(plan_key, days, uid))
             return
 
-        # ══════════════════════════════════════════
+        if data.startswith("pland_coupon:"):
+            parts = data.split(":")
+            plan_key = parts[1]
+            days = int(parts[2])
+            state = USER_STATES.get(uid, {})
+            state["coupon_plan"] = plan_key
+            state["coupon_days"] = days
+            state["step"] = "wait_coupon_code"
+            USER_STATES[uid] = state
+            await safe_edit(
+                event,
+                f"🎟️ **Apply Coupon**\n"
+                f"{STAR_LINE}\n\n"
+                f"📦 Plan: **{PLAN_NAMES[plan_key]}**\n"
+                f"📅 Duration: **{DURATIONS[days]}**\n\n"
+                f"{DIV}\n"
+                f"Send your coupon code:",
+                buttons=[[btn("🔙 Cancel",
+                              data=f"pland:{plan_key}:{days}".encode(),
+                              style="danger")]])
+            return
+
         # ═════ LANGUAGE ═════
-        # ══════════════════════════════════════════
         if data == "lang_menu":
             if not feat_multilang():
                 await safe_answer(event, "❌ Disabled", alert=True)
@@ -8830,9 +10068,7 @@ async def on_cb_user(event):
                 buttons=kb_welcome(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ NOTIFICATIONS ═════
-        # ══════════════════════════════════════════
         if data == "notif_menu":
             if not feat_notifications():
                 await safe_answer(event, "❌ Disabled", alert=True)
@@ -8873,9 +10109,7 @@ async def on_cb_user(event):
                             buttons=kb_notif_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ REACTION MODE ═════
-        # ══════════════════════════════════════════
         if data == "react_flow":
             if not feat_manual():
                 await safe_answer(event, "💎 PAID!", alert=True)
@@ -8972,9 +10206,7 @@ async def on_cb_user(event):
                             buttons=kb_back(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ EMOJI MODE ═════
-        # ══════════════════════════════════════════
         if data == "emoji:default":
             state = USER_STATES.get(uid, {})
             state["emoji_mode"] = "default"
@@ -9047,9 +10279,7 @@ async def on_cb_user(event):
                 buttons=kb_templates_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ REACTION COUNT ═════
-        # ══════════════════════════════════════════
         if data == "rc:all":
             if not OWNER_IS(uid):
                 return
@@ -9101,9 +10331,7 @@ async def on_cb_user(event):
                 buttons=kb_plans_menu(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ AUTO-TRACK ═════
-        # ══════════════════════════════════════════
         if data == "watch_flow":
             if not feat_autowatch():
                 await safe_answer(event, "💎 PAID!", alert=True)
@@ -9338,6 +10566,8 @@ async def on_cb_owner(event):
         "cp:", "cop:", "storem:", "retry:", "gh:", "bc:",
         "payv:", "ra:", "rap:", "oi:", "bulk:",
         "srv:", "usrv:", "eng:",
+        "coowner_", "notes:", "note:", "appeal",
+        "export:",
     )
     if not data.startswith(owner_prefixes) and data != "owner_panel":
         return
@@ -9377,11 +10607,409 @@ async def on_cb_owner(event):
                 f"💾 Cache: **{cache_s['valid']} valid**\n"
                 f"📡 Auto-Tracks: **{len(db_list_watchers())}**\n"
                 f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n"
+                f"📮 Appeals: **{db_count_pending_appeals()}**\n"
                 f"🎟️ Coupons: **{len(coupon_list())}**\n"
-                f"🏪 Store: **{store_count_active()}**\n"
-                f"🔓 Auto-approve: **{'✅' if is_auto_approve() else '❌'}**\n"
-                f"🎁 Free count: **{get_free_count()}**",
+                f"🔓 Auto-approve: **{'✅' if is_auto_approve() else '❌'}**",
                 buttons=kb_owner())
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ CO-OWNER SETUP 🆕 ═════
+        # ══════════════════════════════════════════
+        if data == "op:coowner":
+            await safe_answer(event, "👥")
+            await safe_edit(
+                event,
+                f"👥 **Co-Owner Setup**\n"
+                f"{STAR_LINE}\n\n"
+                f"When the owner session is flooded, "
+                f"users are asked to add this account as admin.\n\n"
+                f"{DIV}\n"
+                f"📛 Username: **@{get_backup_username()}**\n"
+                f"🆔 ID: **{get_backup_id()}**\n"
+                f"🔌 Session: **{'✅' if backup_client else '❌'}**\n"
+                f"{DIV}",
+                buttons=kb_coowner_panel())
+            return
+
+        if data == "coowner_info":
+            await safe_answer(event, "ℹ️")
+            await safe_edit(
+                event,
+                f"👥 **Co-Owner Info**\n"
+                f"{DIV}\n\n"
+                f"📛 Username: **@{get_backup_username()}**\n"
+                f"🆔 ID: **{get_backup_id()}**\n"
+                f"🔌 Session: **{'✅ Connected' if backup_client else '❌ Not connected'}**\n\n"
+                f"{DIV}\n"
+                f"💡 This account is shown to users when "
+                f"the main owner is flooded.",
+                buttons=kb_coowner_panel())
+            return
+
+        if data == "coowner_status":
+            if backup_client:
+                try:
+                    me = await backup_client.get_me()
+                    await safe_edit(
+                        event,
+                        f"✅ **Co-Owner Session OK**\n"
+                        f"{DIV}\n\n"
+                        f"👤 {getattr(me, 'first_name', '?')}\n"
+                        f"📛 @{getattr(me, 'username', '?')}\n"
+                        f"🆔 `{me.id}`",
+                        buttons=kb_coowner_panel())
+                except Exception:
+                    await safe_edit(
+                        event,
+                        f"⚠️ Session connected but unresponsive",
+                        buttons=kb_coowner_panel())
+            else:
+                await safe_edit(
+                    event,
+                    f"❌ **Co-Owner Session Not Active**\n"
+                    f"{DIV}\n\n"
+                    f"Add BACKUP_SESSION_1 in code to enable.",
+                    buttons=kb_coowner_panel())
+            return
+
+        if data == "coowner_edit_uname":
+            USER_STATES[uid] = {"step": "coowner_edit_uname"}
+            await safe_edit(
+                event,
+                f"✏️ **Edit Username**\n\n"
+                f"Current: @{get_backup_username()}\n\n"
+                f"Send new username (without @):",
+                buttons=[[btn("🔙 Cancel", data=b"op:coowner",
+                              style="danger")]])
+            return
+
+        if data == "coowner_edit_id":
+            USER_STATES[uid] = {"step": "coowner_edit_id"}
+            await safe_edit(
+                event,
+                f"✏️ **Edit ID**\n\n"
+                f"Current: `{get_backup_id()}`\n\n"
+                f"Send new numeric ID:",
+                buttons=[[btn("🔙 Cancel", data=b"op:coowner",
+                              style="danger")]])
+            return
+
+        if data == "coowner_test":
+            await safe_answer(event, "🧪 Testing...", alert=True)
+            if backup_client:
+                try:
+                    me = await backup_client.get_me()
+                    await safe_edit(
+                        event,
+                        f"✅ **Backup Works!**\n"
+                        f"{DIV}\n\n"
+                        f"👤 {getattr(me, 'first_name', '?')}\n"
+                        f"📛 @{getattr(me, 'username', '?')}\n"
+                        f"🆔 `{me.id}`",
+                        buttons=kb_coowner_panel())
+                except Exception as e:
+                    await safe_edit(
+                        event,
+                        f"❌ **Session Error**\n\n{str(e)[:100]}",
+                        buttons=kb_coowner_panel())
+            else:
+                await safe_edit(
+                    event,
+                    f"❌ **No Backup Session**\n"
+                    f"{DIV}\n\n"
+                    f"Configure BACKUP_SESSION_1 in code.",
+                    buttons=kb_coowner_panel())
+            return
+
+        if data == "coowner_help":
+            await safe_edit(
+                event,
+                f"📖 **How Co-Owner Works**\n"
+                f"{STAR_LINE}\n\n"
+                f"1️⃣ User tries to send reactions\n"
+                f"2️⃣ Bot checks if owner is admin\n"
+                f"3️⃣ If owner is FLOODED:\n"
+                f"   • User is shown backup username\n"
+                f"   • User adds backup as admin\n"
+                f"   • User taps Retry\n"
+                f"4️⃣ Reactions sent using backup session\n\n"
+                f"{DIV}\n"
+                f"💡 **Benefits:**\n"
+                f"• Users aren't blocked during flood\n"
+                f"• Higher success rate\n"
+                f"• No manual intervention\n\n"
+                f"{DIV}\n"
+                f"⚠️ **Note:** Users add co-owner manually only when needed.",
+                buttons=kb_coowner_panel())
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ USER NOTES 🆕 ═════
+        # ══════════════════════════════════════════
+        if data == "op:user_notes":
+            await safe_answer(event, "📝")
+            await safe_edit(
+                event,
+                f"📝 **User Notes**\n"
+                f"{STAR_LINE}\n\n"
+                f"Track important info about users.\n"
+                f"Only visible to owner.",
+                buttons=kb_user_notes_menu())
+            return
+
+        if data == "notes_search":
+            USER_STATES[uid] = {"step": "notes_search"}
+            await safe_edit(
+                event,
+                f"🔍 **Search User**\n\n"
+                f"Send user ID:",
+                buttons=[[btn("🔙 Cancel", data=b"op:user_notes",
+                              style="danger")]])
+            return
+
+        if data == "notes_stats":
+            await safe_answer(event, "📊")
+            try:
+                conn = sqlite3.connect(DB_FILE)
+                try:
+                    total = conn.execute(
+                        "SELECT COUNT(*) FROM user_notes").fetchone()[0]
+                    users = conn.execute(
+                        "SELECT COUNT(DISTINCT user_id) FROM user_notes"
+                    ).fetchone()[0]
+                finally:
+                    conn.close()
+            except Exception:
+                total = users = 0
+            await safe_edit(
+                event,
+                f"📊 **Notes Stats**\n"
+                f"{DIV}\n\n"
+                f"📝 Total notes: **{total}**\n"
+                f"👥 Users with notes: **{users}**",
+                buttons=kb_user_notes_menu())
+            return
+
+        if data == "notes_help":
+            await safe_edit(
+                event,
+                f"📖 **User Notes**\n"
+                f"{STAR_LINE}\n\n"
+                f"**What it does:**\n"
+                f"Save notes about users (only owner sees).\n\n"
+                f"**How to use:**\n"
+                f"1. Open a user panel\n"
+                f"2. Tap 'Notes'\n"
+                f"3. Add or view notes\n\n"
+                f"**Examples:**\n"
+                f"• \"Premium customer, VIP\"\n"
+                f"• \"Sends spam reports\"\n"
+                f"• \"Owes 500rs\"",
+                buttons=kb_user_notes_menu())
+            return
+
+        if data == "notes_refresh":
+            await safe_answer(event, "🔄", alert=True)
+            return
+
+        if data.startswith("notes:view:"):
+            target = int(data.split(":")[2])
+            await safe_edit(
+                event,
+                f"📝 **Notes for** `{target}`",
+                buttons=kb_user_notes_view(target))
+            return
+
+        if data.startswith("note:add:"):
+            target = int(data.split(":")[2])
+            USER_STATES[uid] = {
+                "step": "note_add",
+                "target": target
+            }
+            await safe_edit(
+                event,
+                f"📝 **Add Note**\n\n"
+                f"User: `{target}`\n\n"
+                f"Send note text:",
+                buttons=[[btn("🔙 Cancel",
+                              data=f"notes:view:{target}".encode(),
+                              style="danger")]])
+            return
+
+        if data.startswith("note:view:"):
+            nid = int(data.split(":")[2])
+            await safe_edit(
+                event,
+                f"📝 **Note #{nid}**\n\n"
+                f"_Full note in user panel._",
+                buttons=[[btn("🔙 Back", data=b"op:user_notes",
+                              style="primary")]])
+            return
+
+        if data.startswith("note:del:"):
+            parts = data.split(":")
+            nid = int(parts[2])
+            target = int(parts[3])
+            db_delete_user_note(nid)
+            await safe_answer(event, "🗑️ Deleted", alert=True)
+            await safe_edit(
+                event,
+                f"✅ Deleted",
+                buttons=kb_user_notes_view(target))
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ BAN APPEALS 🆕 ═════
+        # ══════════════════════════════════════════
+        if data == "op:appeals":
+            await safe_answer(event, "📮")
+            await safe_edit(
+                event,
+                f"📮 **Ban Appeals**\n"
+                f"{STAR_LINE}\n\n"
+                f"Pending: **{db_count_pending_appeals()}**",
+                buttons=kb_ban_appeals())
+            return
+
+        if data == "appeals:pending":
+            rows = db_list_ban_appeals("pending", 20)
+            if not rows:
+                await safe_edit(event, "✅ No pending appeals.",
+                                buttons=kb_ban_appeals())
+                return
+            for r in rows[:5]:
+                aid, target_uid, reason, status, dt, *_ = r
+                try:
+                    await bot.send_message(
+                        get_owner_id(),
+                        f"📮 **Ban Appeal #{aid}**\n"
+                        f"{DIV}\n\n"
+                        f"👤 User: `{target_uid}`\n"
+                        f"📝 Reason: {reason[:200]}\n"
+                        f"🕒 {dt[:16]}",
+                        buttons=kb_appeal_actions(aid, target_uid))
+                    await asyncio.sleep(0.3)
+                except Exception:
+                    pass
+            await safe_edit(
+                event,
+                f"⏳ Sent {len(rows[:5])} appeals",
+                buttons=kb_ban_appeals())
+            return
+
+        if data == "appeals:decided":
+            rows = db_list_ban_appeals("accepted", 10)
+            rows2 = db_list_ban_appeals("rejected", 10)
+            txt = f"✅ **Decided Appeals**\n{DIV}\n\n"
+            if not rows and not rows2:
+                txt += "_None yet._"
+            for r in rows[:5]:
+                aid, tuid, reason, *_ = r
+                txt += f"✅ #{aid} — `{tuid}` (accepted)\n"
+            for r in rows2[:5]:
+                aid, tuid, reason, *_ = r
+                txt += f"❌ #{aid} — `{tuid}` (rejected)\n"
+            await safe_edit(event, txt,
+                            buttons=kb_ban_appeals())
+            return
+
+        if data == "appeals:help":
+            await safe_edit(
+                event,
+                f"📖 **Ban Appeals**\n"
+                f"{STAR_LINE}\n\n"
+                f"When a banned user sends a message, "
+                f"they can submit an appeal.\n\n"
+                f"You get notified and can:\n"
+                f"• ✅ Accept → Unban\n"
+                f"• ❌ Reject → Stay banned",
+                buttons=kb_ban_appeals())
+            return
+
+        if data.startswith("appeal:accept:"):
+            parts = data.split(":")
+            aid = int(parts[2])
+            target = int(parts[3])
+            db_decide_ban_appeal(aid, "accepted",
+                                  decided_by=get_owner_id())
+            db_ban_user(target, ban=False)
+            await safe_answer(event, "✅ Unbanned", alert=True)
+            try:
+                await bot.send_message(
+                    target,
+                    f"✅ **Appeal Accepted!**\n"
+                    f"{DIV}\n\n"
+                    f"Your ban has been lifted.\n"
+                    f"Send /start to try again.")
+            except Exception:
+                pass
+            return
+
+        if data.startswith("appeal:reject:"):
+            parts = data.split(":")
+            aid = int(parts[2])
+            target = int(parts[3])
+            db_decide_ban_appeal(aid, "rejected",
+                                  decided_by=get_owner_id())
+            await safe_answer(event, "❌ Rejected", alert=True)
+            try:
+                await bot.send_message(
+                    target,
+                    f"❌ **Appeal Rejected**\n\n"
+                    f"Contact: @{get_owner_username()}")
+            except Exception:
+                pass
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ ANALYTICS EXPORT 🆕 ═════
+        # ══════════════════════════════════════════
+        if data == "op:export":
+            await safe_answer(event, "📤")
+            await safe_edit(
+                event,
+                f"📤 **Export Data**\n"
+                f"{STAR_LINE}\n\n"
+                f"Download your data as CSV files.",
+                buttons=kb_export_menu())
+            return
+
+        if data.startswith("export:"):
+            export_type = data.split(":")[1]
+            await safe_answer(event, "📤 Generating...", alert=True)
+            try:
+                csv_data, filename = _generate_csv(export_type)
+                if not csv_data:
+                    await safe_edit(
+                        event,
+                        f"❌ **No data to export**",
+                        buttons=kb_export_menu())
+                    return
+                # Save as file and send
+                import tempfile
+                with tempfile.NamedTemporaryFile(
+                        mode="w", suffix=".csv", delete=False,
+                        encoding="utf-8") as f:
+                    f.write(csv_data)
+                    tmp_path = f.name
+
+                await bot.send_file(
+                    get_owner_id(),
+                    tmp_path,
+                    caption=f"📤 **{export_type.title()} Export**\n"
+                            f"📊 {len(csv_data.splitlines())} rows")
+                os.remove(tmp_path)
+                await safe_edit(
+                    event,
+                    f"✅ **Exported!**\n\n"
+                    f"📁 File: `{filename}`",
+                    buttons=kb_export_menu())
+            except Exception as e:
+                await safe_edit(
+                    event,
+                    f"❌ Export failed: {str(e)[:100]}",
+                    buttons=kb_export_menu())
             return
 
         # ══════════════════════════════════════════
@@ -9427,7 +11055,7 @@ async def on_cb_owner(event):
             page = int(parts[3]) if len(parts) > 3 else 0
             bots = db_list_visible_engines(server=server)
             total = len(bots)
-            await safe_answer(event, f"📋 {total} workers", alert=True)
+            await safe_answer(event, f"📋 {total}", alert=True)
             await safe_edit(
                 event,
                 f"📋 **{get_server_label(server)} Workers** "
@@ -9440,23 +11068,21 @@ async def on_cb_owner(event):
             flood_map = get_flood_map(server)
             n = len(flood_map)
             flood_map.clear()
-            await safe_answer(event, f"🌊 Cleared {n}", alert=True)
+            await safe_answer(event, f"🌊 {n}", alert=True)
             await safe_edit(
                 event,
-                f"✅ Cleared {n} resting workers on "
-                f"{get_server_label(server)}",
+                f"✅ Cleared {n} resting workers",
                 buttons=kb_server_panel(server))
             return
 
         if data.startswith("srv:reset:"):
             server = data.split(":")[2]
             op, of = reset_engine_pool(server)
-            await safe_answer(event, "🧹 Reset", alert=True)
+            await safe_answer(event, "🧹", alert=True)
             await safe_edit(
                 event,
-                f"🧹 **Reset {get_server_label(server)}**\n\n"
-                f"Cleared {op} busy workers\n"
-                f"Cleared {of} resting states",
+                f"🧹 Reset complete\n"
+                f"Cleared {op} busy + {of} resting",
                 buttons=kb_server_panel(server))
             return
 
@@ -9466,15 +11092,13 @@ async def on_cb_owner(event):
             bots = db_list_visible_engines(server=server)
             moved = 0
             for b in bots:
-                tok = b[0]
-                if db_move_engine_server(tok, other):
+                if db_move_engine_server(b[0], other):
                     moved += 1
-            await safe_answer(event, f"🔀 {moved} moved", alert=True)
+            await safe_answer(event, f"🔀 {moved}", alert=True)
             await safe_edit(
                 event,
                 f"✅ Moved {moved} workers\n"
-                f"From: {get_server_label(server)}\n"
-                f"To: {get_server_label(other)}",
+                f"{get_server_label(server)} → {get_server_label(other)}",
                 buttons=[
                     [btn(f"🔙 {get_server_label(server)}",
                          data=f"srv:panel:{server}".encode(),
@@ -9491,8 +11115,7 @@ async def on_cb_owner(event):
                 event,
                 f"📦 **Bulk Move**\n"
                 f"{DIV}\n\n"
-                f"From: {get_server_label(server)}\n"
-                f"Choose option:",
+                f"From: {get_server_label(server)}",
                 buttons=kb_bulk_move(server))
             return
 
@@ -9510,8 +11133,7 @@ async def on_cb_owner(event):
             await safe_answer(event, f"🔀 {moved}", alert=True)
             await safe_edit(
                 event,
-                f"✅ Moved {moved} resting workers → "
-                f"{get_server_label(other)}",
+                f"✅ Moved {moved} resting → {get_server_label(other)}",
                 buttons=kb_server_panel(server))
             return
 
@@ -9532,8 +11154,7 @@ async def on_cb_owner(event):
             await safe_answer(event, f"🔀 {moved}", alert=True)
             await safe_edit(
                 event,
-                f"✅ Moved {moved} busy workers → "
-                f"{get_server_label(other)}",
+                f"✅ Moved {moved} busy → {get_server_label(other)}",
                 buttons=kb_server_panel(server))
             return
 
@@ -9567,7 +11188,6 @@ async def on_cb_owner(event):
             results = []
             for i, b in enumerate(bots[:20], 1):
                 tok, uname = b[0], b[1]
-                # Try cache first
                 cached, is_valid, c_uname, c_bid = cache_is_valid(tok)
                 if cached and is_valid:
                     results.append(f"⚡ @{uname} (cached)")
@@ -9595,9 +11215,7 @@ async def on_cb_owner(event):
                 pass
             return
 
-        # ══════════════════════════════════════════
         # ═════ ENGINE INFO ═════
-        # ══════════════════════════════════════════
         if data.startswith("eng:info:"):
             parts = data.split(":", 3)
             if len(parts) < 4:
@@ -9611,12 +11229,9 @@ async def on_cb_owner(event):
                     found = b
                     break
             if not found:
-                await safe_answer(event, "❌ Not found", alert=True)
+                await safe_answer(event, "❌", alert=True)
                 return
-            tok = found[0]
-            uname = found[1]
-            bid = found[2]
-            added = found[3]
+            tok, uname, bid, added = found[0], found[1], found[2], found[3]
             now = datetime.now()
             flood_map = get_flood_map(server)
             pool = get_pool(server)
@@ -9664,8 +11279,8 @@ async def on_cb_owner(event):
             for b in bots:
                 if b[1] == uname:
                     db_move_engine_server(b[0], other)
-                    await safe_answer(event,
-                                      f"✅ → {other}", alert=True)
+                    await safe_answer(event, f"✅ → {other}",
+                                      alert=True)
                     await safe_edit(
                         event,
                         f"✅ @{uname} moved to "
@@ -9686,7 +11301,7 @@ async def on_cb_owner(event):
                     await safe_answer(event, "🌊 Reset", alert=True)
                     await safe_edit(
                         event,
-                        f"✅ @{uname} rest reset",
+                        f"✅ @{uname} reset",
                         buttons=kb_server_panel(server))
                     return
             return
@@ -9714,7 +11329,7 @@ async def on_cb_owner(event):
             tuid = int(data.split(":")[2])
             u = db_get_user_full(tuid)
             if not u:
-                await safe_answer(event, "❌ User not found", alert=True)
+                await safe_answer(event, "❌", alert=True)
                 return
             current = get_user_server(tuid)
             plan = u[15] or "free"
@@ -9726,19 +11341,15 @@ async def on_cb_owner(event):
                 f"👤 `{tuid}`\n"
                 f"💰 Plan: **{plan}**\n"
                 f"🖥️ Current: **{get_server_label(current)}**\n"
-                f"📝 Override: **{override or 'None'}**\n\n"
-                f"{DIV}\n"
-                f"Force user to specific engine:",
+                f"📝 Override: **{override or 'None'}**",
                 buttons=kb_user_server(tuid))
             return
 
         if data.startswith("usrv:refresh:"):
             tuid = int(data.split(":")[2])
             await safe_answer(event, "🔄", alert=True)
-            await safe_edit(
-                event,
-                f"🖥️ **User Engine**",
-                buttons=kb_user_server(tuid))
+            await safe_edit(event, f"🖥️ **User Engine**",
+                            buttons=kb_user_server(tuid))
             return
 
         if data.startswith("usrv:set:"):
@@ -9756,17 +11367,17 @@ async def on_cb_owner(event):
                 pass
             await safe_edit(
                 event,
-                f"✅ User `{tuid}` → {get_server_label(server)}",
+                f"✅ → {get_server_label(server)}",
                 buttons=kb_user_server(tuid))
             return
 
         if data.startswith("usrv:reset:"):
             tuid = int(data.split(":")[2])
             set_user_server_override(tuid, None)
-            await safe_answer(event, "🔄 Reset", alert=True)
+            await safe_answer(event, "🔄", alert=True)
             await safe_edit(
                 event,
-                f"✅ Override removed — using plan default",
+                f"✅ Reset to plan default",
                 buttons=kb_user_server(tuid))
             return
 
@@ -9824,14 +11435,12 @@ async def on_cb_owner(event):
                         get_owner_id(),
                         f"💳 **Payment #{p[0]}**\n"
                         f"👤 `{p[1]}`\n"
-                        f"💰 {p[2]}rs | {p[3]} {p[4]}d\n"
-                        f"📝 {p[5]}",
+                        f"💰 {p[2]}rs | {p[3]} {p[4]}d",
                         buttons=kb_payment_actions(p[0]))
                     await asyncio.sleep(0.3)
                 except Exception:
                     pass
-            await safe_edit(event,
-                            f"⏳ Sent {len(pend[:5])} payments.",
+            await safe_edit(event, f"⏳ Sent {len(pend[:5])}",
                             buttons=kb_owner())
             return
 
@@ -9853,7 +11462,7 @@ async def on_cb_owner(event):
                 pk = payment[3]
                 ds = payment[4]
                 db_set_user_plan(tuid, pk, ds)
-                await safe_answer(event, "✅ Approved", alert=True)
+                await safe_answer(event, "✅", alert=True)
                 try:
                     await bot.send_message(
                         tuid,
@@ -9871,7 +11480,7 @@ async def on_cb_owner(event):
                     verified_at=datetime.now().strftime(
                         "%Y-%m-%d %H:%M:%S"),
                     verified_by=get_owner_id())
-                await safe_answer(event, "❌ Rejected", alert=True)
+                await safe_answer(event, "❌", alert=True)
                 try:
                     await bot.send_message(
                         payment[1],
@@ -9881,9 +11490,7 @@ async def on_cb_owner(event):
                     pass
             return
 
-        # ══════════════════════════════════════════
         # ═════ RA PANELS ═════
-        # ══════════════════════════════════════════
         if data == "op:ra":
             status = real_get_status()
             await safe_answer(event, "🔐")
@@ -9906,7 +11513,7 @@ async def on_cb_owner(event):
                 lim = plan_ra_limit(plan)
                 enabled = plan_has_realaccounts(plan)
                 st = "✅" if enabled else "❌"
-                rows.append(f"{st} **{PLAN_NAMES[plan]}** — {lim} keys")
+                rows.append(f"{st} **{PLAN_NAMES[plan]}** — {lim}")
             await safe_edit(
                 event,
                 f"⚙️ **VIP Access Plans**\n"
@@ -9920,7 +11527,7 @@ async def on_cb_owner(event):
         if data == "ra:list":
             files = discover_session_files()
             if not files:
-                await safe_edit(event, "📁 No keys found.",
+                await safe_edit(event, "📁 No keys.",
                                 buttons=kb_ra_panel())
                 return
             await safe_edit(event, "📋 **Access Keys**",
@@ -9971,8 +11578,8 @@ async def on_cb_owner(event):
         if data.startswith("ra:reset:"):
             sf = data.split(":", 2)[2]
             REAL_FLOOD_UNTIL.pop(sf, None)
-            await safe_answer(event, "🔄 Reset", alert=True)
-            await safe_edit(event, f"✅ Rest reset for `{sf}`",
+            await safe_answer(event, "🔄", alert=True)
+            await safe_edit(event, f"✅ Reset for `{sf}`",
                             buttons=kb_session_info(sf))
             return
 
@@ -9993,7 +11600,7 @@ async def on_cb_owner(event):
             n = len(REAL_FLOOD_UNTIL)
             REAL_FLOOD_UNTIL.clear()
             await safe_answer(event, f"🌊 {n}", alert=True)
-            await safe_edit(event, f"✅ Cleared {n} resting",
+            await safe_edit(event, f"✅ Cleared {n}",
                             buttons=kb_ra_panel())
             return
 
@@ -10001,13 +11608,12 @@ async def on_cb_owner(event):
             n = len(REAL_CLIENTS)
             await close_all_real_clients()
             await safe_answer(event, f"🔌 {n}", alert=True)
-            await safe_edit(event,
-                            f"✅ Disconnected {n}",
+            await safe_edit(event, f"✅ {n} disconnected",
                             buttons=kb_ra_panel())
             return
 
         if data == "ra:test_all":
-            await safe_answer(event, "🧪 Testing...", alert=True)
+            await safe_answer(event, "🧪", alert=True)
             files = discover_session_files()
             if not files:
                 await safe_edit(event, "❌ No keys",
@@ -10098,9 +11704,7 @@ async def on_cb_owner(event):
                 f"👤 **Owner Info**\n"
                 f"{DIV}\n\n"
                 f"👑 Username: **@{get_owner_username()}**\n"
-                f"🆔 Owner ID: `{get_owner_id()}`\n\n"
-                f"{DIV}\n"
-                f"💡 Changes take effect immediately",
+                f"🆔 Owner ID: `{get_owner_id()}`",
                 buttons=[
                     [btn("✏️ Edit Username",
                          data=b"oi:edit_uname", style="primary")],
@@ -10203,9 +11807,7 @@ async def on_cb_owner(event):
                             buttons=kb_coupons_manage())
             return
 
-        # ══════════════════════════════════════════
         # ═════ EMOJI STORE MANAGE ═════
-        # ══════════════════════════════════════════
         if data == "op:store":
             await safe_answer(event, "🏪")
             await safe_edit(
@@ -10268,9 +11870,7 @@ async def on_cb_owner(event):
                             buttons=kb_store_manage())
             return
 
-        # ══════════════════════════════════════════
         # ═════ AUTO-RETRY ═════
-        # ══════════════════════════════════════════
         if data == "op:retry":
             await safe_answer(event, "🔄")
             pending = retry_list_pending()
@@ -10280,15 +11880,13 @@ async def on_cb_owner(event):
                 f"{DIV}\n\n"
                 f"⏳ Pending: **{len(pending)}**\n"
                 f"⚙️ Enabled: "
-                f"**{'✅' if feat_auto_retry() else '❌'}**\n"
-                f"📊 Max attempts: **{cfg_get('auto_retry_max', '3')}**",
+                f"**{'✅' if feat_auto_retry() else '❌'}**",
                 buttons=kb_retry_menu())
             return
 
         if data == "retry:process_now":
-            await safe_answer(event, "🔄 Processing...", alert=True)
-            await safe_edit(event,
-                            "✅ Retry loop running in background",
+            await safe_answer(event, "🔄", alert=True)
+            await safe_edit(event, "Started in background",
                             buttons=kb_retry_menu())
             return
 
@@ -10316,9 +11914,7 @@ async def on_cb_owner(event):
                             buttons=kb_retry_menu())
             return
 
-        # ══════════════════════════════════════════
         # ═════ RATE LIMITS ═════
-        # ══════════════════════════════════════════
         if data == "op:rate_limits":
             await safe_answer(event, "📈")
             conn = sqlite3.connect(DB_FILE)
@@ -10332,8 +11928,7 @@ async def on_cb_owner(event):
             finally:
                 conn.close()
             txt = (f"📈 **Rate Limits**\n"
-                   f"{DIV}\n\n"
-                   f"**Top senders today:**\n\n")
+                   f"{DIV}\n\n**Top senders today:**\n\n")
             if not top:
                 txt += "_None_"
             for i, r in enumerate(top, 1):
@@ -10344,16 +11939,14 @@ async def on_cb_owner(event):
                             buttons=kb_rate_limits())
             return
 
-        # ══════════════════════════════════════════
         # ═════ BULK USERS ═════
-        # ══════════════════════════════════════════
         if data == "op:bulk_users":
             await safe_answer(event, "👥")
             await safe_edit(
                 event,
                 f"👥 **Bulk User Actions**\n"
                 f"{DIV}\n\n"
-                f"⚠️ These affect ALL users!\n\n"
+                f"⚠️ Affects ALL users!\n\n"
                 f"⏳ Pending: **{db_count_pending_approvals()}**\n"
                 f"✅ Approved: **{db_count_approved_users()}**\n"
                 f"🚫 Banned: **{db_count_banned_users()}**",
@@ -10373,7 +11966,7 @@ async def on_cb_owner(event):
                 conn.close()
             _dirty()
             await safe_answer(event, f"✅ {n}", alert=True)
-            await safe_edit(event, f"✅ Approved {n} users",
+            await safe_edit(event, f"✅ Approved {n}",
                             buttons=kb_bulk_users())
             return
 
@@ -10408,23 +12001,18 @@ async def on_cb_owner(event):
                 conn.close()
             _dirty()
             await safe_answer(event, f"💎 {n}", alert=True)
-            await safe_edit(event,
-                            f"💎 Premium granted to {n}",
+            await safe_edit(event, f"💎 {n} upgraded",
                             buttons=kb_bulk_users())
             return
 
-        # ══════════════════════════════════════════
         # ═════ FEATURES ═════
-        # ══════════════════════════════════════════
         if data == "op:features":
             await safe_answer(event, "🎛️")
             await safe_edit(
                 event,
                 f"🎛️ **Features**\n"
                 f"{STAR_LINE}\n\n"
-                f"Tap to toggle:\n\n"
-                f"💎 = Paid feature\n"
-                f"🆓 = Free for all",
+                f"Tap to toggle:",
                 buttons=kb_features())
             return
 
@@ -10434,21 +12022,17 @@ async def on_cb_owner(event):
             await safe_answer(event,
                               f"{'✅ ON' if nv else '❌ OFF'}",
                               alert=True)
-            await safe_edit(
-                event, f"🎛️ **Features**\n{DIV}",
-                buttons=kb_features())
+            await safe_edit(event, f"🎛️ **Features**\n{DIV}",
+                            buttons=kb_features())
             return
 
-        # ══════════════════════════════════════════
         # ═════ PLAN PRICES ═════
-        # ══════════════════════════════════════════
         if data == "op:plan_prices":
             await safe_answer(event, "💰")
             await safe_edit(
                 event,
-                f"💰 **Plan Prices**\n"
-                f"{DIV}\n\n"
-                f"Tap a plan to edit prices:",
+                f"💰 **Plan Prices**\n{DIV}\n\n"
+                f"Tap a plan to edit:",
                 buttons=kb_plan_prices())
             return
 
@@ -10456,9 +12040,7 @@ async def on_cb_owner(event):
             plan = data.split(":")[2]
             await safe_edit(
                 event,
-                f"💰 **{PLAN_NAMES[plan]}**\n"
-                f"{DIV}\n\n"
-                f"Tap duration to edit price:",
+                f"💰 **{PLAN_NAMES[plan]}**\n{DIV}",
                 buttons=kb_plan_prices_durations(plan))
             return
 
@@ -10480,16 +12062,12 @@ async def on_cb_owner(event):
                 buttons=kb_back(uid))
             return
 
-        # ══════════════════════════════════════════
         # ═════ PAID FEATURES ═════
-        # ══════════════════════════════════════════
         if data == "op:paid_features":
             await safe_answer(event, "💎")
             await safe_edit(
                 event,
-                f"💎 **Paid Features**\n"
-                f"{STAR_LINE}\n\n"
-                f"Toggle which features require paid plan:",
+                f"💎 **Paid Features**\n{DIV}",
                 buttons=kb_paid_features())
             return
 
@@ -10499,22 +12077,18 @@ async def on_cb_owner(event):
             await safe_answer(event,
                               "💎 PAID" if nv else "🆓 FREE",
                               alert=True)
-            await safe_edit(
-                event, f"💎 **Paid Features**\n{DIV}",
-                buttons=kb_paid_features())
+            await safe_edit(event, f"💎 **Paid Features**\n{DIV}",
+                            buttons=kb_paid_features())
             return
 
-        # ══════════════════════════════════════════
         # ═════ FORCE / TEAM / PACKS ═════
-        # ══════════════════════════════════════════
         if data == "op:force_channels":
             await safe_answer(event, "📢")
             await safe_edit(
                 event,
                 f"📢 **Force Channels**\n"
                 f"{DIV}\n\n"
-                f"Active: **{db_count_force_channels(True)}**\n"
-                f"Total: **{db_count_force_channels(False)}**",
+                f"Active: **{db_count_force_channels(True)}**",
                 buttons=kb_force_channels())
             return
 
@@ -10549,8 +12123,7 @@ async def on_cb_owner(event):
             await safe_answer(event, "👥")
             await safe_edit(
                 event,
-                f"👥 **Team Members**\n"
-                f"{DIV}\n\n"
+                f"👥 **Team Members**\n{DIV}\n\n"
                 f"Total: **{db_count_team_members()}**",
                 buttons=kb_team())
             return
@@ -10596,8 +12169,7 @@ async def on_cb_owner(event):
             await safe_answer(event, "🎨")
             await safe_edit(
                 event,
-                f"🎨 **Custom Packs**\n"
-                f"{DIV}\n\n"
+                f"🎨 **Custom Packs**\n{DIV}\n\n"
                 f"Total: **{db_count_custom_packs()}**",
                 buttons=kb_emoji_packs_manage())
             return
@@ -10641,9 +12213,7 @@ async def on_cb_owner(event):
                 ])
             return
 
-        # ══════════════════════════════════════════
         # ═════ WATCHERS / REFERRALS / QUEUE ═════
-        # ══════════════════════════════════════════
         if data == "op:watchers":
             ws = db_list_watchers()
             txt = f"📡 **All Auto-Tracks ({len(ws)})**\n{DIV}\n\n"
@@ -10677,9 +12247,7 @@ async def on_cb_owner(event):
             await safe_edit(event, txt[:4000], buttons=kb_owner())
             return
 
-        # ══════════════════════════════════════════
         # ═════ POOL STATUS / RESET ═════
-        # ══════════════════════════════════════════
         if data == "op:pool_status":
             await safe_edit(
                 event,
@@ -10692,24 +12260,20 @@ async def on_cb_owner(event):
             global TASK_RUNNING, TASK_OWNER_UID
             TASK_RUNNING = False
             TASK_OWNER_UID = None
-            await safe_answer(event, "🧹 Reset", alert=True)
+            await safe_answer(event, "🧹", alert=True)
             await safe_edit(
                 event,
                 f"🧹 **Pool Reset**\n\n"
-                f"Cleared {op} busy workers\n"
-                f"Cleared {of} resting states",
+                f"Cleared {op} busy + {of} resting",
                 buttons=kb_owner())
             return
 
-        # ══════════════════════════════════════════
         # ═════ TOGGLE AUTO / SET FREE ═════
-        # ══════════════════════════════════════════
         if data == "op:toggle_auto":
             nv = not is_auto_approve()
             set_auto_approve(nv)
             await safe_answer(event,
-                              f"{'✅' if nv else '❌'}",
-                              alert=True)
+                              f"{'✅' if nv else '❌'}", alert=True)
             await safe_edit(
                 event,
                 f"👑 **Auto-Approve**\n{DIV}\n\n"
@@ -10728,9 +12292,7 @@ async def on_cb_owner(event):
                               style="danger")]])
             return
 
-        # ══════════════════════════════════════════
         # ═════ ENGINES OVERVIEW ═════
-        # ══════════════════════════════════════════
         if data == "op:engines":
             stats = db_engine_stats()
             cache_s = cache_stats()
@@ -10743,11 +12305,9 @@ async def on_cb_owner(event):
                 f"💎 Premium: **{stats['paid']}**\n"
                 f"🔒 Permanent: **{stats['permanent']}**\n\n"
                 f"{DIV}\n"
-                f"💾 **Cache Status**\n"
+                f"💾 **Cache**\n"
                 f"✅ Valid: **{cache_s['valid']}**\n"
-                f"❌ Invalid: **{cache_s['invalid']}**\n"
-                f"📁 Total: **{cache_s['total']}**\n\n"
-                f"Choose engine to manage:",
+                f"❌ Invalid: **{cache_s['invalid']}**",
                 buttons=[
                     [btn(f"🆓 Standard ({stats['free']})",
                          data=b"srv:panel:free",
@@ -10765,16 +12325,14 @@ async def on_cb_owner(event):
 
         if data == "op:clear_cache":
             n = cache_clear_invalid()
-            await safe_answer(event, f"🧹 {n} cleared", alert=True)
+            await safe_answer(event, f"🧹 {n}", alert=True)
             await safe_edit(
                 event,
                 f"✅ Cleared {n} invalid cache entries",
                 buttons=kb_owner())
             return
 
-        # ══════════════════════════════════════════
         # ═════ USERS MANAGEMENT ═════
-        # ══════════════════════════════════════════
         if data == "op:users":
             rows = db_all_users(10, 0)
             txt = f"👥 **Users**\n{DIV}\n\n"
@@ -10826,8 +12384,7 @@ async def on_cb_owner(event):
             nb = not u[5]
             db_ban_user(target, ban=nb)
             await safe_answer(event,
-                              f"{'🚫' if nb else '✅'}",
-                              alert=True)
+                              f"{'🚫' if nb else '✅'}", alert=True)
             await safe_edit(event, "Updated",
                             buttons=kb_user_manage(target))
             return
@@ -10940,9 +12497,9 @@ async def on_cb_owner(event):
         if data.startswith("um:ra_reset:"):
             target = int(data.split(":")[2])
             set_user_ra_limit(target, -1)
-            await safe_answer(event, "✅ Reset", alert=True)
+            await safe_answer(event, "✅", alert=True)
             await safe_edit(
-                event, "✅ VIP limit reset",
+                event, "✅ Reset",
                 buttons=[[btn("🔙",
                               data=f"um:ra:{target}".encode(),
                               style="primary")]])
@@ -11008,17 +12565,14 @@ async def on_cb_owner(event):
                             buttons=kb_user_manage(target))
             return
 
-        # ══════════════════════════════════════════
         # ═════ BROADCAST / ADD / PENDING ═════
-        # ══════════════════════════════════════════
         if data == "op:broadcast":
             ch = await get_admin_chats()
             await safe_edit(
                 event,
                 f"📢 **Broadcast**\n"
                 f"{DIV}\n\n"
-                f"📊 Chats: **{len(ch)}**\n\n"
-                f"⚠️ Sends to all admin chats",
+                f"📊 Chats: **{len(ch)}**",
                 buttons=[
                     [btn("📝 Text", data=b"bc:text",
                          style="primary")],
@@ -11054,14 +12608,13 @@ async def on_cb_owner(event):
                 sv = r[9] if len(r) > 9 else "free"
                 txt += (f"{ic} {r[4]} @{r[5]} [{m}/{sv}] "
                         f"{r[7][:16]}\n")
-            await safe_edit(event, txt[:4000],
-                            buttons=kb_owner())
+            await safe_edit(event, txt[:4000], buttons=kb_owner())
             return
 
         if data == "op:pending":
             rows = db_pending_approvals(10)
             if not rows:
-                await safe_edit(event, "✅ No pending users.",
+                await safe_edit(event, "✅ No pending.",
                                 buttons=kb_owner())
                 return
             for r in rows:
@@ -11071,31 +12624,26 @@ async def on_cb_owner(event):
                         f"🔔 **Approval**\n"
                         f"👤 {r[1]}\n"
                         f"🆔 `{r[0]}`\n"
-                        f"📛 @{r[2] or 'no_username'}\n"
-                        f"🕒 {r[3][:16]}",
+                        f"📛 @{r[2] or 'no_username'}",
                         buttons=kb_approval_actions(r[0]))
                     await asyncio.sleep(0.4)
                 except Exception:
                     pass
-            await safe_edit(event,
-                            f"⏳ Sent {len(rows)} requests",
+            await safe_edit(event, f"⏳ {len(rows)} sent",
                             buttons=kb_owner())
             return
 
         if data == "op:approved":
             rows = db_approved_users(20)
-            txt = f"✅ **Approved Users ({len(rows)})**\n\n"
+            txt = f"✅ **Approved ({len(rows)})**\n\n"
             if not rows:
                 txt += "_None_"
             for r in rows:
                 txt += f"👤 {r[1] or '—'} `{r[0]}`\n"
-            await safe_edit(event, txt[:4000],
-                            buttons=kb_owner())
+            await safe_edit(event, txt[:4000], buttons=kb_owner())
             return
 
-        # ══════════════════════════════════════════
         # ═════ GITHUB SYNC ═════
-        # ══════════════════════════════════════════
         if data == "op:ghsync":
             s = github_sync.get_stats()
             enabled = (HAS_GH_SYNC
@@ -11156,6 +12704,92 @@ async def on_cb_owner(event):
             pass
 
 
+# ══════════════════════ CSV EXPORT HELPER 🆕 ══════════════════════
+def _generate_csv(export_type):
+    """Generate CSV data for export"""
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+
+            if export_type == "users":
+                rows = c.execute("""SELECT user_id, first_name, username,
+                    plan, free_balance, total_reactions, is_banned,
+                    language, joined_at, last_active
+                    FROM users ORDER BY user_id""").fetchall()
+                headers = ["user_id", "first_name", "username", "plan",
+                           "balance", "reactions", "banned", "language",
+                           "joined_at", "last_active"]
+                filename = "users.csv"
+
+            elif export_type == "payments":
+                rows = c.execute("""SELECT id, user_id, amount, plan,
+                    days, method, status, coupon_code, discount_amount,
+                    created_at, verified_at FROM payments
+                    ORDER BY id DESC""").fetchall()
+                headers = ["id", "user_id", "amount", "plan", "days",
+                           "method", "status", "coupon", "discount",
+                           "created_at", "verified_at"]
+                filename = "payments.csv"
+
+            elif export_type == "reactions":
+                rows = c.execute("""SELECT id, user_id, chat_title,
+                    post_id, emoji, bot_username, status, method, server,
+                    created_at FROM reactions
+                    ORDER BY id DESC LIMIT 5000""").fetchall()
+                headers = ["id", "user_id", "chat_title", "post_id",
+                           "emoji", "engine", "status", "method",
+                           "server", "created_at"]
+                filename = "reactions.csv"
+
+            elif export_type == "stats":
+                rows = c.execute("""SELECT user_id, total_sent,
+                    today_sent, week_sent, success_count, fail_count,
+                    streak_days, trust_score FROM user_stats
+                    ORDER BY total_sent DESC""").fetchall()
+                headers = ["user_id", "total", "today", "week", "success",
+                           "fail", "streak", "trust"]
+                filename = "stats.csv"
+
+            elif export_type == "referrals":
+                rows = c.execute("""SELECT id, referrer_id, new_user_id,
+                    status, reward_given, created_at, validated_at
+                    FROM referrals ORDER BY id DESC""").fetchall()
+                headers = ["id", "referrer", "new_user", "status",
+                           "rewarded", "created_at", "validated_at"]
+                filename = "referrals.csv"
+
+            elif export_type == "appeals":
+                rows = c.execute("""SELECT id, user_id, reason, status,
+                    created_at, decided_at FROM ban_appeals
+                    ORDER BY id DESC""").fetchall()
+                headers = ["id", "user_id", "reason", "status",
+                           "created_at", "decided_at"]
+                filename = "appeals.csv"
+
+            else:
+                return None, None
+
+            if not rows:
+                return None, None
+
+            # Build CSV
+            lines = [",".join(headers)]
+            for row in rows:
+                line = []
+                for v in row:
+                    s = str(v) if v is not None else ""
+                    s = s.replace(",", ";").replace("\n", " ")
+                    line.append(f'"{s}"')
+                lines.append(",".join(line))
+
+            return "\n".join(lines), filename
+        finally:
+            conn.close()
+    except Exception:
+        return None, None
+
+
 # ══════════════════════ END OF PART 14 ══════════════════════
 D("Part 14 ready", "ok")
 # ══════════════════════ HTTP HEALTH SERVER ══════════════════════
@@ -11210,6 +12844,7 @@ async def start_health_server():
             "auto_tracks": len(db_list_watchers()),
             "queue_pending": len(db_list_queue(status="pending")),
             "retry_pending": retry_count_pending(),
+            "ban_appeals": db_count_pending_appeals(),
         })
 
     app = web.Application()
@@ -11238,6 +12873,7 @@ async def on_ping(event):
         fs = get_pool_status("free")
         ps = get_pool_status("paid")
         real_status = real_get_status()
+        cache_s = cache_stats()
         await event.reply(
             f"🏓 **Pong!**\n"
             f"{DIV}\n\n"
@@ -11252,6 +12888,7 @@ async def on_ping(event):
             f"      🟢{ps['free']} 🔴{ps['busy']} 🌊{ps['flooded']}\n\n"
             f"🔐 Access Keys: **{real_status['available']}/"
             f"{real_status['total']}**\n"
+            f"💾 Cache: **{cache_s['valid']} valid**\n"
             f"📡 Auto-Tracks: **{len(db_list_watchers())}**\n"
             f"🎯 Status: "
             f"**{'🔴 Working' if TASK_RUNNING else '🟢 Ready'}**")
@@ -11259,7 +12896,7 @@ async def on_ping(event):
         D_err(e, "on_ping")
 
 
-# ══════════════════════ /status COMMAND ══════════════════════
+# ══════════════════════ /status COMMAND (OWNER) ══════════════════════
 @bot.on(events.NewMessage(pattern="/status"))
 async def on_status(event):
     try:
@@ -11300,7 +12937,8 @@ async def on_status(event):
             f"**Owner UID:** `{TASK_OWNER_UID or '—'}`\n\n"
             f"**⏰ Queue:** **{len(db_list_queue(status='pending'))}**\n"
             f"**🔄 Retries:** **{retry_count_pending()}**\n"
-            f"**📡 Auto-Tracks:** **{len(db_list_watchers())}**")
+            f"**📡 Auto-Tracks:** **{len(db_list_watchers())}**\n"
+            f"**📮 Appeals:** **{db_count_pending_appeals()}**")
     except Exception as e:
         D_err(e, "on_status")
 
@@ -11354,28 +12992,34 @@ async def main():
         print("❌ Session invalid. Exiting.", flush=True)
         return
 
-    # ═════ Backup client ═════
+    # ═════ Backup client (Co-Owner) ═════
     if BACKUP_SESSION_1 and len(BACKUP_SESSION_1) > 250:
         try:
             backup_client = TelegramClient(
                 StringSession(BACKUP_SESSION_1), API_ID, API_HASH)
             await backup_client.start()
             if await backup_client.is_user_authorized():
-                D("Backup system ready", "ok")
+                D("Co-owner ready", "ok")
             else:
                 await backup_client.disconnect()
                 backup_client = None
+                print("  ⚠️  Co-owner session invalid", flush=True)
         except Exception:
             backup_client = None
+            print("  ⚠️  Co-owner session failed", flush=True)
+    else:
+        print("  ℹ️  Co-owner session not configured", flush=True)
 
     # ═════ Admin info ═════
     me = await admin_client.get_me()
 
-    # ═════ Startup info (FRIENDLY + SILENT) ═════
+    # ═════ Friendly startup info ═════
     print(f"  ✨ Welcome, {me.first_name}!", flush=True)
     print("", flush=True)
     print(f"  👤 Owner: @{get_owner_username()}", flush=True)
     print(f"  🆔 ID: {get_owner_id()}", flush=True)
+    if backup_client:
+        print(f"  👥 Co-Owner: @{get_backup_username()}", flush=True)
     print("", flush=True)
     print("  ⚙️  System initializing...", flush=True)
     print("  • Loading modules ✓", flush=True)
@@ -11394,6 +13038,8 @@ async def main():
     asyncio.create_task(daily_summary_loop())
     asyncio.create_task(startup_engine_sync())
     asyncio.create_task(cache_cleanup_loop())
+    asyncio.create_task(auto_bot_validator_loop())
+    asyncio.create_task(user_notes_cleanup_loop())
     # ✅ Non-blocking engine sync
     asyncio.create_task(sync_engines_cached())
 
@@ -11408,7 +13054,7 @@ async def main():
             wait_sec = e.seconds + 30
             print(f"  ⏳ Waiting {wait_sec}s (rate limit)...", flush=True)
             await asyncio.sleep(wait_sec)
-        except Exception as e:
+        except Exception:
             print(f"  ⚠️ Retry in 30s...", flush=True)
             await asyncio.sleep(30)
 
