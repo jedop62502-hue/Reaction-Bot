@@ -408,8 +408,6 @@ def db_init():
         reseller_id INTEGER, client_id INTEGER, plan TEXT, expires_at TEXT,
         commission_paid INTEGER DEFAULT 0, added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
-    conn.commit()
-    conn.close()
     D("Tables created (Part 1)", "dbg")
     # ── Migration: add missing columns to users ──
     for col, dflt in [
