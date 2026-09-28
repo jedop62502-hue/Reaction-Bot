@@ -1,8 +1,9 @@
 """
 ============================================================
-   GHOST REACTION BOT v72 - SMART BATCH EDITION
-   Batch Admin System (50 max) + Smart Fallback Reactions
-   Failed Bot Tracking + Multi-Lang Help + Fixed RA/Session
+   GHOST REACTION BOT v73 - DUAL SERVER EDITION
+   Free Server + Paid Server (50/50 split)
+   Owner Manual Override + Full Auto Dedupe
+   Smart Batch + Fallback + Failed Bot Tracking
    Credit: @Anonymous_User_37
 ============================================================
 """
@@ -36,7 +37,7 @@ from telethon.errors.rpcerrorlist import (
 
 from aiohttp import web
 
-# ✅ GitHub sync OPTIONAL — crash nahi hoga agar file na ho
+# ✅ GitHub sync OPTIONAL
 try:
     import github_sync
     HAS_GH_SYNC = True
@@ -67,71 +68,293 @@ ADMIN_SESSION = "1BJWap1wBu2X5POvvWDOSvJZAROd9WIKpJMpSIf-W3skkHehdGLol5KkobjCIfo
 BACKUP_SESSION_1 = ""
 BOT_TOKEN = "8878162447:AAGMBnukLS2jPxfBthfeY1GAblCCrgtaH2M"
 
-BOT_TOKENS = [
-    "8841673258:AAHmkFSMiuS6eja_CnqVH548wcam_XBRAY4","7593703253:AAEgY5r_UoBtXYiCntg6wt_seiBbhxqrMeI",
-    "8553819198:AAEtfCIbrvgkvtAhUNMhull2sYZcnBVSj8o","8974028456:AAHmZvMGFbGBy0ie4pQfICxXnqy5GG4Racg",
-    "8988266285:AAFrB5RXFcbDyd_-_RZrnMpNVDakIrXT_ePc","8708232817:AAH6jRVisH7W1GvVdZIDbPT-LBELs0NVVzY",
-    "8913217410:AAG1sjOnzMGJgGd1wjmbQevpI9QVrKeAdxI","8820548215:AAG9cyP2k9MBkUgJ4q2sQH8W9AaTh1nAcdQ",
-    "8968734078:AAGEq778W3nJlADAQdp_zaiatlW-UyDKj1Q","8328358987:AAEcvUOW0AIZBsYrl5C1ediUbR9rCkHVrtg",
-    "8728464321:AAGsyJihokd7r5Tlp54W4lPWrFpvRlULRFE","8930721931:AAErSyWq5cRUC7NjfLzLU4F7vuHTF9vfVkM",
-    "8783856775:AAE5oRj-CfvKu1QkbabnpYf_NresBkFN_FA","8748532509:AAEQYzaL4BBLddWoF-laUlQ-dR_nC-2v3sQ",
-    "8956849671:AAGToCuy-bsGRMxexUAjWIHBiO-XK7mTSTg","8846722436:AAE4blebnl-47O8D7MIYEpaDvlSE1T6PjOs",
-    "8944172439:AAF6Bob4CFkN9J1uYfHhzR5F_DboZo5pZ2o","8745749488:AAH9iBk_3OhdRQSxL0_i7ZKY9muQlhruLUw",
-    "8841955340:AAG1wx_6Qg-mRdulTXA_10ZyUMt5uS1pM7E","8924067849:AAGTfhAeymFPNkzHZs7qYfoLdHh1Eci9LYM",
-    "8771116985:AAEVflfEL_jhDlCjgjuEGEq5ew7XQZtA42w","8603663849:AAFULr5Oa2hxKVvXP9SEUfgTHwOKVsnEVJE",
-    "8931110714:AAFc7jMeqLrZNnJT-Gu1PvOCC1KtYiphQcM","8803252857:AAFeiuLDYZq1vXl0HPixIny7sVgwInbeDI4",
-    "8979609203:AAH2y70TChxnGN12meD79zfhvgrOUcLxgpQ","8905843316:AAEt7EiKOinstEIFVblgKImWKpDMAx3VOss",
-    "8989541204:AAHSlSxo2BTWo4CwHi99wnO2seJ4Q6Ijcl0","8944322541:AAE-L4laExHQoz0RtGGZH4rR0w9HRBsZ5ZQ",
-    "8641606957:AAFo2g3KF3_MM2gSqfoLrO-GcdeZDrku_rI","8964416323:AAFCgLhsuDRX6e_qKSdMSeJMvOnftyJIpjw",
-    "8857844062:AAHkqUl93T5IIeQzRVI4gTbDtGNXM2l56vY","8819430996:AAG61wjEPXzQt51-XXvxLk44xUUVevEM-Zg",
-    "8822557788:AAGo0EpEEj6oPTDS6AZvFQRJLbY0SKILm9E","8698942203:AAHqYg0fbbw91_VXLy-QMaAweNOYpTt0_8U",
-    "8685235239:AAFde1c3wMjQUNky9DBFjPZRwiQIzwv2eWM","8768563277:AAEw6E0YI9VvaWKWqGrWV7r__VIECYfd4Tw",
-    "8510446309:AAHhEoCC3elgLIsDUNQx8sdT97OOOVKFLGQ","8950435967:AAHz9cX7ni-h9cYfDB-B0Ze7hbTTge9aSS0",
-    "8952785819:AAHlGqZdLvIAu_7Gc5cnEWIk_qcX05Uu3L8","8868030693:AAEwQNOs9GLbryk2NyKNCCUioYvEguTcLZA",
-    "8757705970:AAEHdekrha8nKfM1dD_K2qQDGEpM62bq7fo","8815901180:AAFvbu5PHknm7Yuiyf4RvK_vMtYW0-KY4oA",
-    "8785643638:AAGk7RfKtOkFgGA9VMc-R2KUuot2chkErfY","8871939279:AAFNABGPWmo-jYugam_8yosqvTvlqUs6rOw",
-    "8853912055:AAEBXCqq444SNm1PuAWDhAGmqHhsXUhgGhM","8821582256:AAG8RtlrztqJxaX7Tm02A_s9FQhRYoCLOFY",
-    "8900198440:AAGxqWK8pv9ymM8Q3h_8LkM3bN6xYzKZfZE","8714611659:AAGYKV151mrnPd8L4un2jqyeGKYJWgWyUNM",
-    "8938927350:AAGqDG704mjg-jRhvy5I23pGKsLc5NRXHQY","8256889928:AAHi_MEPlcCX_RAGGijMjjEFu7dPTPL0WZc",
-    "8833683561:AAFYJK1JFpZ70AQcV4qGJV6LEZwAqGlqdnM","8100369464:AAEgoYuvVDyiamsJE4Wvn8tNP3AeULjr7qQ",
-    "8662013526:AAFpMDtWcV-vPVIIUhwzF890JbzvPONvHeE","8729112057:AAHNJH5Q52rG06cxUhVH5v9abckcorrk-cc",
-    "8471788383:AAFh-7qdOm0p_YZfHu-cFlnX0EvbaR_EPNA","8891259440:AAFkd8xRSTXYjLYBoc5BJCUraaECgJyw7MA",
-    "8983293074:AAGAEWkH_fRsE1ZHDO6Y8400ItngSMUzWn0","8471875480:AAExUSZAMmB3DJDjBHJJzQFreb4wuUhF-LE",
-    "8861709151:AAGkJdg6dfNHgkImCoXLeqpj09BXaFn9K3A","8609489669:AAHFCpioHV24w5UGNsCwEshFmb9SbAsexCQ",
-    "8820797593:AAFTZM5d-2lFKU01RtDHwihAHESc6diPfQM","8962290157:AAHXjwHwh_t9msQi0CcudyXM2k220WCDCK0",
-    "8008985452:AAG8Bdv1_RxeUMJVls6_Xii1p_inQNlVgxo","8971769677:AAH35Rj_VJbjRlJtFcqQIeuEJ2hWlfjKSU0",
-    "8990507622:AAHnMjPXwH2pU9X5wEAmWVWT5M7MwZy5dag","8784663275:AAH8P9qX9v9csE9I-KXnsRcgkjchRsQnDso",
-    "8938896874:AAFL2y5KXpzsatkpLIFI057z28GnXU68JRY","8988481023:AAFYAdCPKeFf0ggzW7rVztxQGo7ZxTFEGK8",
-    "8994425405:AAGP6ekwed9AHZ3gSf2CsvFSY1EYrZpvNaE","8960571934:AAFlTT44gSwOKsR9-EIRRSV5sLVYOfB69Lg",
-    "8779154787:AAFTgYyGhFH9tl886CCAJf693FDcVNhV9U0","8903745472:AAEUCdpnOmFb7FvxAPWYyI9hiHqJJvgxYeQ",
-    "8996047725:AAF4hqBOfZX9KkvKrRtzWVKmAMih5rWGd3k","8813887147:AAHPuB5fPRYsZPsdAzywzvEcFBKESdDzmFI",
-    "8918383154:AAGD9zce0bs0NOdr2BRiMYQYTgB5yYfHM00","8350933617:AAEf3w6E_m9A_-0Gjo9ipB6-gF1gnYh6u1M",
-    "8965953734:AAEMAsvzZE-3Yxf7_ZawAHrG5EN9ewNAfro","8221570065:AAFUFQuB2w2aXjGhh9PtTSbOYi2knb5cEnc",
-    "8919303440:AAE2c4d_UwTHCWnm3LGOZ0mKntWrK11g78w","8832547686:AAHl5TnZF5yddtqgnWTHScuIQ3H_D-5FyiE",
-    "8949714253:AAEq-kdm7HUj17a2S-2PV7FuuGvUIKusk7Q","8950470890:AAFOc5fE-55FU8fp07HvrrwbKFDtokVz37U",
-    "8816997120:AAG3hoky363ACg0sNLTHAz2gdvZ6GBDdUk4","8857013054:AAGKXdUshAe2bZEPHcfxabK7cEpNPfZZbkA",
-    "8826047151:AAGIFXxzoVHhNtpca5bavuo6mcKLgUo89Zg","8968831352:AAGFUCm9G_tnVrEskE2S8tmjkucteWCyRSo",
-    "8889331184:AAETFEujC9Tkdlrnzr-etu3MUy9Usv_n2tg","8189182599:AAGW4N-_kDhi__wdDxvELX_JqPRyDy4f2CI",
-    "8899796556:AAFpkw6ou_KLLNpxc799wff01Df8ARGf6AE","8913059580:AAGYXEjE-AWLsrSt1G8Fhpw0_1o-SiTen_Q",
-    "8623196341:AAEWQX-5V9CiearLhCjCIUJ9dkJyltFHaBQ","8893398545:AAG6ytTXtGXsoWG6vFRylbOYXfldHpMzq7s",
-    "8552097300:AAFp3DZvoxoZoWTdT-JDGzzYD9MybMus--Y","8981400829:AAHJYVnt0sjQCw47c8Wse9kysLPrT52IBpY",
-    "8963410266:AAGR9sXmxA1rrciIz5MZMxByGg1wVOEN9Zg","8716210889:AAESTa6z6lhIL83a4N2ld1iXcA_L-WqRJhg",
-    "8912557604:AAHQq888h9ojNuGYssw7n9Ro64rYIz_8SlY","8291028314:AAFrLRo2E_jT3bazVkDKpgd42ppGFJgFV8c",
-    "8418409480:AAFYfuWbuuyaD54Ks_ThQAGEHTw3nzbrTyw","8935405135:AAFC3ONCxh-LM2axSRVj0T_GkRFrGf242BY",
-    "8862081715:AAGAKOqQZPEm6t1rs1S8W0aQ0ctGv_rPrZ8","8950949832:AAHPAuHamEqE-B9Z3U5dpL4pUyTbcqfETIA",
-    "8841428180:AAFPjIUBID7jeC2hj5aM4PuWo2-NJ29sWjM","8941585136:AAFcpOoVjVYuU0UrOvO0w8zd1k0ZxDl2Qlo",
-    "8634996391:AAGpg8B4Uh9KIH4bd7jlszmzI03zUqBQnVQ","8813724246:AAHP0rnBLPfBoQmcftjk4i7nfVMZZVp6UrE",
-    "8741375662:AAHgRJAK3FLPb9y_Gc-Y8yktiTC4Lr2S-18","8974865654:AAFF4uB0yJLSJSHJTHXigvrPW-rWhB6qFeo",
-    "8911644039:AAFYE8CTP7jmwLQljMlAnSzpe02G19VvZwE","8962352673:AAFR6qFzABemeFI_5CX8EXifoxGBI5ZyrPw",
-    "8857051106:AAEbY0nWQUsNxQBFJbnCCfv_bZn9vvZjeng","8938143439:AAE7og1KxgCKE_2s_m3nCl4GDuvh_MvPs8w",
-    "8824445026:AAEwXki7eTKBmHzC8HVjALgnNB4XhzucfE0","8653676138:AAEnWUCQy3DTuL_u8qPX1kjpfAoGn-vdu30",
-    "8605109730:AAG_nkDk--Du7s03iC8sCGU8WxuT2NjU5pU","8913650429:AAGgjDUN1GzDbAv8nTN22-A-mISIEgOBzJM",
-    "8851289196:AAGICsicQG11JTb0H7abgWn0ms5HYMTTI4o","8941332755:AAEnb3eJfJAnr3dwkcuxVOmJGIfZkbSU1HA",
-    "8940700372:AAGYRHGcLdime__fV487QNGn_Wvj_5uviBM","8968649929:AAGIrxG7rbxK08yIg6kUEobPqLRQrwXi5dY",
-    "8683641338:AAHO3dT8HdV7uTcN5UhCB6KmCiHA0-uco7I","8655009239:AAGw-Y9ur0X0hu6t17ouYSL7BmHbd51tKk8",
+# ══════════════════════ BOT TOKENS (Master — auto-dedupe) ══════════════════════
+# Purane + Naye — duplicates automatically skip ho jayenge
+_RAW_BOT_TOKENS = [
+    # ═══ PURANE TOKENS (script mein pehle se thay) ═══
+    "8841673258:AAHmkFSMiuS6eja_CnqVH548wcam_XBRAY4",
+    "7593703253:AAEgY5r_UoBtXYiCntg6wt_seiBbhxqrMeI",
+    "8553819198:AAEtfCIbrvgkvtAhUNMhull2sYZcnBVSj8o",
+    "8974028456:AAHmZvMGFbGBy0ie4pQfICxXnqy5GG4Racg",
+    "8988266285:AAFrB5RXFcbDyd_-_RZrnMpNVDakIrXT_ePc",
+    "8708232817:AAH6jRVisH7W1GvVdZIDbPT-LBELs0NVVzY",
+    "8913217410:AAG1sjOnzMGJgGd1wjmbQevpI9QVrKeAdxI",
+    "8820548215:AAG9cyP2k9MBkUgJ4q2sQH8W9AaTh1nAcdQ",
+    "8968734078:AAGEq778W3nJlADAQdp_zaiatlW-UyDKj1Q",
+    "8328358987:AAEcvUOW0AIZBsYrl5C1ediUbR9rCkHVrtg",
+    "8728464321:AAGsyJihokd7r5Tlp54W4lPWrFpvRlULRFE",
+    "8930721931:AAErSyWq5cRUC7NjfLzLU4F7vuHTF9vfVkM",
+    "8783856775:AAE5oRj-CfvKu1QkbabnpYf_NresBkFN_FA",
+    "8748532509:AAEQYzaL4BBLddWoF-laUlQ-dR_nC-2v3sQ",
+    "8956849671:AAGToCuy-bsGRMxexUAjWIHBiO-XK7mTSTg",
+    "8846722436:AAE4blebnl-47O8D7MIYEpaDvlSE1T6PjOs",
+    "8944172439:AAF6Bob4CFkN9J1uYfHhzR5F_DboZo5pZ2o",
+    "8745749488:AAH9iBk_3OhdRQSxL0_i7ZKY9muQlhruLUw",
+    "8841955340:AAG1wx_6Qg-mRdulTXA_10ZyUMt5uS1pM7E",
+    "8924067849:AAGTfhAeymFPNkzHZs7qYfoLdHh1Eci9LYM",
+    "8771116985:AAEVflfEL_jhDlCjgjuEGEq5ew7XQZtA42w",
+    "8603663849:AAFULr5Oa2hxKVvXP9SEUfgTHwOKVsnEVJE",
+    "8931110714:AAFc7jMeqLrZNnJT-Gu1PvOCC1KtYiphQcM",
+    "8803252857:AAFeiuLDYZq1vXl0HPixIny7sVgwInbeDI4",
+    "8979609203:AAH2y70TChxnGN12meD79zfhvgrOUcLxgpQ",
+    "8905843316:AAEt7EiKOinstEIFVblgKImWKpDMAx3VOss",
+    "8989541204:AAHSlSxo2BTWo4CwHi99wnO2seJ4Q6Ijcl0",
+    "8944322541:AAE-L4laExHQoz0RtGGZH4rR0w9HRBsZ5ZQ",
+    "8641606957:AAFo2g3KF3_MM2gSqfoLrO-GcdeZDrku_rI",
+    "8964416323:AAFCgLhsuDRX6e_qKSdMSeJMvOnftyJIpjw",
+    "8857844062:AAHkqUl93T5IIeQzRVI4gTbDtGNXM2l56vY",
+    "8819430996:AAG61wjEPXzQt51-XXvxLk44xUUVevEM-Zg",
+    "8822557788:AAGo0EpEEj6oPTDS6AZvFQRJLbY0SKILm9E",
+    "8698942203:AAHqYg0fbbw91_VXLy-QMaAweNOYpTt0_8U",
+    "8685235239:AAFde1c3wMjQUNky9DBFjPZRwiQIzwv2eWM",
+    "8768563277:AAEw6E0YI9VvaWKWqGrWV7r__VIECYfd4Tw",
+    "8510446309:AAHhEoCC3elgLIsDUNQx8sdT97OOOVKFLGQ",
+    "8950435967:AAHz9cX7ni-h9cYfDB-B0Ze7hbTTge9aSS0",
+    "8952785819:AAHlGqZdLvIAu_7Gc5cnEWIk_qcX05Uu3L8",
+    "8868030693:AAEwQNOs9GLbryk2NyKNCCUioYvEguTcLZA",
+    "8757705970:AAEHdekrha8nKfM1dD_K2qQDGEpM62bq7fo",
+    "8815901180:AAFvbu5PHknm7Yuiyf4RvK_vMtYW0-KY4oA",
+    "8785643638:AAGk7RfKtOkFgGA9VMc-R2KUuot2chkErfY",
+    "8871939279:AAFNABGPWmo-jYugam_8yosqvTvlqUs6rOw",
+    "8853912055:AAEBXCqq444SNm1PuAWDhAGmqHhsXUhgGhM",
+    "8821582256:AAG8RtlrztqJxaX7Tm02A_s9FQhRYoCLOFY",
+    "8900198440:AAGxqWK8pv9ymM8Q3h_8LkM3bN6xYzKZfZE",
+    "8714611659:AAGYKV151mrnPd8L4un2jqyeGKYJWgWyUNM",
+    "8938927350:AAGqDG704mjg-jRhvy5I23pGKsLc5NRXHQY",
+    "8256889928:AAHi_MEPlcCX_RAGGijMjjEFu7dPTPL0WZc",
+    "8833683561:AAFYJK1JFpZ70AQcV4qGJV6LEZwAqGlqdnM",
+    "8100369464:AAEgoYuvVDyiamsJE4Wvn8tNP3AeULjr7qQ",
+    "8662013526:AAFpMDtWcV-vPVIIUhwzF890JbzvPONvHeE",
+    "8729112057:AAHNJH5Q52rG06cxUhVH5v9abckcorrk-cc",
+    "8471788383:AAFh-7qdOm0p_YZfHu-cFlnX0EvbaR_EPNA",
+    "8891259440:AAFkd8xRSTXYjLYBoc5BJCUraaECgJyw7MA",
+    "8983293074:AAGAEWkH_fRsE1ZHDO6Y8400ItngSMUzWn0",
+    "8471875480:AAExUSZAMmB3DJDjBHJJzQFreb4wuUhF-LE",
+    "8861709151:AAGkJdg6dfNHgkImCoXLeqpj09BXaFn9K3A",
+    "8609489669:AAHFCpioHV24w5UGNsCwEshFmb9SbAsexCQ",
+    "8820797593:AAFTZM5d-2lFKU01RtDHwihAHESc6diPfQM",
+    "8962290157:AAHXjwHwh_t9msQi0CcudyXM2k220WCDCK0",
+    "8008985452:AAG8Bdv1_RxeUMJVls6_Xii1p_inQNlVgxo",
+    "8971769677:AAH35Rj_VJbjRlJtFcqQIeuEJ2hWlfjKSU0",
+    "8990507622:AAHnMjPXwH2pU9X5wEAmWVWT5M7MwZy5dag",
+    "8784663275:AAH8P9qX9v9csE9I-KXnsRcgkjchRsQnDso",
+    "8938896874:AAFL2y5KXpzsatkpLIFI057z28GnXU68JRY",
+    "8988481023:AAFYAdCPKeFf0ggzW7rVztxQGo7ZxTFEGK8",
+    "8994425405:AAGP6ekwed9AHZ3gSf2CsvFSY1EYrZpvNaE",
+    "8960571934:AAFlTT44gSwOKsR9-EIRRSV5sLVYOfB69Lg",
+    "8779154787:AAFTgYyGhFH9tl886CCAJf693FDcVNhV9U0",
+    "8903745472:AAEUCdpnOmFb7FvxAPWYyI9hiHqJJvgxYeQ",
+    "8996047725:AAF4hqBOfZX9KkvKrRtzWVKmAMih5rWGd3k",
+    "8813887147:AAHPuB5fPRYsZPsdAzywzvEcFBKESdDzmFI",
+    "8918383154:AAGD9zce0bs0NOdr2BRiMYQYTgB5yYfHM00",
+    "8350933617:AAEf3w6E_m9A_-0Gjo9ipB6-gF1gnYh6u1M",
+    "8965953734:AAEMAsvzZE-3Yxf7_ZawAHrG5EN9ewNAfro",
+    "8221570065:AAFUFQuB2w2aXjGhh9PtTSbOYi2knb5cEnc",
+    "8919303440:AAE2c4d_UwTHCWnm3LGOZ0mKntWrK11g78w",
+    "8832547686:AAHl5TnZF5yddtqgnWTHScuIQ3H_D-5FyiE",
+    "8949714253:AAEq-kdm7HUj17a2S-2PV7FuuGvUIKusk7Q",
+    "8950470890:AAFOc5fE-55FU8fp07HvrrwbKFDtokVz37U",
+    "8816997120:AAG3hoky363ACg0sNLTHAz2gdvZ6GBDdUk4",
+    "8857013054:AAGKXdUshAe2bZEPHcfxabK7cEpNPfZZbkA",
+    "8826047151:AAGIFXxzoVHhNtpca5bavuo6mcKLgUo89Zg",
+    "8968831352:AAGFUCm9G_tnVrEskE2S8tmjkucteWCyRSo",
+    "8889331184:AAETFEujC9Tkdlrnzr-etu3MUy9Usv_n2tg",
+    "8189182599:AAGW4N-_kDhi__wdDxvELX_JqPRyDy4f2CI",
+    "8899796556:AAFpkw6ou_KLLNpxc799wff01Df8ARGf6AE",
+    "8913059580:AAGYXEjE-AWLsrSt1G8Fhpw0_1o-SiTen_Q",
+    "8623196341:AAEWQX-5V9CiearLhCjCIUJ9dkJyltFHaBQ",
+    "8893398545:AAG6ytTXtGXsoWG6vFRylbOYXfldHpMzq7s",
+    "8552097300:AAFp3DZvoxoZoWTdT-JDGzzYD9MybMus--Y",
+    "8981400829:AAHJYVnt0sjQCw47c8Wse9kysLPrT52IBpY",
+    "8963410266:AAGR9sXmxA1rrciIz5MZMxByGg1wVOEN9Zg",
+    "8716210889:AAESTa6z6lhIL83a4N2ld1iXcA_L-WqRJhg",
+    "8912557604:AAHQq888h9ojNuGYssw7n9Ro64rYIz_8SlY",
+    "8291028314:AAFrLRo2E_jT3bazVkDKpgd42ppGFJgFV8c",
+    "8418409480:AAFYfuWbuuyaD54Ks_ThQAGEHTw3nzbrTyw",
+    "8935405135:AAFC3ONCxh-LM2axSRVj0T_GkRFrGf242BY",
+    "8862081715:AAGAKOqQZPEm6t1rs1S8W0aQ0ctGv_rPrZ8",
+    "8950949832:AAHPAuHamEqE-B9Z3U5dpL4pUyTbcqfETIA",
+    "8841428180:AAFPjIUBID7jeC2hj5aM4PuWo2-NJ29sWjM",
+    "8941585136:AAFcpOoVjVYuU0UrOvO0w8zd1k0ZxDl2Qlo",
+    "8634996391:AAGpg8B4Uh9KIH4bd7jlszmzI03zUqBQnVQ",
+    "8813724246:AAHP0rnBLPfBoQmcftjk4i7nfVMZZVp6UrE",
+    "8741375662:AAHgRJAK3FLPb9y_Gc-Y8yktiTC4Lr2S-18",
+    "8974865654:AAFF4uB0yJLSJSHJTHXigvrPW-rWhB6qFeo",
+    "8911644039:AAFYE8CTP7jmwLQljMlAnSzpe02G19VvZwE",
+    "8962352673:AAFR6qFzABemeFI_5CX8EXifoxGBI5ZyrPw",
+    "8857051106:AAEbY0nWQUsNxQBFJbnCCfv_bZn9vvZjeng",
+    "8938143439:AAE7og1KxgCKE_2s_m3nCl4GDuvh_MvPs8w",
+    "8824445026:AAEwXki7eTKBmHzC8HVjALgnNB4XhzucfE0",
+    "8653676138:AAEnWUCQy3DTuL_u8qPX1kjpfAoGn-vdu30",
+    "8605109730:AAG_nkDk--Du7s03iC8sCGU8WxuT2NjU5pU",
+    "8913650429:AAGgjDUN1GzDbAv8nTN22-A-mISIEgOBzJM",
+    "8851289196:AAGICsicQG11JTb0H7abgWn0ms5HYMTTI4o",
+    "8941332755:AAEnb3eJfJAnr3dwkcuxVOmJGIfZkbSU1HA",
+    "8940700372:AAGYRHGcLdime__fV487QNGn_Wvj_5uviBM",
+    "8968649929:AAGIrxG7rbxK08yIg6kUEobPqLRQrwXi5dY",
+    "8683641338:AAHO3dT8HdV7uTcN5UhCB6KmCiHA0-uco7I",
+    "8655009239:AAGw-Y9ur0X0hu6t17ouYSL7BmHbd51tKk8",
     "8696672028:AAHiAB-U1A2650-HO4vaY-HE6kinLtlFUcQ",
+    
+    # ═══ NAYE TOKENS ═══
+    "8836762962:AAEfykTc8xW-Qtg5Dj2sdyd8Pv32pdkTEG4",
+    "8930953450:AAF4bV7rDvwkyttcwopbt6Cnz1hhDaBwiWs",
+    "8872256184:AAFemPe7BzFsg639ZhGFsNEUG_z1IEPHrgs",
+    "8873825851:AAEYomO1fiAIlZlXZ0yOFVVTeaAliyw-gOs",
+    "8804566350:AAEPorEwqaceNY-COcLN_fxli3pzsl24tPg",
+    "8616580968:AAG3aN3PZAE_8YHSSrVdmBRPtvRGb7-uEDo",
+    "8694904909:AAFinqlEzBggfpt1PPiUXcmtLHdTY2goBI8",
+    "8939598884:AAGOriST39ECwAeyGB0yh-iBuxxdXow-TdY",
+    "8753880235:AAHrreP8AQ6xR6ahnB0OQsi87cjsNmqMzqU",
+    "8933211188:AAHa_QQSU_d96sVZF8UFECChkxeS1d0Xf-Q",
+    "8887882151:AAEXpjYyww2qkL_fqRbldKYdAWbPwp3Lc_Y",
+    "8077072239:AAE7FkFKf0tuNhJQcy5u-CE9oB1l92-pvyA",
+    "8861881121:AAFs3K3vRKV5cf2xFXf5g9Lli6V7fpSiXkQ",
+    "8721434180:AAFVkXTPxCPBVqmLCCv6_tU38wUPhaAAB1M",
+    "8855476829:AAGWnB-V7nwLh8qfLi2UWOjusw_P2g1sGzM",
+    "8530191277:AAGTJ4vx6txnC1LrzvPjSHn0x_5lmJQxP7A",
+    "8825634159:AAFvbmakQ033QgQoeLu7q7OHYSanjM5EgjQ",
+    "8186488203:AAEqDlI4PFuANgdqVnkz5pdpmX6wr_34pVk",
+    "8834429452:AAEZuOJsCxhvpLUWpetWVnRlXn3tKOzLDlA",
+    "8735831279:AAH7Bo8waAf7UM5q8c6idSYT4mgnaniBaeo",
+    "8691168768:AAG27i0Okpyfc-QldqKIzHhkw2zsdP3uVGM",
+    "8808636199:AAFS4GGzGEeclyRijD4GJGSEmAGJhPvL4I8",
+    "8629248468:AAEWztVHReYg7Ir5oZJG4bq1GGGhso-5nbs",
+    "8399865674:AAFyEPmrC4XcMuQaXDteDirdo-esc3x1gxI",
+    "8711973443:AAHs6k30d_WRPROKhvrZ9vhHif8Ag-KgEws",
+    "8895517785:AAHqdkGIZvNzsoREfLDn4W0tsTsRKaRQlvM",
+    "8904181880:AAGNsSp4Bpnkt68ZYrb01TYCMLVk3PTaB9c",
+    "8659189400:AAHmW51YbEo3TFbImVFvbesUtVqVGTnDjEM",
+    "8763339065:AAF1LPBYnMqsKa1JI00YusmQsqp4_3MhRbA",
+    "8204077410:AAExKUju6XtVDJcGUmRqW42yAkQ93BsMhjY",
+    "8846427241:AAFwE79DBGXuL4D2EDvVmZsIceeIIpgaBRM",
+    "8811506527:AAGWuXZIa5jMwjxYd5fs_FYO12Y9ZWtqvJY",
+    "8887094335:AAHq_wg4B63pNVynivs2W7YasZsOeGJ9dYA",
+    "8759529429:AAHgMj0Fb_ErpMByyuv5q7z0ii4b-mt90mM",
+    "8734725201:AAGAJSbWw-2bnmTa2dGmbu7HPBq4w2oNrKk",
+    "8744370627:AAHQW-lvCCqShU_ZPBkF0uSYhErm9IWsoms",
+    "8636321380:AAEfu54-Xyx-bgOE43GfYC9zXXqS0ibRNpo",
+    "8842402547:AAHIuEQyNBf-MYfElZjEy9lB3U6Yxv8TOAY",
+    "8968416580:AAF9UIacJE6jtM2zJ0CoUPcO2h5rZ0Hgwxk",
+    "8983579841:AAEBNIqju4Mc9GYDM1ROmPdkoYNSYQerZY4",
+    "8924470155:AAHStrtWxmnkb_jwHr9o_lDxkocGwaDxF9o",
+    "8646190794:AAFxOuZoK1v-K6f9zpDzKiwX8ddYHKL3Fko",
+    "8609362391:AAEIX8VEvRerRdYTM8VktjFMKB2e-AYQ1gE",
+    "8947005664:AAHqaUFrFOmqmQORagE7TFap_fo3k1t_uRY",
+    "8920181738:AAFWT6xF4wiPD2dal3vKLaWi4ByaXv-ql7M",
+    "8840708072:AAGTVFU3-Xe5GwJIQcK1wjM5u5F_bpLjKvc",
+    "8610161657:AAGM5BOGI9wdSRT6FSHB8WxX_cwrinGvsME",
+    "8740955689:AAHb1uP5gbV0JIZma6Az0nKDKptTDCgelDo",
+    "8748070601:AAExk7kUdceMo-pHKY9IjcDOxgG8C_H1gwA",
+    "8861985796:AAFYWV5aohaFLWYuNYNUAgM1gJRM8-YcxQ4",
+    "8629755223:AAHFqbp0zK4G69a8RJoGj9VtLqUpvdumeBU",
+    "8799402761:AAGIJ5gHzKz3KKlqZTY8Zh_i9w0Lo23JKLE",
+    "8713327772:AAGRiAqQgU5wUjsGbgVupI3b5M9R_io7dVw",
+    "8989331034:AAHuD7Eznd9igKtu4lulVnha6jRA2CD7vE8",
+    "8737257901:AAHcAkSy3OAuiGModYWUCSeGHU9qD5EAtsY",
+    "8912082625:AAF4ky4WPlZcd0WKLDSzDvHPCorldWje33Y",
+    "8605178514:AAFBKxv3w4tUsItdh8rlkB0zzQPOQicTv4g",
+    "8929272267:AAHY-y1GYqWFuW-_TMgIWqpYWtn9jYgb38Q",
+    "8952822895:AAH_D4snLgtdPWp9mdnkgdCmooT4ntkcwqA",
+    "8614726892:AAE5oqaTuJXHh8SDaKz8CHQY4-2vSFoaEHI",
+    "8861639970:AAEhu3fqxaTFy9GHXy6GSBXNKfaKZ2Yw2g4",
+    "8815053623:AAEIcfw4h4Tbmvsn7u620xtdeQY0FsxFXVg",
+    "8661258005:AAGpa4BxZdyuDaaPExjitcAzRUumsAQ7Oi4",
+    "8662715303:AAEui_9v4xmdBCaLyKmJHufRlN0sYwsjwR8",
+    "8543087654:AAGz_rQLHToB_cU2Wy1b7rLO1-mGH21qhhY",
+    "8905733010:AAFC5W2ldfSrpEo0cgt6AmA8Mw6C_JO9KEk",
+    "8542237475:AAFj8HxMhBVoMYL5rtIGtsdVmI2q2Uu8wyo",
+    "8838675159:AAE_54l94SSJpgTS0BnvQDd-gS2sOsrFXGY",
+    "8590777451:AAHITDVRlEQ0d1NP61Yw9xnznccWRisOdgc",
+    "8867904690:AAHHDJcrVAcjYJdMVPuw8dX1oNYwLJPdLu4",
+    "8838965715:AAG7Gz3KSoeKh56SRgO8OEt4Vvu5_8gJAoM",
+    "8923909842:AAGKDbORwvFO0TWSaT-OynWWSrDLm1wNSIg",
+    "8692228378:AAHS9XL-H1eGqlOtE66Hz9JIXV_aPXIodsU",
+    "8804516017:AAHzSTmV53-7cQZdtKJhyNTK94-WdDfw0cU",
+    "8719289135:AAEYFp_XYoqzlM201qVhmjhqXtNC6g348-w",
+    "8926598293:AAHhG4uZcYymWzt_oeA1WHhwzLPsw4bvCCw",
+    "8831931709:AAFPpQvO2xVcsNzCzkSQAXbvh4d7v37NgVE",
+    "8810734398:AAFMWRfgY5Sv8dRalbEW0N9NkZfr3uWfzQE",
+    "8884046718:AAEhmJzpOJXK_yHQONs37Izd74pnjc9E6_M",
+    "8711404123:AAE_R6O1mQErDilOZnx0BplnMFMrgeFgTIo",
+    "8759954245:AAEk7G1KIgGMyGo-D9ORBj_NHDw4x4INs-A",
+    "8911817060:AAEorqqmHFJUPVHn4hW_3IlHYu3CxXsdSSI",
+    "8787801515:AAH20DPUXvRoqcAhaX65vfUSNhnqUPV-9u8",
+    "8267821853:AAGD0Yo7XW-nb2WsRdvfQade_HIQBi53StI",
+    "8957963473:AAE0oAI40eFp_TvN6kzkV5pdK5y9qU9hRAE",
+    "8907296618:AAFJtdNhp9cniBZpc7qdkeZDgNvLbiBvTG8",
+    "8962194440:AAEj-NZ7DfJN_PPNAna_QeREJHROmEcI0nc",
+    "8232718043:AAEv30sleBvpK-JXENfdA-5f1FhHC3Ijn1Y",
+    "8833324855:AAF0kH9wYfX2-t0CONGn0kUOXh55t5TsPuE",
+    "8641192792:AAEAUuAei4DOSuR6T8COTL511oiIMZtlYd0",
+    "8945018413:AAESHzBg4UF_1i0DxMhux7no28aiQt6Ct74",
+    "8888773608:AAGKUVaILpMiJT2GXhHkGXHcIGv5XQxHNUs",
+    "8793899520:AAEXtPOveGYXWHm36o9M4XIhuDixO9RizvQ",
+    "8870796074:AAHtu7jMDqux_4Abost4rfQbdBOegFGmWBU",
+    "8341464481:AAErZ2SMQsRKFXlZ-BKNI_Ew3xr_9XkCrjw",
+    "8357485885:AAHS_zBEp6318-E3p_h-6HNFQTd430yvSvs",
+    "8917102545:AAHugV7a3IrI66sEqHTJIfU9SWs1U8XV_KY",
+    "8604688837:AAHWNcf_Xjh8KpqAy9t0BkRX9tZMOB0uCdg",
+    "8933271589:AAGBzf0ZzbooelPSsnnlU0D-h55aYNPbPnw",
+    "8926464596:AAGeeKqK8ZDcy1lszofa4Y6Ht-qdW6Ay5yc",
+    "8823851915:AAFc6cOnkeK-JYWVE4m6S5D-SAboffz76sM",
+    "8943709444:AAE1tRJDj9bhEI6pIie3S8CcynvHdMkQAwY",
+    "8918710712:AAGgWI4ivpjcZl3VUYgBIjTx3Jp0HIIuE50",
+    "8589602805:AAFmPngJim8_esyKcCjjnjvsGTNol1hnVMc",
+    "8976792733:AAGZ9s3VH1bTcnL8d6em2qsIdVXva01v0Vg",
+    "8963392391:AAEu9EDeDW5Vl2OsQ4h1infcq-Jei5_Q6uI",
+    "8842093299:AAGJp5P9CS0zXgyIRZTpY4C5uvG37NFAp4g",
+    "8921757993:AAFDxmWZuNJ4_ZjFAQU3d7ye9zK2t4oWE10",
+    "8306659351:AAFuqqKp4X72u486ItBS_HlBA8b4XCxjeuo",
+    "8609649936:AAFcrdfMBr-sPmMCrUwyFWyU2J-EjbZBpeE",
+    "8858513698:AAF4bsiRMEBOTUqfqMv2dHjVIW5sFKdy9w0",
+    "8946299677:AAHMXk6WhVGQU7pj-XphIRwHpLdGmn9A4x0",
+    "8985111289:AAG_RVtet6v_IWJ5A1eaE1l7UBO1OWoT3eY",
+    "8764444463:AAGOWGjckzdoq2RDKyNifOFbU072HFtJVOk",
+    "8897706807:AAEeJkWxFmZJtnm1PU22rHxcniOh6c72GM4",
+    "8634253247:AAFRLlUXI0aHxxDuDWWGxcBxEB0aw_6AiTo",
+    "8807284103:AAHvWfvjmmZk00S0PXREJbKDZN3y6cPKSM0",
+    "8796889247:AAELgigk6c49GdPZz0iwXFyXuB78qGWaCug",
+    "8940009825:AAFJFJZ6kUweO_srv5u5rhldO6TJybDtozQ",
 ]
 
+# ✅ AUTO DEDUPE — Python set() order preserve karta hai (dict se)
+def dedupe_tokens(token_list):
+    seen = set()
+    result = []
+    for tok in token_list:
+        tok = tok.strip()
+        if not tok or tok in seen:
+            continue
+        seen.add(tok)
+        result.append(tok)
+    return result
+
+BOT_TOKENS = dedupe_tokens(_RAW_BOT_TOKENS)
+_DUPLICATES_SKIPPED = len(_RAW_BOT_TOKENS) - len(BOT_TOKENS)
+
+print(f"[STARTUP] ✅ Bot tokens: {len(_RAW_BOT_TOKENS)} raw → "
+      f"{len(BOT_TOKENS)} unique ({_DUPLICATES_SKIPPED} duplicates skipped)")
+
+# ══════════════════════ SERVER SPLIT (50/50) ══════════════════════
+def split_bots_servers(all_tokens):
+    """
+    Split bot tokens: half free server, half paid server.
+    Returns (free_list, paid_list)
+    """
+    total = len(all_tokens)
+    half = total // 2
+    free_list = all_tokens[:half]
+    paid_list = all_tokens[half:]
+    return free_list, paid_list
+
+FREE_SERVER_TOKENS, PAID_SERVER_TOKENS = split_bots_servers(BOT_TOKENS)
+
+print(f"[STARTUP] 🆓 Free server bots: {len(FREE_SERVER_TOKENS)}")
+print(f"[STARTUP] 💎 Paid server bots: {len(PAID_SERVER_TOKENS)}")
+print(f"[STARTUP] 📊 Total: {len(BOT_TOKENS)}")
+
+# ══════════════════════ OTHER CONFIG ══════════════════════
 OWNER_USERNAME_DEFAULT = "Anonymous_User_37"
 OWNER_ID_DEFAULT = 8762845215
 FORCE_CHANNELS_DEFAULT = []
@@ -161,7 +384,6 @@ DB_FILE = (
 
 # ══════════════════════ REACTIONS ══════════════════════
 DEFAULT_REACTIONS = ["❤️", "👍", "🔥"]
-# ✅ FALLBACK CHAIN — agar primary fail ho to yeh try karo
 FALLBACK_REACTIONS = ["❤️", "👍", "🔥", "🥰", "🎉", "💯", "😍", "👏"]
 
 ALL_REACTIONS = [
@@ -171,6 +393,7 @@ ALL_REACTIONS = [
     "😪","😫","🥱","😴","😌","😛","😜","🤪"
 ]
 
+# ══════════════════════ LIMITS ══════════════════════
 DEFAULT_FREE_COUNT = 5
 MAX_REACTIONS = 200
 BROADCAST_DELAY = 1.5
@@ -184,25 +407,33 @@ BOT_BUSY_TIMEOUT = 2
 POOL_CLEANUP_INTERVAL = 30
 USER_COOLDOWN = 15
 
-# ✅ SMART BATCH CONFIG — Telegram limit 50 admins per chat
-TELEGRAM_ADMIN_LIMIT = 50      # Max admins Telegram allows
-BATCH_SIZE = 45                # Safe batch (leave room for existing admins)
-MAX_CYCLES = 50                # Max loops
-MAX_FAILED_BATCHES = 5         # Before giving up
-FALLBACK_ENABLED = True        # Fallback reactions on
-FAILED_BOT_RETRY = True        # Failed bots ko retry karo
+# ── Smart batch config ──
+TELEGRAM_ADMIN_LIMIT = 50
+BATCH_SIZE = 45
+MAX_CYCLES = 50
+MAX_FAILED_BATCHES = 5
+FALLBACK_ENABLED = True
+FAILED_BOT_RETRY = True
 
+# ══════════════════════ PLANS ══════════════════════
 PLAN_LIMITS = {"free":5, "basic":20, "pro":50, "premium":200}
 PLAN_NAMES = {
     "free":"🆓 Free","basic":"🥉 Basic","pro":"🥈 Pro","premium":"🥇 Premium"
 }
 DURATIONS = {1:"1 Day", 7:"7 Days", 15:"15 Days", 30:"30 Days"}
-PAID_PLANS = {"basic","pro","premium"}
+PAID_PLANS = {"basic", "pro", "premium"}
 DEFAULT_PRICES = {
     "basic":   {1:70,  7:250,  15:500,  30:900},
     "pro":     {1:120, 7:400,  15:800,  30:1400},
     "premium": {1:200, 7:700,  15:1400, 30:2500}
 }
+
+# ── Server assignment ──
+# Free plan users → free server
+# Basic + Pro + Premium + Owner → paid server
+SERVER_FREE_PLANS = {"free"}
+SERVER_PAID_PLANS = {"basic", "pro", "premium"}
+
 LANGUAGES = {
     "en":"🇬🇧 English", "ur":"🇵🇰 اردو", "hi":"🇮🇳 हिन्दी",
     "ar":"🇸🇦 العربية", "ru":"🇷🇺 Русский", "es":"🇪🇸 Español",
@@ -218,6 +449,7 @@ EMOJI_PACKS = {
     "party": ["🎉","🥳","🎊","🎈","🎁"]
 }
 
+# ══════════════════════ GLOBAL STATE ══════════════════════
 BOT_POOL = {}
 BOT_POOL_LOCK = asyncio.Lock()
 FLOOD_UNTIL = {}
@@ -238,9 +470,13 @@ backup_client = None
 _start_time = time.time()
 bot = TelegramClient("ghost_reaction_bot", API_ID, API_HASH)
 USER_STATES = {}
-
-# ✅ Per-task failed bots tracker (in-memory, task ke baad clear)
 FAILED_BOTS_TRACKER = {}
+
+# ── Server pools (separate!) ──
+FREE_POOL = {}
+PAID_POOL = {}
+FREE_FLOOD_UNTIL = {}
+PAID_FLOOD_UNTIL = {}
 
 
 def _dirty():
@@ -253,10 +489,13 @@ def _dirty():
 
 def global_exception_handler(loop, context):
     exc = context.get("exception")
-    if not exc: return
+    if not exc:
+        return
     err_name = type(exc).__name__
-    if err_name in ("QueryIdInvalidError",): return
-    if "query ID is invalid" in str(exc): return
+    if err_name in ("QueryIdInvalidError",):
+        return
+    if "query ID is invalid" in str(exc):
+        return
     print(f"\n{'─'*60}\n⚠️ GLOBAL: {exc}", flush=True)
     traceback.print_exception(type(exc), exc, exc.__traceback__)
     print(f"{'─'*60}\n", flush=True)
@@ -268,7 +507,8 @@ SPARKLE = "✨"
 
 
 def progress_bar(cur, total, width=12):
-    if total <= 0: return "░" * width
+    if total <= 0:
+        return "░" * width
     f = min(int((cur / total) * width), width)
     return "█" * f + "░" * (width - f)
 
@@ -281,12 +521,13 @@ def D(msg, level="info"):
         "plan":"💰","lang":"🌍","backup":"🛡️","paid":"💎","pool":"🎯",
         "health":"❤️","queue":"⏰","pay":"💳","team":"👥","bulk":"📦",
         "gh":"🔄","real":"👤","anim":"🎬","store":"🏪","smart":"🧠",
-        "fallback":"🩹","batch":"📦"
+        "fallback":"🩹","batch":"📦","free":"🆓","server":"🖥️"
     }
     print(f"[{ts}] {ic.get(level,'•')} {msg}", flush=True)
 
 
-def D_sep(t): print(f"\n{'='*60}\n  {t}\n{'='*60}", flush=True)
+def D_sep(t):
+    print(f"\n{'='*60}\n  {t}\n{'='*60}", flush=True)
 
 
 def D_err(e, ctx=""):
@@ -295,24 +536,44 @@ def D_err(e, ctx=""):
     print(f"{'─'*60}\n", flush=True)
 
 
-def get_owner_username(): return cfg_get("owner_username", OWNER_USERNAME_DEFAULT)
+def get_owner_username():
+    return cfg_get("owner_username", OWNER_USERNAME_DEFAULT)
+
+
 def get_owner_id():
-    try: return int(cfg_get("owner_id", str(OWNER_ID_DEFAULT)))
-    except Exception: return OWNER_ID_DEFAULT
-def OWNER_IS(uid): return uid == get_owner_id()
-def get_today_str(): return datetime.now().strftime("%Y-%m-%d")
+    try:
+        return int(cfg_get("owner_id", str(OWNER_ID_DEFAULT)))
+    except Exception:
+        return OWNER_ID_DEFAULT
+
+
+def OWNER_IS(uid):
+    return uid == get_owner_id()
+
+
+def get_today_str():
+    return datetime.now().strftime("%Y-%m-%d")
+
+
 def get_week_start_str():
     now = datetime.now()
     monday = now - timedelta(days=now.weekday())
     return monday.strftime("%Y-%m-%d")
 
 
+# ══════════════════════ END OF PART 1 ══════════════════════
+D("✅ Part 1 loaded — Config + Bots + Server Split (50/50)", "ok")
 # ══════════════════════ DATABASE — PART 1 ══════════════════════
 def db_init():
+    """Initialize database with ALL tables (Part 1 + 2 + 3 combined)"""
     if "/" in DB_FILE:
         os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
+
+    # ═══════════════════════════════════════════════════════
+    # ═════ PART 1 TABLES ═════
+    # ═══════════════════════════════════════════════════════
 
     # ── Users ──
     c.execute("""CREATE TABLE IF NOT EXISTS users (
@@ -331,7 +592,8 @@ def db_init():
         referral_count INTEGER DEFAULT 0, referral_earned INTEGER DEFAULT 0,
         team_role TEXT DEFAULT 'user', team_commission INTEGER DEFAULT 0,
         total_spent INTEGER DEFAULT 0,
-        ra_limit_override INTEGER DEFAULT -1)""")
+        ra_limit_override INTEGER DEFAULT -1,
+        server_override TEXT DEFAULT NULL)""")
 
     # ── Reactions log ──
     c.execute("""CREATE TABLE IF NOT EXISTS reactions (
@@ -339,6 +601,7 @@ def db_init():
         chat_title TEXT, chat_id INTEGER, post_link TEXT, post_id INTEGER,
         emoji TEXT, bot_username TEXT, status TEXT,
         method TEXT DEFAULT 'bot',
+        server TEXT DEFAULT 'free',
         created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
 
     # ── Approvals ──
@@ -352,7 +615,185 @@ def db_init():
     c.execute("""CREATE TABLE IF NOT EXISTS config (
         key TEXT PRIMARY KEY, value TEXT)""")
 
-    # ✅ SQLite optimizations
+    # ── Bots (main pool) ──
+    c.execute("""CREATE TABLE IF NOT EXISTS bots (
+        token TEXT PRIMARY KEY, username TEXT, bot_id INTEGER,
+        server TEXT DEFAULT 'free',
+        added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Bot Servers (management table) ──
+    c.execute("""CREATE TABLE IF NOT EXISTS bot_servers (
+        token TEXT PRIMARY KEY, username TEXT,
+        server TEXT DEFAULT 'free',
+        priority INTEGER DEFAULT 100,
+        is_active INTEGER DEFAULT 1,
+        moved_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ═══════════════════════════════════════════════════════
+    # ═════ PART 2 TABLES ═════
+    # ═══════════════════════════════════════════════════════
+
+    # ── Watchers ──
+    c.execute("""CREATE TABLE IF NOT EXISTS watchers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        chat_id INTEGER, chat_title TEXT, chat_link TEXT,
+        chat_type TEXT, reaction_count INTEGER DEFAULT 5,
+        emoji_mode TEXT DEFAULT 'default', custom_emojis TEXT,
+        last_post_id INTEGER DEFAULT 0, is_active INTEGER DEFAULT 1,
+        server TEXT DEFAULT 'free',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP, last_run TEXT)""")
+
+    # ── Templates ──
+    c.execute("""CREATE TABLE IF NOT EXISTS templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        name TEXT, emojis TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Referrals ──
+    c.execute("""CREATE TABLE IF NOT EXISTS referrals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        referrer_id INTEGER, new_user_id INTEGER,
+        status TEXT DEFAULT 'pending', reward_given INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        validated_at TEXT)""")
+
+    # ── Notifications ──
+    c.execute("""CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        message TEXT, is_read INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ═══════════════════════════════════════════════════════
+    # ═════ PART 3 TABLES ═════
+    # ═══════════════════════════════════════════════════════
+
+    # ── Queue ──
+    c.execute("""CREATE TABLE IF NOT EXISTS queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        chat_link TEXT, post_link TEXT, reaction_count INTEGER,
+        emoji_mode TEXT DEFAULT 'default', custom_emojis TEXT,
+        scheduled_time TEXT, status TEXT DEFAULT 'pending',
+        server TEXT DEFAULT 'free',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        executed_at TEXT, error TEXT)""")
+
+    # ── Bulk jobs ──
+    c.execute("""CREATE TABLE IF NOT EXISTS bulk_jobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        job_type TEXT, total INTEGER DEFAULT 0,
+        completed INTEGER DEFAULT 0, failed INTEGER DEFAULT 0,
+        status TEXT DEFAULT 'pending',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP, data TEXT)""")
+
+    # ── Payments ──
+    c.execute("""CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        amount INTEGER, plan TEXT, days INTEGER, method TEXT,
+        screenshot TEXT, status TEXT DEFAULT 'pending',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        verified_at TEXT, verified_by INTEGER, notes TEXT)""")
+
+    # ── Force channels ──
+    c.execute("""CREATE TABLE IF NOT EXISTS force_channels (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, channel TEXT UNIQUE,
+        url TEXT, name TEXT, active INTEGER DEFAULT 1,
+        added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Team members ──
+    c.execute("""CREATE TABLE IF NOT EXISTS team_members (
+        user_id INTEGER PRIMARY KEY, role TEXT DEFAULT 'user',
+        permissions TEXT, commission_percent INTEGER DEFAULT 0,
+        total_sales INTEGER DEFAULT 0,
+        total_commission INTEGER DEFAULT 0,
+        added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Custom packs ──
+    c.execute("""CREATE TABLE IF NOT EXISTS custom_packs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT,
+        emojis TEXT, price INTEGER DEFAULT 0,
+        is_paid INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── User stats ──
+    c.execute("""CREATE TABLE IF NOT EXISTS user_stats (
+        user_id INTEGER PRIMARY KEY, total_sent INTEGER DEFAULT 0,
+        today_sent INTEGER DEFAULT 0, today_date TEXT,
+        week_sent INTEGER DEFAULT 0, week_start TEXT,
+        success_count INTEGER DEFAULT 0, fail_count INTEGER DEFAULT 0,
+        streak_days INTEGER DEFAULT 0, last_bonus_date TEXT,
+        trust_score INTEGER DEFAULT 100,
+        last_active TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Daily bonus ──
+    c.execute("""CREATE TABLE IF NOT EXISTS daily_bonus (
+        user_id INTEGER, bonus_date TEXT, amount INTEGER DEFAULT 0,
+        streak_day INTEGER DEFAULT 1,
+        PRIMARY KEY(user_id, bonus_date))""")
+
+    # ── Coupons ──
+    c.execute("""CREATE TABLE IF NOT EXISTS coupons (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE,
+        discount_percent INTEGER DEFAULT 0,
+        discount_flat INTEGER DEFAULT 0,
+        max_uses INTEGER DEFAULT 0, used_count INTEGER DEFAULT 0,
+        expires_at TEXT, active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Coupon uses ──
+    c.execute("""CREATE TABLE IF NOT EXISTS coupon_uses (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, coupon_id INTEGER,
+        user_id INTEGER,
+        used_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Retry queue ──
+    c.execute("""CREATE TABLE IF NOT EXISTS retry_queue (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        chat_link TEXT, post_link TEXT, count INTEGER,
+        emoji_mode TEXT DEFAULT 'default', custom_emojis TEXT,
+        attempts INTEGER DEFAULT 0, max_attempts INTEGER DEFAULT 3,
+        next_retry TEXT, last_error TEXT,
+        status TEXT DEFAULT 'pending',
+        server TEXT DEFAULT 'free',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Emoji store (🔴 YEH PEHLE MISSING THA) ──
+    c.execute("""CREATE TABLE IF NOT EXISTS emoji_store (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT,
+        emojis TEXT, price INTEGER DEFAULT 0,
+        description TEXT, is_active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── User store buys ──
+    c.execute("""CREATE TABLE IF NOT EXISTS user_store_buys (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        pack_id INTEGER, paid_amount INTEGER,
+        bought_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Post analytics ──
+    c.execute("""CREATE TABLE IF NOT EXISTS post_analytics (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+        chat_id INTEGER, post_id INTEGER, chat_title TEXT,
+        sent_count INTEGER DEFAULT 0,
+        requested_count INTEGER DEFAULT 0,
+        server TEXT DEFAULT 'free',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Teams ──
+    c.execute("""CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER,
+        name TEXT, commission_percent INTEGER DEFAULT 10,
+        active INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ── Team clients ──
+    c.execute("""CREATE TABLE IF NOT EXISTS team_clients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, team_id INTEGER,
+        reseller_id INTEGER, client_id INTEGER,
+        plan TEXT, expires_at TEXT,
+        commission_paid INTEGER DEFAULT 0,
+        added_at TEXT DEFAULT CURRENT_TIMESTAMP)""")
+
+    # ══════════════════════ SQLITE OPTIMIZATIONS ══════════════════════
     try:
         c.execute("PRAGMA journal_mode=WAL")
         c.execute("PRAGMA synchronous=NORMAL")
@@ -362,17 +803,30 @@ def db_init():
         pass
 
     # ── Indices ──
-    for sql in [
+    indices = [
         "CREATE INDEX IF NOT EXISTS idx_reactions_user ON reactions(user_id)",
         "CREATE INDEX IF NOT EXISTS idx_reactions_date ON reactions(created_at)",
         "CREATE INDEX IF NOT EXISTS idx_reactions_status ON reactions(status)",
+        "CREATE INDEX IF NOT EXISTS idx_reactions_server ON reactions(server)",
         "CREATE INDEX IF NOT EXISTS idx_users_plan ON users(plan)",
         "CREATE INDEX IF NOT EXISTS idx_approvals_status ON approvals(status)",
-    ]:
-        try: c.execute(sql)
-        except Exception: pass
+        "CREATE INDEX IF NOT EXISTS idx_queue_status ON queue(status, scheduled_time)",
+        "CREATE INDEX IF NOT EXISTS idx_watchers_active ON watchers(is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, is_read)",
+        "CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)",
+        "CREATE INDEX IF NOT EXISTS idx_retry_status ON retry_queue(status, next_retry)",
+        "CREATE INDEX IF NOT EXISTS idx_store_active ON emoji_store(is_active)",
+        "CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)",
+        "CREATE INDEX IF NOT EXISTS idx_stats_today ON user_stats(today_date)",
+        "CREATE INDEX IF NOT EXISTS idx_bots_server ON bots(server)",
+    ]
+    for sql in indices:
+        try:
+            c.execute(sql)
+        except Exception:
+            pass
 
-    # ── Config defaults ──
+    # ══════════════════════ CONFIG DEFAULTS ══════════════════════
     cfg_defaults = [
         ("owner_username", OWNER_USERNAME_DEFAULT),
         ("owner_id", str(OWNER_ID_DEFAULT)),
@@ -405,18 +859,18 @@ def db_init():
         ("smart_notif_enabled", "1"), ("coupon_enabled", "1"),
         ("emoji_store_enabled", "1"), ("post_analytics_enabled", "1"),
         ("team_reseller_enabled", "1"), ("upsell_enabled", "1"),
-        # ✅ Smart reaction
-        ("smart_reaction_enabled", "1"),
-        ("fallback_enabled", "1"),
+        ("smart_reaction_enabled", "1"), ("fallback_enabled", "1"),
+        ("dual_server_enabled", "1"),
     ]
     for plan, prices in DEFAULT_PRICES.items():
         for days, price in prices.items():
             cfg_defaults.append((f"price_{plan}_{days}", str(price)))
 
     for k, v in cfg_defaults:
-        c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)", (k, v))
+        c.execute("INSERT OR IGNORE INTO config(key, value) VALUES(?, ?)",
+                  (k, v))
 
-    # ── Migration columns ──
+    # ══════════════════════ MIGRATION COLUMNS ══════════════════════
     for col, dflt in [
         ("is_banned","INTEGER DEFAULT 0"),
         ("total_reactions","INTEGER DEFAULT 0"),
@@ -438,43 +892,101 @@ def db_init():
         ("team_commission","INTEGER DEFAULT 0"),
         ("total_spent","INTEGER DEFAULT 0"),
         ("ra_limit_override","INTEGER DEFAULT -1"),
+        ("server_override","TEXT DEFAULT NULL"),
     ]:
-        try: c.execute(f"ALTER TABLE users ADD COLUMN {col} {dflt}")
-        except sqlite3.OperationalError: pass
+        try:
+            c.execute(f"ALTER TABLE users ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Reactions migration
+    for col, dflt in [("server","TEXT DEFAULT 'free'"),
+                      ("method","TEXT DEFAULT 'bot'")]:
+        try:
+            c.execute(f"ALTER TABLE reactions ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Bots migration
+    try:
+        c.execute("ALTER TABLE bots ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Queue migration
+    for col, dflt in [("server","TEXT DEFAULT 'free'")]:
+        try:
+            c.execute(f"ALTER TABLE queue ADD COLUMN {col} {dflt}")
+        except sqlite3.OperationalError:
+            pass
+
+    # Watchers migration
+    try:
+        c.execute("ALTER TABLE watchers ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Retry migration
+    try:
+        c.execute("ALTER TABLE retry_queue ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
+
+    # Post analytics migration
+    try:
+        c.execute("ALTER TABLE post_analytics ADD COLUMN server TEXT DEFAULT 'free'")
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
     _dirty()
-    D(f"DB Part 1 initialized: {DB_FILE}", "ok")
+    D(f"DB initialized: {DB_FILE}", "ok")
 
 
 # ══════════════════════ CONFIG HELPERS ══════════════════════
 def cfg_get(k, d=None):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("SELECT value FROM config WHERE key=?", (k,)).fetchone()
-        return r[0] if r else d
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("SELECT value FROM config WHERE key=?",
+                             (k,)).fetchone()
+            return r[0] if r else d
+        finally:
+            conn.close()
+    except Exception:
+        return d
 
 
 def cfg_set(k, v):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        conn.execute("INSERT OR REPLACE INTO config(key, value) VALUES(?, ?)",
-                     (k, str(v)))
-        conn.commit()
-    finally: conn.close()
-    _dirty()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            conn.execute("INSERT OR REPLACE INTO config(key, value) VALUES(?, ?)",
+                         (k, str(v)))
+            conn.commit()
+        finally:
+            conn.close()
+        _dirty()
+    except Exception as e:
+        D(f"cfg_set error: {str(e)[:60]}", "warn")
 
 
-def cfg_bool(k, d=True): return cfg_get(k, "1" if d else "0") == "1"
+def cfg_bool(k, d=True):
+    return cfg_get(k, "1" if d else "0") == "1"
+
+
 def cfg_toggle(k):
     n = not cfg_bool(k)
     cfg_set(k, "1" if n else "0")
     return n
+
+
 def get_plan_price(plan, days):
-    try: return int(cfg_get(f"price_{plan}_{days}", "0"))
-    except Exception: return 0
+    try:
+        return int(cfg_get(f"price_{plan}_{days}", "0"))
+    except Exception:
+        return 0
 
 
 # ══════════════════════ FEATURE FLAGS ══════════════════════
@@ -505,22 +1017,35 @@ def feat_team_reseller():  return cfg_bool("team_reseller_enabled")
 def feat_upsell():         return cfg_bool("upsell_enabled")
 def feat_smart_reaction(): return cfg_bool("smart_reaction_enabled")
 def feat_fallback():       return cfg_bool("fallback_enabled")
+def feat_dual_server():    return cfg_bool("dual_server_enabled")
 
 
-def is_paid_feature(f): return cfg_bool(f"paid_{f}", False)
-def plan_has_realaccounts(plan): return cfg_bool(f"plan_realaccounts_{plan}", False)
+def is_paid_feature(f):
+    return cfg_bool(f"paid_{f}", False)
+
+
+def plan_has_realaccounts(plan):
+    return cfg_bool(f"plan_realaccounts_{plan}", False)
+
+
 def plan_ra_limit(plan):
-    try: return int(cfg_get(f"plan_ra_limit_{plan}", "0"))
-    except Exception: return 0
+    try:
+        return int(cfg_get(f"plan_ra_limit_{plan}", "0"))
+    except Exception:
+        return 0
 
 
-# ══════════════════════ USER LIMITS ══════════════════════
+# ══════════════════════ USER LIMITS & SERVER ══════════════════════
 def get_user_ra_limit(uid):
-    if OWNER_IS(uid): return 999, "owner"
+    if OWNER_IS(uid):
+        return 999, "owner"
     u = db_get_user_full(uid)
-    if not u: return 0, "none"
-    try: override = u[26] if len(u) > 26 else -1
-    except Exception: override = -1
+    if not u:
+        return 0, "none"
+    try:
+        override = u[26] if len(u) > 26 else -1
+    except Exception:
+        override = -1
     if override is not None and int(override) >= 0:
         return int(override), "custom"
     plan = u[15] or "free"
@@ -530,13 +1055,16 @@ def get_user_ra_limit(uid):
             try:
                 if datetime.strptime(exp, "%Y-%m-%d %H:%M:%S") < datetime.now():
                     plan = "free"
-            except Exception: pass
+            except Exception:
+                pass
     return plan_ra_limit(plan), "plan"
 
 
 def user_has_realaccounts(uid):
-    if OWNER_IS(uid): return True
-    if not feat_realaccounts(): return False
+    if OWNER_IS(uid):
+        return True
+    if not feat_realaccounts():
+        return False
     limit, _ = get_user_ra_limit(uid)
     return limit > 0
 
@@ -547,64 +1075,143 @@ def set_user_ra_limit(uid, limit):
         conn.execute("UPDATE users SET ra_limit_override=? WHERE user_id=?",
                      (int(limit), uid))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
 
 
 def user_has_paid_access(uid):
-    if OWNER_IS(uid): return True
+    if OWNER_IS(uid):
+        return True
     u = db_get_user_full(uid)
-    if not u or len(u) < 16: return False
+    if not u or len(u) < 16:
+        return False
     plan = u[15] or "free"
-    if plan not in PAID_PLANS: return False
+    if plan not in PAID_PLANS:
+        return False
     exp = u[16] if len(u) > 16 else None
     if exp:
         try:
             if datetime.strptime(exp, "%Y-%m-%d %H:%M:%S") < datetime.now():
                 return False
-        except Exception: pass
+        except Exception:
+            pass
     return True
 
 
 def can_use_feature(uid, f):
-    if OWNER_IS(uid): return True
-    if not is_paid_feature(f): return True
+    if OWNER_IS(uid):
+        return True
+    if not is_paid_feature(f):
+        return True
     return user_has_paid_access(uid)
 
 
 def get_free_count():
-    try: return int(cfg_get("free_count", DEFAULT_FREE_COUNT))
-    except Exception: return DEFAULT_FREE_COUNT
+    try:
+        return int(cfg_get("free_count", DEFAULT_FREE_COUNT))
+    except Exception:
+        return DEFAULT_FREE_COUNT
 
 
-def is_auto_approve(): return cfg_get("auto_approve", "1") == "1"
-def set_auto_approve(v): cfg_set("auto_approve", "1" if v else "0")
-def gen_referral_code(uid): return f"REF{uid}{random.randint(1000, 9999)}"
+def is_auto_approve():
+    return cfg_get("auto_approve", "1") == "1"
+
+
+def set_auto_approve(v):
+    cfg_set("auto_approve", "1" if v else "0")
+
+
+def gen_referral_code(uid):
+    return f"REF{uid}{random.randint(1000, 9999)}"
 
 
 def get_user_limit(uid):
-    if OWNER_IS(uid): return MAX_REACTIONS
+    if OWNER_IS(uid):
+        return MAX_REACTIONS
     conn = sqlite3.connect(DB_FILE)
     try:
         r = conn.execute("""SELECT custom_limit, plan, plan_expires
             FROM users WHERE user_id=?""", (uid,)).fetchone()
-    finally: conn.close()
-    if not r: return get_free_count()
+    finally:
+        conn.close()
+    if not r:
+        return get_free_count()
     cl, plan, pe = r
-    if cl and cl > 0: return cl
+    if cl and cl > 0:
+        return cl
     if plan and plan in PLAN_LIMITS:
         if pe:
             try:
                 if datetime.strptime(pe, "%Y-%m-%d %H:%M:%S") < datetime.now():
                     return get_free_count()
-            except Exception: pass
+            except Exception:
+                pass
         return PLAN_LIMITS[plan]
     return get_free_count()
 
 
+# ══════════════════════ SERVER ASSIGNMENT ══════════════════════
+def get_user_server(uid):
+    """
+    Determine which server a user should use.
+    Returns: 'free' or 'paid'
+    """
+    if OWNER_IS(uid):
+        return "paid"
+    u = db_get_user_full(uid)
+    if not u:
+        return "free"
+    # Check manual override first
+    try:
+        override = u[27] if len(u) > 27 else None
+    except Exception:
+        override = None
+    if override in ("free", "paid"):
+        return override
+    # Determine from plan
+    plan = u[15] or "free"
+    if plan in PAID_PLANS:
+        exp = u[16] if len(u) > 16 else None
+        if exp:
+            try:
+                if datetime.strptime(exp, "%Y-%m-%d %H:%M:%S") < datetime.now():
+                    return "free"
+            except Exception:
+                pass
+        return "paid"
+    return "free"
+
+
+def set_user_server_override(uid, server):
+    """Set manual server override. server='free'/'paid'/None"""
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        conn.execute("UPDATE users SET server_override=? WHERE user_id=?",
+                     (server, uid))
+        conn.commit()
+    finally:
+        conn.close()
+    _dirty()
+
+
+def get_server_tokens(server):
+    """Get list of tokens for a server"""
+    if server == "paid":
+        return PAID_SERVER_TOKENS
+    return FREE_SERVER_TOKENS
+
+
+def get_server_label(server):
+    if server == "paid":
+        return "💎 PAID"
+    return "🆓 FREE"
+
+
 # ══════════════════════ DB — USERS ══════════════════════
 def db_get_user_full(uid):
-    if uid is None: return None
+    if uid is None:
+        return None
     conn = sqlite3.connect(DB_FILE)
     try:
         return conn.execute("""SELECT user_id, first_name, username,
@@ -613,20 +1220,23 @@ def db_get_user_full(uid):
             allow_manual, allow_autowatch, allow_custom_emoji, plan,
             plan_expires, free_balance, language, referral_code, referred_by,
             referral_count, referral_earned, team_role, team_commission,
-            total_spent, ra_limit_override
+            total_spent, ra_limit_override, server_override
             FROM users WHERE user_id=?""", (uid,)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_user(uid):
-    if uid is None: return None
+    if uid is None:
+        return None
     conn = sqlite3.connect(DB_FILE)
     try:
         return conn.execute("""SELECT user_id, first_name, username,
             joined_at, last_active, is_banned, total_reactions,
             total_bots, custom_limit FROM users WHERE user_id=?""",
             (uid,)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_save_user(uid, first_name, username=None, referred_by=0):
@@ -645,8 +1255,11 @@ def db_save_user(uid, first_name, username=None, referred_by=0):
             c.execute("""UPDATE users SET first_name=?, username=?,
                 last_active=CURRENT_TIMESTAMP WHERE user_id=?""",
                 (first_name, username, uid))
+        c.execute("INSERT OR IGNORE INTO user_stats(user_id) VALUES(?)",
+                  (uid,))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
 
 
@@ -656,7 +1269,8 @@ def db_is_banned(uid):
         r = conn.execute("SELECT is_banned FROM users WHERE user_id=?",
                          (uid,)).fetchone()
         return bool(r and r[0])
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_ban_user(uid, ban=True):
@@ -667,7 +1281,8 @@ def db_ban_user(uid, ban=True):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_set_user_limit(uid, limit):
@@ -678,23 +1293,26 @@ def db_set_user_limit(uid, limit):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_set_user_perm(uid, feature, value):
     col = {
-        "channel":"allow_channel", "group":"allow_group",
-        "manual":"allow_manual", "autowatch":"allow_autowatch",
-        "custom_emoji":"allow_custom_emoji",
-        "auto_watch_unlocked":"auto_watch_unlocked"
+        "channel": "allow_channel", "group": "allow_group",
+        "manual": "allow_manual", "autowatch": "allow_autowatch",
+        "custom_emoji": "allow_custom_emoji",
+        "auto_watch_unlocked": "auto_watch_unlocked"
     }.get(feature)
-    if not col: return False
+    if not col:
+        return False
     conn = sqlite3.connect(DB_FILE)
     try:
         conn.execute(f"UPDATE users SET {col}=? WHERE user_id=?",
                      (1 if value else 0, uid))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
     return True
 
@@ -705,7 +1323,8 @@ def db_set_user_lang(uid, lang):
         conn.execute("UPDATE users SET language=? WHERE user_id=?",
                      (lang, uid))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
 
 
@@ -716,7 +1335,8 @@ def db_set_user_plan(uid, plan, days=30):
         conn.execute("UPDATE users SET plan=?, plan_expires=? WHERE user_id=?",
                      (plan, exp, uid))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
 
 
@@ -726,7 +1346,8 @@ def db_add_free_balance(uid, amount):
         conn.execute("""UPDATE users SET free_balance = free_balance + ?
             WHERE user_id=?""", (amount, uid))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
 
 
@@ -735,20 +1356,23 @@ def db_spend_free_balance(uid, amount):
     try:
         r = conn.execute("SELECT free_balance FROM users WHERE user_id=?",
                          (uid,)).fetchone()
-        if not r or r[0] < amount: return False
+        if not r or r[0] < amount:
+            return False
         conn.execute("""UPDATE users SET free_balance = free_balance - ?
             WHERE user_id=?""", (amount, uid))
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_total_users():
     conn = sqlite3.connect(DB_FILE)
     try:
         return conn.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_all_users(l=50, o=0):
@@ -759,27 +1383,31 @@ def db_all_users(l=50, o=0):
             total_bots, custom_limit FROM users
             ORDER BY last_active DESC LIMIT ? OFFSET ?""",
             (l, o)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_banned_users():
     conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("SELECT COUNT(*) FROM users WHERE is_banned=1"
-                            ).fetchone()[0]
-    finally: conn.close()
+        return conn.execute("""SELECT COUNT(*) FROM users
+            WHERE is_banned=1""").fetchone()[0]
+    finally:
+        conn.close()
 
 
 # ══════════════════════ DB — REACTIONS ══════════════════════
-def db_save_reaction(uid, ct, cid, pl, pid, emoji, bu, status, method="bot"):
+def db_save_reaction(uid, ct, cid, pl, pid, emoji, bu, status,
+                     method="bot", server="free"):
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
             c = conn.cursor()
-            c.execute("""INSERT INTO reactions (user_id, chat_title, chat_id,
-                post_link, post_id, emoji, bot_username, status, method)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (uid, ct, cid, pl, pid, emoji, bu, status, method))
+            c.execute("""INSERT INTO reactions (user_id, chat_title,
+                chat_id, post_link, post_id, emoji, bot_username, status,
+                method, server)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (uid, ct, cid, pl, pid, emoji, bu, status, method, server))
             if status == "ok":
                 c.execute("""UPDATE users SET total_reactions =
                     total_reactions + 1 WHERE user_id=?""", (uid,))
@@ -792,84 +1420,220 @@ def db_save_reaction(uid, ct, cid, pl, pid, emoji, bu, status, method="bot"):
 
 
 def db_total_reactions():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM reactions
-            WHERE status='ok'""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM reactions
+                WHERE status='ok'""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 def db_reactions_today():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        t = datetime.now().strftime("%Y-%m-%d")
-        return conn.execute("""SELECT COUNT(*) FROM reactions
-            WHERE status='ok' AND DATE(created_at)=?""", (t,)).fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            t = datetime.now().strftime("%Y-%m-%d")
+            return conn.execute("""SELECT COUNT(*) FROM reactions
+                WHERE status='ok' AND DATE(created_at)=?""",
+                (t,)).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 def db_recent_reactions(l=20):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT r.user_id, u.first_name,
-            r.chat_title, r.post_id, r.emoji, r.bot_username,
-            r.status, r.created_at, r.method
-            FROM reactions r LEFT JOIN users u
-            ON u.user_id = r.user_id
-            ORDER BY r.id DESC LIMIT ?""", (l,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT r.user_id, u.first_name,
+                r.chat_title, r.post_id, r.emoji, r.bot_username,
+                r.status, r.created_at, r.method, r.server
+                FROM reactions r LEFT JOIN users u
+                ON u.user_id = r.user_id
+                ORDER BY r.id DESC LIMIT ?""", (l,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def db_reactions_by_day(days=7):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        res = []
-        for i in range(days-1, -1, -1):
-            d = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
-            n = conn.execute("""SELECT COUNT(*) FROM reactions
-                WHERE status='ok' AND DATE(created_at)=?""", (d,)).fetchone()[0]
-            res.append((d, n))
-        return res
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            res = []
+            for i in range(days-1, -1, -1):
+                d = (datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+                n = conn.execute("""SELECT COUNT(*) FROM reactions
+                    WHERE status='ok' AND DATE(created_at)=?""",
+                    (d,)).fetchone()[0]
+                res.append((d, n))
+            return res
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def db_top_users_by_reactions(l=10):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT user_id, first_name, total_reactions
-            FROM users WHERE total_reactions > 0
-            ORDER BY total_reactions DESC LIMIT ?""", (l,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT user_id, first_name,
+                total_reactions FROM users WHERE total_reactions > 0
+                ORDER BY total_reactions DESC LIMIT ?""", (l,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def db_top_groups(l=10):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT chat_title, chat_id, COUNT(*) as cnt
-            FROM reactions WHERE status='ok'
-            GROUP BY chat_id ORDER BY cnt DESC LIMIT ?""", (l,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT chat_title, chat_id,
+                COUNT(*) as cnt FROM reactions WHERE status='ok'
+                GROUP BY chat_id ORDER BY cnt DESC LIMIT ?""",
+                (l,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def db_revenue_stats():
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            t = datetime.now().strftime("%Y-%m-%d")
+            m = datetime.now().strftime("%Y-%m")
+            tot = conn.execute("""SELECT COALESCE(SUM(amount),0)
+                FROM payments WHERE status='approved'""").fetchone()[0]
+            tr = conn.execute("""SELECT COALESCE(SUM(amount),0)
+                FROM payments WHERE status='approved'
+                AND DATE(created_at)=?""", (t,)).fetchone()[0]
+            mr = conn.execute("""SELECT COALESCE(SUM(amount),0)
+                FROM payments WHERE status='approved'
+                AND strftime('%Y-%m', created_at)=?""", (m,)).fetchone()[0]
+            return tot, tr, mr
+        finally:
+            conn.close()
+    except Exception:
+        return 0, 0, 0
+
+
+# ══════════════════════ DB — BOTS & SERVERS ══════════════════════
+def db_add_bot(token, username, bot_id, server="free"):
     conn = sqlite3.connect(DB_FILE)
     try:
-        t = datetime.now().strftime("%Y-%m-%d")
-        m = datetime.now().strftime("%Y-%m")
-        tot = conn.execute("""SELECT COALESCE(SUM(amount),0) FROM payments
-            WHERE status='approved'""").fetchone()[0]
-        tr = conn.execute("""SELECT COALESCE(SUM(amount),0) FROM payments
-            WHERE status='approved' AND DATE(created_at)=?""",
-            (t,)).fetchone()[0]
-        mr = conn.execute("""SELECT COALESCE(SUM(amount),0) FROM payments
-            WHERE status='approved' AND strftime('%Y-%m', created_at)=?""",
-            (m,)).fetchone()[0]
-        return tot, tr, mr
-    finally: conn.close()
+        conn.execute("""INSERT OR REPLACE INTO bots
+            (token, username, bot_id, server) VALUES(?, ?, ?, ?)""",
+            (token, username, bot_id, server))
+        conn.execute("""INSERT OR REPLACE INTO bot_servers
+            (token, username, server) VALUES(?, ?, ?)""",
+            (token, username, server))
+        conn.commit()
+        _dirty()
+        return True
+    except Exception:
+        return False
+    finally:
+        conn.close()
 
 
-# ══════════════════════ END OF PART 1 ══════════════════════
-D("✅ Part 1 loaded — Config + DB Part 1 ready", "ok")
+def db_list_bots(server=None):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        if server:
+            return conn.execute("""SELECT token, username, bot_id, added_at
+                FROM bots WHERE server=? ORDER BY added_at ASC""",
+                (server,)).fetchall()
+        return conn.execute("""SELECT token, username, bot_id, added_at
+            FROM bots ORDER BY added_at ASC""").fetchall()
+    finally:
+        conn.close()
+
+
+def db_list_visible_bots(server=None):
+    """Bots except permanent admins"""
+    return [b for b in db_list_bots(server)
+            if not is_permanent_admin(b[1])]
+
+
+def db_count_bots(server=None):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        if server:
+            return conn.execute("""SELECT COUNT(*) FROM bots
+                WHERE server=?""", (server,)).fetchone()[0]
+        return conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
+    finally:
+        conn.close()
+
+
+def db_count_visible_bots(server=None):
+    return len(db_list_visible_bots(server))
+
+
+def db_remove_bot(token):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        conn.execute("DELETE FROM bots WHERE token=?", (token,))
+        conn.execute("DELETE FROM bot_servers WHERE token=?", (token,))
+        conn.commit()
+        _dirty()
+        return True
+    finally:
+        conn.close()
+
+
+def db_get_bot_by_username(username):
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        return conn.execute("""SELECT token, username, bot_id, server
+            FROM bots WHERE username=?""", (username,)).fetchone()
+    finally:
+        conn.close()
+
+
+def db_move_bot_server(token, new_server):
+    """Move bot to different server"""
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        conn.execute("UPDATE bots SET server=? WHERE token=?",
+                     (new_server, token))
+        conn.execute("""UPDATE bot_servers SET server=?,
+            moved_at=CURRENT_TIMESTAMP WHERE token=?""",
+            (new_server, token))
+        conn.commit()
+        _dirty()
+        return True
+    finally:
+        conn.close()
+
+
+def db_bot_stats():
+    conn = sqlite3.connect(DB_FILE)
+    try:
+        total = conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
+        free = conn.execute("""SELECT COUNT(*) FROM bots
+            WHERE server='free'""").fetchone()[0]
+        paid = conn.execute("""SELECT COUNT(*) FROM bots
+            WHERE server='paid'""").fetchone()[0]
+        perm = sum(1 for b in db_list_bots() if is_permanent_admin(b[1]))
+        return {"total": total, "free": free, "paid": paid,
+                "permanent": perm}
+    finally:
+        conn.close()
+
+
+# ══════════════════════ END OF PART 2 ══════════════════════
+D("✅ Part 2 loaded — DB Part 1 (Users, Reactions, Bots, Servers)", "ok")
 # ══════════════════════ DB — APPROVALS ══════════════════════
 def db_approval_status(uid):
     conn = sqlite3.connect(DB_FILE)
@@ -877,7 +1641,8 @@ def db_approval_status(uid):
         r = conn.execute("SELECT status FROM approvals WHERE user_id=?",
                          (uid,)).fetchone()
         return r[0] if r else None
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_has_requested(uid):
@@ -885,7 +1650,8 @@ def db_has_requested(uid):
     try:
         return conn.execute("SELECT 1 FROM approvals WHERE user_id=?",
                             (uid,)).fetchone() is not None
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_create_approval(uid, fn, un=None):
@@ -900,7 +1666,8 @@ def db_create_approval(uid, fn, un=None):
         conn.commit()
         _dirty()
         return True, "created"
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_set_approval(uid, status, approved_by=None):
@@ -923,7 +1690,8 @@ def db_set_approval(uid, status, approved_by=None):
                 decided_at=CURRENT_TIMESTAMP, approved_by=?
                 WHERE user_id=?""", (status, approved_by, uid))
         conn.commit()
-    finally: conn.close()
+    finally:
+        conn.close()
     _dirty()
 
 
@@ -933,7 +1701,8 @@ def db_pending_approvals(l=50):
         return conn.execute("""SELECT user_id, first_name, username,
             requested_at FROM approvals WHERE status='pending'
             ORDER BY requested_at ASC LIMIT ?""", (l,)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_approved_users(l=100):
@@ -943,116 +1712,63 @@ def db_approved_users(l=100):
             decided_at, approved_by FROM approvals
             WHERE status='approved'
             ORDER BY decided_at DESC LIMIT ?""", (l,)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_pending_approvals():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM approvals
-            WHERE status='pending'""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM approvals
+                WHERE status='pending'""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 def db_count_approved_users():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM approvals
-            WHERE status='approved'""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM approvals
+                WHERE status='approved'""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 def db_count_rejected_users():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM approvals
-            WHERE status='rejected'""").fetchone()[0]
-    finally: conn.close()
-
-
-# ══════════════════════ DB — BOTS POOL ══════════════════════
-def db_add_bot(token, username, bot_id):
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        conn.execute("""INSERT OR REPLACE INTO bots(token, username, bot_id)
-            VALUES(?, ?, ?)""", (token, username, bot_id))
-        conn.commit()
-        _dirty()
-        return True
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM approvals
+                WHERE status='rejected'""").fetchone()[0]
+        finally:
+            conn.close()
     except Exception:
-        return False
-    finally: conn.close()
-
-
-def db_list_bots():
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        return conn.execute("""SELECT token, username, bot_id, added_at
-            FROM bots ORDER BY added_at ASC""").fetchall()
-    finally: conn.close()
-
-
-def db_list_visible_bots():
-    """Bots except permanent admins"""
-    return [b for b in db_list_bots() if not is_permanent_admin(b[1])]
-
-
-def db_count_bots():
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        return conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
-    finally: conn.close()
-
-
-def db_count_visible_bots():
-    return len(db_list_visible_bots())
-
-
-def db_remove_bot(token):
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        conn.execute("DELETE FROM bots WHERE token=?", (token,))
-        conn.commit()
-        _dirty()
-        return True
-    finally: conn.close()
-
-
-def db_get_bot_by_username(username):
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        return conn.execute("""SELECT token, username, bot_id FROM bots
-            WHERE username=?""", (username,)).fetchone()
-    finally: conn.close()
-
-
-def db_bot_stats():
-    """Bot pool stats"""
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        total = conn.execute("SELECT COUNT(*) FROM bots").fetchone()[0]
-        perm = sum(1 for b in db_list_bots()
-                   if is_permanent_admin(b[1]))
-        return {"total": total, "permanent": perm,
-                "visible": total - perm}
-    finally: conn.close()
+        return 0
 
 
 # ══════════════════════ DB — WATCHERS ══════════════════════
-def db_add_watcher(u, ci, ct, cl, cty, rc=5, em="default", ce=None, lp=0):
+def db_add_watcher(u, ci, ct, cl, cty, rc=5, em="default",
+                   ce=None, lp=0, server="free"):
     conn = sqlite3.connect(DB_FILE)
     try:
         c = conn.cursor()
         es = ",".join(ce) if ce else None
         c.execute("""INSERT INTO watchers (user_id, chat_id, chat_title,
             chat_link, chat_type, reaction_count, emoji_mode,
-            custom_emojis, last_post_id, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)""",
-            (u, ci, ct, cl, cty, rc, em, es, lp))
+            custom_emojis, last_post_id, is_active, server)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?)""",
+            (u, ci, ct, cl, cty, rc, em, es, lp, server))
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_list_watchers(uid=None):
@@ -1060,13 +1776,14 @@ def db_list_watchers(uid=None):
     try:
         sql = """SELECT id, user_id, chat_id, chat_title, chat_link,
             chat_type, reaction_count, emoji_mode, custom_emojis,
-            last_post_id, is_active, created_at, last_run
+            last_post_id, is_active, created_at, last_run, server
             FROM watchers"""
         if uid:
             return conn.execute(sql + " WHERE user_id=? ORDER BY id DESC",
                                 (uid,)).fetchall()
         return conn.execute(sql + " ORDER BY id DESC").fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_watcher(wid):
@@ -1074,13 +1791,15 @@ def db_get_watcher(wid):
     try:
         return conn.execute("""SELECT id, user_id, chat_id, chat_title,
             chat_link, chat_type, reaction_count, emoji_mode,
-            custom_emojis, last_post_id, is_active, created_at, last_run
-            FROM watchers WHERE id=?""", (wid,)).fetchone()
-    finally: conn.close()
+            custom_emojis, last_post_id, is_active, created_at,
+            last_run, server FROM watchers WHERE id=?""", (wid,)).fetchone()
+    finally:
+        conn.close()
 
 
 def db_update_watcher(wid, **kw):
-    if not kw: return False
+    if not kw:
+        return False
     fs, vs = [], []
     for k, v in kw.items():
         fs.append(f"{k}=?")
@@ -1093,7 +1812,8 @@ def db_update_watcher(wid, **kw):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_delete_watcher(wid):
@@ -1103,15 +1823,20 @@ def db_delete_watcher(wid):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_active_watchers():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM watchers
-            WHERE is_active=1""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM watchers
+                WHERE is_active=1""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — TEMPLATES ══════════════════════
@@ -1124,7 +1849,8 @@ def db_add_template(uid, name, emojis):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_list_templates(uid):
@@ -1132,7 +1858,8 @@ def db_list_templates(uid):
     try:
         return conn.execute("""SELECT id, name, emojis FROM templates
             WHERE user_id=? ORDER BY id DESC""", (uid,)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_template(tid, uid=None):
@@ -1143,7 +1870,8 @@ def db_get_template(tid, uid=None):
                 WHERE id=? AND user_id=?""", (tid, uid)).fetchone()
         return conn.execute("""SELECT id, name, emojis FROM templates
             WHERE id=?""", (tid,)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_delete_template(tid, uid=None):
@@ -1156,17 +1884,22 @@ def db_delete_template(tid, uid=None):
             conn.execute("DELETE FROM templates WHERE id=?", (tid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_templates(uid=None):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        if uid:
-            return conn.execute("""SELECT COUNT(*) FROM templates
-                WHERE user_id=?""", (uid,)).fetchone()[0]
-        return conn.execute("SELECT COUNT(*) FROM templates").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            if uid:
+                return conn.execute("""SELECT COUNT(*) FROM templates
+                    WHERE user_id=?""", (uid,)).fetchone()[0]
+            return conn.execute("SELECT COUNT(*) FROM templates").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — REFERRALS ══════════════════════
@@ -1176,7 +1909,8 @@ def db_get_referral_code(uid):
         r = conn.execute("SELECT referral_code FROM users WHERE user_id=?",
                          (uid,)).fetchone()
         return r[0] if r else None
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_find_user_by_ref_code(code):
@@ -1185,14 +1919,15 @@ def db_find_user_by_ref_code(code):
         r = conn.execute("SELECT user_id FROM users WHERE referral_code=?",
                          (code,)).fetchone()
         return r[0] if r else None
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_add_referral(rid, nid):
     conn = sqlite3.connect(DB_FILE)
     try:
         c = conn.cursor()
-        if c.execute("""SELECT 1 FROM referrals WHERE new_user_id=?""",
+        if c.execute("SELECT 1 FROM referrals WHERE new_user_id=?",
                      (nid,)).fetchone():
             return False
         c.execute("""INSERT INTO referrals (referrer_id, new_user_id, status)
@@ -1200,7 +1935,8 @@ def db_add_referral(rid, nid):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_validate_referral(nid):
@@ -1209,7 +1945,8 @@ def db_validate_referral(nid):
         c = conn.cursor()
         r = c.execute("""SELECT id, referrer_id FROM referrals
             WHERE new_user_id=? AND status='pending'""", (nid,)).fetchone()
-        if not r: return None
+        if not r:
+            return None
         rid, ref = r
         total_reward = REFERRAL_REWARD + FRIEND_VALID_REWARD
         c.execute("""UPDATE referrals SET status='validated',
@@ -1224,7 +1961,8 @@ def db_validate_referral(nid):
         conn.commit()
         _dirty()
         return ref
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_referral_stats(uid):
@@ -1233,7 +1971,8 @@ def db_get_referral_stats(uid):
         r = conn.execute("""SELECT referral_count, referral_earned
             FROM users WHERE user_id=?""", (uid,)).fetchone()
         return (r[0] or 0, r[1] or 0) if r else (0, 0)
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_top_referrers(l=10):
@@ -1242,24 +1981,31 @@ def db_top_referrers(l=10):
         return conn.execute("""SELECT user_id, first_name, referral_count,
             referral_earned FROM users WHERE referral_count > 0
             ORDER BY referral_count DESC LIMIT ?""", (l,)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_referrals():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        total = conn.execute("SELECT COUNT(*) FROM referrals").fetchone()[0]
-        valid = conn.execute("""SELECT COUNT(*) FROM referrals
-            WHERE status='validated'""").fetchone()[0]
-        pend = conn.execute("""SELECT COUNT(*) FROM referrals
-            WHERE status='pending'""").fetchone()[0]
-        return {"total": total, "valid": valid, "pending": pend}
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            total = conn.execute("SELECT COUNT(*) FROM referrals"
+                                 ).fetchone()[0]
+            valid = conn.execute("""SELECT COUNT(*) FROM referrals
+                WHERE status='validated'""").fetchone()[0]
+            pend = conn.execute("""SELECT COUNT(*) FROM referrals
+                WHERE status='pending'""").fetchone()[0]
+            return {"total": total, "valid": valid, "pending": pend}
+        finally:
+            conn.close()
+    except Exception:
+        return {"total": 0, "valid": 0, "pending": 0}
 
 
 # ══════════════════════ DB — NOTIFICATIONS ══════════════════════
 def db_add_notification(uid, msg):
-    if not feat_notifications(): return
+    if not feat_notifications():
+        return
     try:
         conn = sqlite3.connect(DB_FILE)
         try:
@@ -1279,15 +2025,20 @@ def db_get_notifications(uid, l=10):
         return conn.execute("""SELECT id, message, is_read, created_at
             FROM notifications WHERE user_id=?
             ORDER BY id DESC LIMIT ?""", (uid, l)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_unread_notifications(uid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM notifications
-            WHERE user_id=? AND is_read=0""", (uid,)).fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM notifications
+                WHERE user_id=? AND is_read=0""", (uid,)).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 def db_mark_notifications_read(uid):
@@ -1297,7 +2048,8 @@ def db_mark_notifications_read(uid):
                      (uid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_delete_notification(nid, uid):
@@ -1307,7 +2059,8 @@ def db_delete_notification(nid, uid):
                      (nid, uid))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_clear_notifications(uid):
@@ -1316,7 +2069,8 @@ def db_clear_notifications(uid):
         conn.execute("DELETE FROM notifications WHERE user_id=?", (uid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_broadcast_notification(message):
@@ -1330,25 +2084,28 @@ def db_broadcast_notification(message):
         conn.commit()
         _dirty()
         return n
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
-# ══════════════════════ END OF PART 2 ══════════════════════
-D("✅ Part 2 loaded — Approvals + Bots + Watchers + Templates + Referrals + Notifications", "ok")
+# ══════════════════════ END OF PART 3 ══════════════════════
+D("✅ Part 3 loaded — DB Part 2 (Approvals, Watchers, Templates, Referrals, Notifications)", "ok")
 # ══════════════════════ DB — QUEUE ══════════════════════
-def db_add_queue(uid, cl, pl, rc, em="default", ce=None, st=None):
+def db_add_queue(uid, cl, pl, rc, em="default", ce=None, st=None,
+                 server="free"):
     conn = sqlite3.connect(DB_FILE)
     try:
         c = conn.cursor()
         es = ",".join(ce) if ce else None
         c.execute("""INSERT INTO queue (user_id, chat_link, post_link,
-            reaction_count, emoji_mode, custom_emojis, scheduled_time, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')""",
-            (uid, cl, pl, rc, em, es, st))
+            reaction_count, emoji_mode, custom_emojis, scheduled_time,
+            status, server) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)""",
+            (uid, cl, pl, rc, em, es, st, server))
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_list_queue(user_id=None, status=None):
@@ -1356,7 +2113,7 @@ def db_list_queue(user_id=None, status=None):
     try:
         base = """SELECT id, user_id, chat_link, post_link, reaction_count,
             emoji_mode, custom_emojis, scheduled_time, status, created_at,
-            executed_at, error FROM queue"""
+            executed_at, error, server FROM queue"""
         if user_id and status:
             return conn.execute(base + """ WHERE user_id=? AND status=?
                 ORDER BY id DESC""", (user_id, status)).fetchall()
@@ -1367,7 +2124,8 @@ def db_list_queue(user_id=None, status=None):
             return conn.execute(base + """ WHERE status=?
                 ORDER BY scheduled_time ASC""", (status,)).fetchall()
         return conn.execute(base + " ORDER BY id DESC").fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_queue(qid):
@@ -1375,13 +2133,15 @@ def db_get_queue(qid):
     try:
         return conn.execute("""SELECT id, user_id, chat_link, post_link,
             reaction_count, emoji_mode, custom_emojis, scheduled_time,
-            status, created_at, executed_at, error FROM queue WHERE id=?""",
-            (qid,)).fetchone()
-    finally: conn.close()
+            status, created_at, executed_at, error, server
+            FROM queue WHERE id=?""", (qid,)).fetchone()
+    finally:
+        conn.close()
 
 
 def db_update_queue(qid, **kw):
-    if not kw: return False
+    if not kw:
+        return False
     fs, vs = [], []
     for k, v in kw.items():
         fs.append(f"{k}=?")
@@ -1393,7 +2153,8 @@ def db_update_queue(qid, **kw):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_delete_queue(qid, uid=None):
@@ -1406,17 +2167,22 @@ def db_delete_queue(qid, uid=None):
             conn.execute("DELETE FROM queue WHERE id=?", (qid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_queue(status=None):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        if status:
-            return conn.execute("""SELECT COUNT(*) FROM queue
-                WHERE status=?""", (status,)).fetchone()[0]
-        return conn.execute("SELECT COUNT(*) FROM queue").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            if status:
+                return conn.execute("""SELECT COUNT(*) FROM queue
+                    WHERE status=?""", (status,)).fetchone()[0]
+            return conn.execute("SELECT COUNT(*) FROM queue").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — PAYMENTS ══════════════════════
@@ -1430,7 +2196,8 @@ def db_add_payment(uid, amt, plan, days, method, ss=""):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_list_payments(user_id=None, status=None, l=50):
@@ -1450,7 +2217,8 @@ def db_list_payments(user_id=None, status=None, l=50):
             return conn.execute(base + """ WHERE user_id=?
                 ORDER BY id DESC LIMIT ?""", (user_id, l)).fetchall()
         return conn.execute(base + " ORDER BY id DESC LIMIT ?", (l,)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_payment(pid):
@@ -1459,11 +2227,13 @@ def db_get_payment(pid):
         return conn.execute("""SELECT id, user_id, amount, plan, days,
             method, screenshot, status, created_at, verified_at,
             verified_by, notes FROM payments WHERE id=?""", (pid,)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_update_payment(pid, **kw):
-    if not kw: return False
+    if not kw:
+        return False
     fs, vs = [], []
     for k, v in kw.items():
         fs.append(f"{k}=?")
@@ -1476,17 +2246,22 @@ def db_update_payment(pid, **kw):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_payments(status=None):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        if status:
-            return conn.execute("""SELECT COUNT(*) FROM payments
-                WHERE status=?""", (status,)).fetchone()[0]
-        return conn.execute("SELECT COUNT(*) FROM payments").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            if status:
+                return conn.execute("""SELECT COUNT(*) FROM payments
+                    WHERE status=?""", (status,)).fetchone()[0]
+            return conn.execute("SELECT COUNT(*) FROM payments").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — BULK JOBS ══════════════════════
@@ -1499,11 +2274,13 @@ def db_add_bulk_job(uid, jt, total, data=None):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_update_bulk_job(jid, **kw):
-    if not kw: return False
+    if not kw:
+        return False
     fs, vs = [], []
     for k, v in kw.items():
         fs.append(f"{k}=?")
@@ -1516,7 +2293,8 @@ def db_update_bulk_job(jid, **kw):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_bulk_job(jid):
@@ -1525,7 +2303,8 @@ def db_get_bulk_job(jid):
         return conn.execute("""SELECT id, user_id, job_type, total,
             completed, failed, status, created_at, data
             FROM bulk_jobs WHERE id=?""", (jid,)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_list_bulk_jobs(uid=None, l=20):
@@ -1537,7 +2316,8 @@ def db_list_bulk_jobs(uid=None, l=20):
             return conn.execute(base + """ WHERE user_id=?
                 ORDER BY id DESC LIMIT ?""", (uid, l)).fetchall()
         return conn.execute(base + " ORDER BY id DESC LIMIT ?", (l,)).fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 # ══════════════════════ DB — FORCE CHANNELS ══════════════════════
@@ -1549,7 +2329,8 @@ def db_list_force_channels(only_active=True):
                 FROM force_channels WHERE active=1 ORDER BY id ASC""").fetchall()
         return conn.execute("""SELECT id, channel, url, name, active
             FROM force_channels ORDER BY id ASC""").fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_add_force_channel(ch, url, name):
@@ -1561,7 +2342,8 @@ def db_add_force_channel(ch, url, name):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_delete_force_channel(fid):
@@ -1570,7 +2352,8 @@ def db_delete_force_channel(fid):
         conn.execute("DELETE FROM force_channels WHERE id=?", (fid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_toggle_force_channel(fid):
@@ -1580,17 +2363,23 @@ def db_toggle_force_channel(fid):
             WHERE id=?""", (fid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_force_channels(only_active=True):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        if only_active:
-            return conn.execute("""SELECT COUNT(*) FROM force_channels
-                WHERE active=1""").fetchone()[0]
-        return conn.execute("SELECT COUNT(*) FROM force_channels").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            if only_active:
+                return conn.execute("""SELECT COUNT(*) FROM force_channels
+                    WHERE active=1""").fetchone()[0]
+            return conn.execute("SELECT COUNT(*) FROM force_channels"
+                                ).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — TEAM MEMBERS ══════════════════════
@@ -1600,7 +2389,8 @@ def db_list_team():
         return conn.execute("""SELECT user_id, role, permissions,
             commission_percent, total_sales, total_commission, added_at
             FROM team_members ORDER BY added_at DESC""").fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_add_team_member(uid, role="reseller", comm=10):
@@ -1615,7 +2405,8 @@ def db_add_team_member(uid, role="reseller", comm=10):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_remove_team_member(uid):
@@ -1627,7 +2418,8 @@ def db_remove_team_member(uid):
             WHERE user_id=?""", (uid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_team_member(uid):
@@ -1636,31 +2428,20 @@ def db_get_team_member(uid):
         return conn.execute("""SELECT user_id, role, permissions,
             commission_percent, total_sales, total_commission, added_at
             FROM team_members WHERE user_id=?""", (uid,)).fetchone()
-    finally: conn.close()
-
-
-def db_update_team_member(uid, **kw):
-    if not kw: return False
-    fs, vs = [], []
-    for k, v in kw.items():
-        fs.append(f"{k}=?")
-        vs.append(v)
-    vs.append(uid)
-    conn = sqlite3.connect(DB_FILE)
-    try:
-        conn.execute(f"UPDATE team_members SET {', '.join(fs)} WHERE user_id=?",
-                     tuple(vs))
-        conn.commit()
-        _dirty()
-        return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_team_members():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("SELECT COUNT(*) FROM team_members").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("SELECT COUNT(*) FROM team_members"
+                                ).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — CUSTOM PACKS ══════════════════════
@@ -1669,7 +2450,8 @@ def db_list_custom_packs():
     try:
         return conn.execute("""SELECT id, name, emojis, price, is_paid
             FROM custom_packs ORDER BY id DESC""").fetchall()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_get_custom_pack(pid):
@@ -1677,7 +2459,8 @@ def db_get_custom_pack(pid):
     try:
         return conn.execute("""SELECT id, name, emojis, price, is_paid
             FROM custom_packs WHERE id=?""", (pid,)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_add_custom_pack(name, emojis, price=0, is_paid=0):
@@ -1690,7 +2473,8 @@ def db_add_custom_pack(name, emojis, price=0, is_paid=0):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_delete_custom_pack(pid):
@@ -1699,163 +2483,210 @@ def db_delete_custom_pack(pid):
         conn.execute("DELETE FROM custom_packs WHERE id=?", (pid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def db_count_custom_packs():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("SELECT COUNT(*) FROM custom_packs").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("SELECT COUNT(*) FROM custom_packs"
+                                ).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — USER STATS ══════════════════════
 def stats_get(uid):
     if uid is None:
         return (None, 0, 0, None, 0, None, 0, 0, 0, None, 100, None)
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("""SELECT user_id, total_sent, today_sent,
-            today_date, week_sent, week_start, success_count, fail_count,
-            streak_days, last_bonus_date, trust_score, last_active
-            FROM user_stats WHERE user_id=?""", (uid,)).fetchone()
-        if not r:
-            try:
-                conn.execute("""INSERT OR IGNORE INTO user_stats(user_id)
-                    VALUES(?)""", (uid,))
-                conn.commit()
-            except Exception:
-                pass
-            return (uid, 0, 0, None, 0, None, 0, 0, 0, None, 100,
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        return r
-    finally:
-        conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("""SELECT user_id, total_sent, today_sent,
+                today_date, week_sent, week_start, success_count, fail_count,
+                streak_days, last_bonus_date, trust_score, last_active
+                FROM user_stats WHERE user_id=?""", (uid,)).fetchone()
+            if not r:
+                try:
+                    conn.execute("""INSERT OR IGNORE INTO user_stats(user_id)
+                        VALUES(?)""", (uid,))
+                    conn.commit()
+                except Exception:
+                    pass
+                return (uid, 0, 0, None, 0, None, 0, 0, 0, None, 100,
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            return r
+        finally:
+            conn.close()
+    except Exception:
+        return (uid, 0, 0, None, 0, None, 0, 0, 0, None, 100, None)
 
 
 def stats_bump(uid, ok=True):
     today = get_today_str()
     week_start = get_week_start_str()
-    conn = sqlite3.connect(DB_FILE)
     try:
-        c = conn.cursor()
-        c.execute("INSERT OR IGNORE INTO user_stats(user_id) VALUES(?)",
-                  (uid,))
-        r = c.execute("""SELECT today_date, week_start FROM user_stats
-            WHERE user_id=?""", (uid,)).fetchone()
-        if r:
-            if r[0] != today:
-                c.execute("""UPDATE user_stats SET today_sent=0,
-                    today_date=? WHERE user_id=?""", (today, uid))
-            if r[1] != week_start:
-                c.execute("""UPDATE user_stats SET week_sent=0,
-                    week_start=? WHERE user_id=?""", (week_start, uid))
-        if ok:
-            c.execute("""UPDATE user_stats SET total_sent = total_sent + 1,
-                today_sent = today_sent + 1, week_sent = week_sent + 1,
-                success_count = success_count + 1,
-                last_active = CURRENT_TIMESTAMP WHERE user_id=?""", (uid,))
-        else:
-            c.execute("""UPDATE user_stats SET fail_count = fail_count + 1,
-                last_active = CURRENT_TIMESTAMP WHERE user_id=?""", (uid,))
-        conn.commit()
-    finally:
-        conn.close()
-    _dirty()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+            c.execute("INSERT OR IGNORE INTO user_stats(user_id) VALUES(?)",
+                      (uid,))
+            r = c.execute("""SELECT today_date, week_start FROM user_stats
+                WHERE user_id=?""", (uid,)).fetchone()
+            if r:
+                if r[0] != today:
+                    c.execute("""UPDATE user_stats SET today_sent=0,
+                        today_date=? WHERE user_id=?""", (today, uid))
+                if r[1] != week_start:
+                    c.execute("""UPDATE user_stats SET week_sent=0,
+                        week_start=? WHERE user_id=?""", (week_start, uid))
+            if ok:
+                c.execute("""UPDATE user_stats SET total_sent = total_sent + 1,
+                    today_sent = today_sent + 1, week_sent = week_sent + 1,
+                    success_count = success_count + 1,
+                    last_active = CURRENT_TIMESTAMP WHERE user_id=?""", (uid,))
+            else:
+                c.execute("""UPDATE user_stats SET fail_count = fail_count + 1,
+                    last_active = CURRENT_TIMESTAMP WHERE user_id=?""", (uid,))
+            conn.commit()
+        finally:
+            conn.close()
+        _dirty()
+    except Exception:
+        pass
 
 
 def stats_update_trust(uid, delta):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        conn.execute("""UPDATE user_stats SET
-            trust_score = MAX(0, MIN(100, trust_score + ?))
-            WHERE user_id=?""", (delta, uid))
-        conn.commit()
-    finally: conn.close()
-    _dirty()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            conn.execute("""UPDATE user_stats SET
+                trust_score = MAX(0, MIN(100, trust_score + ?))
+                WHERE user_id=?""", (delta, uid))
+            conn.commit()
+        finally:
+            conn.close()
+        _dirty()
+    except Exception:
+        pass
 
 
 def stats_leaderboard(limit=10):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT s.user_id, u.first_name,
-            s.total_sent, s.success_count, s.trust_score
-            FROM user_stats s LEFT JOIN users u ON u.user_id = s.user_id
-            ORDER BY s.total_sent DESC LIMIT ?""", (limit,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT s.user_id, u.first_name,
+                s.total_sent, s.success_count, s.trust_score
+                FROM user_stats s LEFT JOIN users u ON u.user_id = s.user_id
+                ORDER BY s.total_sent DESC LIMIT ?""", (limit,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 # ══════════════════════ DB — DAILY BONUS ══════════════════════
 def bonus_can_claim(uid):
-    today = get_today_str()
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("""SELECT 1 FROM daily_bonus
-            WHERE user_id=? AND bonus_date=?""", (uid, today)).fetchone()
-        return r is None
-    finally: conn.close()
+        today = get_today_str()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("""SELECT 1 FROM daily_bonus
+                WHERE user_id=? AND bonus_date=?""", (uid, today)).fetchone()
+            return r is None
+        finally:
+            conn.close()
+    except Exception:
+        return True
 
 
 def bonus_get_streak(uid):
-    today = get_today_str()
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("""SELECT streak_days, last_bonus_date
-            FROM user_stats WHERE user_id=?""", (uid,)).fetchone()
-        if not r: return 0
-        streak, last = r
-        if last == today: return streak or 0
-        if last == yesterday: return streak or 0
+        today = get_today_str()
+        yesterday = (datetime.now() - timedelta(days=1)
+                     ).strftime("%Y-%m-%d")
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("""SELECT streak_days, last_bonus_date
+                FROM user_stats WHERE user_id=?""", (uid,)).fetchone()
+            if not r:
+                return 0
+            streak, last = r
+            if last == today:
+                return streak or 0
+            if last == yesterday:
+                return streak or 0
+            return 0
+        finally:
+            conn.close()
+    except Exception:
         return 0
-    finally: conn.close()
 
 
 def bonus_claim(uid):
     if not bonus_can_claim(uid):
         return False, 0, bonus_get_streak(uid)
     today = get_today_str()
-    try: base_amt = int(cfg_get("daily_bonus_amount", "1"))
-    except Exception: base_amt = 1
-    try: streak_bonus = int(cfg_get("streak_bonus_amount", "5"))
-    except Exception: streak_bonus = 5
+    try:
+        base_amt = int(cfg_get("daily_bonus_amount", "1"))
+    except Exception:
+        base_amt = 1
+    try:
+        streak_bonus = int(cfg_get("streak_bonus_amount", "5"))
+    except Exception:
+        streak_bonus = 5
     current_streak = bonus_get_streak(uid)
     new_streak = current_streak + 1
     total = base_amt
-    if new_streak % 7 == 0: total += streak_bonus
-    conn = sqlite3.connect(DB_FILE)
+    if new_streak % 7 == 0:
+        total += streak_bonus
     try:
-        c = conn.cursor()
-        c.execute("""INSERT OR REPLACE INTO daily_bonus
-            (user_id, bonus_date, amount, streak_day)
-            VALUES(?, ?, ?, ?)""", (uid, today, total, new_streak))
-        c.execute("INSERT OR IGNORE INTO user_stats(user_id) VALUES(?)",
-                  (uid,))
-        c.execute("""UPDATE user_stats SET streak_days=?,
-            last_bonus_date=? WHERE user_id=?""",
-            (new_streak, today, uid))
-        c.execute("""UPDATE users SET free_balance = free_balance + ?
-            WHERE user_id=?""", (total, uid))
-        conn.commit()
-    finally:
-        conn.close()
-    _dirty()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+            c.execute("""INSERT OR REPLACE INTO daily_bonus
+                (user_id, bonus_date, amount, streak_day)
+                VALUES(?, ?, ?, ?)""", (uid, today, total, new_streak))
+            c.execute("INSERT OR IGNORE INTO user_stats(user_id) VALUES(?)",
+                      (uid,))
+            c.execute("""UPDATE user_stats SET streak_days=?,
+                last_bonus_date=? WHERE user_id=?""",
+                (new_streak, today, uid))
+            c.execute("""UPDATE users SET free_balance = free_balance + ?
+                WHERE user_id=?""", (total, uid))
+            conn.commit()
+        finally:
+            conn.close()
+        _dirty()
+    except Exception:
+        return False, 0, 0
     return True, total, new_streak
 
 
 def bonus_history(uid, l=10):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT bonus_date, amount, streak_day
-            FROM daily_bonus WHERE user_id=?
-            ORDER BY bonus_date DESC LIMIT ?""", (uid, l)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT bonus_date, amount, streak_day
+                FROM daily_bonus WHERE user_id=?
+                ORDER BY bonus_date DESC LIMIT ?""", (uid, l)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 # ══════════════════════ DB — AUTO-RETRY ══════════════════════
-def retry_add(uid, chat_link, post_link, count, em="default", ce=None, err=""):
-    try: max_att = int(cfg_get("auto_retry_max", "3"))
-    except Exception: max_att = 3
+def retry_add(uid, chat_link, post_link, count, em="default",
+              ce=None, err="", server="free"):
+    try:
+        max_att = int(cfg_get("auto_retry_max", "3"))
+    except Exception:
+        max_att = 3
     conn = sqlite3.connect(DB_FILE)
     try:
         c = conn.cursor()
@@ -1864,33 +2695,44 @@ def retry_add(uid, chat_link, post_link, count, em="default", ce=None, err=""):
                       ).strftime("%Y-%m-%d %H:%M:%S")
         c.execute("""INSERT INTO retry_queue (user_id, chat_link,
             post_link, count, emoji_mode, custom_emojis, next_retry,
-            last_error) VALUES(?, ?, ?, ?, ?, ?, ?, ?)""",
-            (uid, chat_link, post_link, count, em, es, next_retry, err[:200]))
+            last_error, server) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (uid, chat_link, post_link, count, em, es, next_retry,
+             err[:200], server))
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def retry_list_due():
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT id, user_id, chat_link, post_link,
-            count, emoji_mode, custom_emojis, attempts, max_attempts
-            FROM retry_queue WHERE status='pending' AND next_retry <= ?
-            ORDER BY next_retry ASC LIMIT 5""", (now,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, user_id, chat_link, post_link,
+                count, emoji_mode, custom_emojis, attempts, max_attempts,
+                server FROM retry_queue
+                WHERE status='pending' AND next_retry <= ?
+                ORDER BY next_retry ASC LIMIT 5""", (now,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def retry_list_pending():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT id, user_id, chat_link, post_link,
-            count, emoji_mode, custom_emojis, attempts, max_attempts,
-            next_retry, last_error FROM retry_queue
-            WHERE status='pending' ORDER BY next_retry ASC""").fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, user_id, chat_link, post_link,
+                count, emoji_mode, custom_emojis, attempts, max_attempts,
+                next_retry, last_error, server FROM retry_queue
+                WHERE status='pending' ORDER BY next_retry ASC""").fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def retry_mark(rid, success=False, err=""):
@@ -1898,8 +2740,7 @@ def retry_mark(rid, success=False, err=""):
     try:
         c = conn.cursor()
         if success:
-            c.execute("UPDATE retry_queue SET status='done' WHERE id=?",
-                      (rid,))
+            c.execute("UPDATE retry_queue SET status='done' WHERE id=?", (rid,))
         else:
             r = c.execute("""SELECT attempts, max_attempts FROM retry_queue
                 WHERE id=?""", (rid,)).fetchone()
@@ -1919,15 +2760,20 @@ def retry_mark(rid, success=False, err=""):
                         (new_att, next_retry, err[:200], rid))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def retry_count_pending():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM retry_queue
-            WHERE status='pending'""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM retry_queue
+                WHERE status='pending'""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 def retry_clear_all():
@@ -1936,7 +2782,8 @@ def retry_clear_all():
         conn.execute("DELETE FROM retry_queue WHERE status='pending'")
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 # ══════════════════════ DB — COUPONS ══════════════════════
@@ -1951,7 +2798,8 @@ def coupon_create(code, percent=0, flat=0, max_uses=0, expires=None):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def coupon_get(code):
@@ -1960,15 +2808,19 @@ def coupon_get(code):
         return conn.execute("""SELECT id, code, discount_percent,
             discount_flat, max_uses, used_count, expires_at, active
             FROM coupons WHERE code=?""", (code.upper(),)).fetchone()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def coupon_apply(code, original_price, uid):
     c = coupon_get(code)
-    if not c: return None, "Coupon not found"
+    if not c:
+        return None, "Coupon not found"
     cid, code_, pct, flat, max_u, used, expires, active = c
-    if not active: return None, "Coupon disabled"
-    if max_u > 0 and used >= max_u: return None, "Coupon fully used"
+    if not active:
+        return None, "Coupon disabled"
+    if max_u > 0 and used >= max_u:
+        return None, "Coupon fully used"
     if expires:
         try:
             if datetime.strptime(expires, "%Y-%m-%d %H:%M:%S") < datetime.now():
@@ -1979,12 +2831,15 @@ def coupon_apply(code, original_price, uid):
     try:
         r = conn.execute("""SELECT 1 FROM coupon_uses
             WHERE coupon_id=? AND user_id=?""", (cid, uid)).fetchone()
-        if r: return None, "Already used by you"
+        if r:
+            return None, "Already used by you"
     finally:
         conn.close()
     discount = 0
-    if pct > 0: discount += int(original_price * pct / 100)
-    if flat > 0: discount += flat
+    if pct > 0:
+        discount += int(original_price * pct / 100)
+    if flat > 0:
+        discount += flat
     final_price = max(0, original_price - discount)
     return (cid, discount, final_price), None
 
@@ -1999,16 +2854,21 @@ def coupon_mark_used(cid, uid):
             WHERE id=?""", (cid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def coupon_list():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT id, code, discount_percent,
-            discount_flat, max_uses, used_count, expires_at, active
-            FROM coupons ORDER BY id DESC""").fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, code, discount_percent,
+                discount_flat, max_uses, used_count, expires_at, active
+                FROM coupons ORDER BY id DESC""").fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def coupon_delete(cid):
@@ -2017,7 +2877,8 @@ def coupon_delete(cid):
         conn.execute("DELETE FROM coupons WHERE id=?", (cid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def coupon_toggle(cid):
@@ -2027,38 +2888,51 @@ def coupon_toggle(cid):
             WHERE id=?""", (cid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def coupon_count_active():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM coupons
-            WHERE active=1""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM coupons
+                WHERE active=1""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — EMOJI STORE ══════════════════════
 def store_list(active_only=True):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        if active_only:
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            if active_only:
+                return conn.execute("""SELECT id, name, emojis, price,
+                    description FROM emoji_store WHERE is_active=1
+                    ORDER BY price ASC""").fetchall()
             return conn.execute("""SELECT id, name, emojis, price,
-                description FROM emoji_store WHERE is_active=1
-                ORDER BY price ASC""").fetchall()
-        return conn.execute("""SELECT id, name, emojis, price,
-            description, is_active FROM emoji_store ORDER BY id DESC
-            """).fetchall()
-    finally: conn.close()
+                description, is_active FROM emoji_store
+                ORDER BY id DESC""").fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def store_get(pid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT id, name, emojis, price,
-            description, is_active FROM emoji_store WHERE id=?""",
-            (pid,)).fetchone()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, name, emojis, price,
+                description, is_active FROM emoji_store WHERE id=?""",
+                (pid,)).fetchone()
+        finally:
+            conn.close()
+    except Exception:
+        return None
 
 
 def store_add(name, emojis, price=0, desc=""):
@@ -2071,7 +2945,8 @@ def store_add(name, emojis, price=0, desc=""):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def store_delete(pid):
@@ -2080,7 +2955,8 @@ def store_delete(pid):
         conn.execute("DELETE FROM emoji_store WHERE id=?", (pid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def store_toggle(pid):
@@ -2090,16 +2966,21 @@ def store_toggle(pid):
             WHERE id=?""", (pid,))
         conn.commit()
         _dirty()
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def store_user_owns(uid, pid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("""SELECT 1 FROM user_store_buys
-            WHERE user_id=? AND pack_id=?""", (uid, pid)).fetchone()
-        return r is not None
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("""SELECT 1 FROM user_store_buys
+                WHERE user_id=? AND pack_id=?""", (uid, pid)).fetchone()
+            return r is not None
+        finally:
+            conn.close()
+    except Exception:
+        return False
 
 
 def store_buy(uid, pid, amount):
@@ -2111,62 +2992,84 @@ def store_buy(uid, pid, amount):
         conn.commit()
         _dirty()
         return True
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def store_user_purchases(uid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT b.id, p.name, p.emojis, b.paid_amount,
-            b.bought_at FROM user_store_buys b
-            LEFT JOIN emoji_store p ON p.id = b.pack_id
-            WHERE b.user_id=? ORDER BY b.id DESC""", (uid,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT b.id, p.name, p.emojis,
+                b.paid_amount, b.bought_at FROM user_store_buys b
+                LEFT JOIN emoji_store p ON p.id = b.pack_id
+                WHERE b.user_id=? ORDER BY b.id DESC""", (uid,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def store_count_active():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT COUNT(*) FROM emoji_store
-            WHERE is_active=1""").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT COUNT(*) FROM emoji_store
+                WHERE is_active=1""").fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
 # ══════════════════════ DB — POST ANALYTICS ══════════════════════
-def post_analytics_add(uid, chat_id, post_id, chat_title, sent, requested):
-    conn = sqlite3.connect(DB_FILE)
+def post_analytics_add(uid, chat_id, post_id, chat_title, sent,
+                       requested, server="free"):
     try:
-        c = conn.cursor()
-        c.execute("""INSERT INTO post_analytics (user_id, chat_id, post_id,
-            chat_title, sent_count, requested_count)
-            VALUES(?, ?, ?, ?, ?, ?)""",
-            (uid, chat_id, post_id, chat_title, sent, requested))
-        conn.commit()
-        _dirty()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+            c.execute("""INSERT INTO post_analytics (user_id, chat_id,
+                post_id, chat_title, sent_count, requested_count, server)
+                VALUES(?, ?, ?, ?, ?, ?, ?)""",
+                (uid, chat_id, post_id, chat_title, sent, requested, server))
+            conn.commit()
+            _dirty()
+        finally:
+            conn.close()
+    except Exception:
+        pass
 
 
 def post_analytics_user(uid, limit=10):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT chat_title, post_id, sent_count,
-            requested_count, created_at FROM post_analytics
-            WHERE user_id=? ORDER BY id DESC LIMIT ?""",
-            (uid, limit)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT chat_title, post_id, sent_count,
+                requested_count, created_at FROM post_analytics
+                WHERE user_id=? ORDER BY id DESC LIMIT ?""",
+                (uid, limit)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def post_analytics_stats(uid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("""SELECT COUNT(*), COALESCE(SUM(sent_count),0),
-            COALESCE(SUM(requested_count),0) FROM post_analytics
-            WHERE user_id=?""", (uid,)).fetchone()
-        total_posts, total_sent, total_req = r if r else (0, 0, 0)
-        rate = int(total_sent / max(1, total_req) * 100)
-        return {"posts": total_posts, "sent": total_sent,
-                "requested": total_req, "rate": rate}
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("""SELECT COUNT(*), COALESCE(SUM(sent_count),0),
+                COALESCE(SUM(requested_count),0) FROM post_analytics
+                WHERE user_id=?""", (uid,)).fetchone()
+            total_posts, total_sent, total_req = r if r else (0, 0, 0)
+            rate = int(total_sent / max(1, total_req) * 100)
+            return {"posts": total_posts, "sent": total_sent,
+                    "requested": total_req, "rate": rate}
+        finally:
+            conn.close()
+    except Exception:
+        return {"posts": 0, "sent": 0, "requested": 0, "rate": 0}
 
 
 # ══════════════════════ DB — TEAMS (Reseller) ══════════════════════
@@ -2179,16 +3082,21 @@ def team_create(owner_id, name, comm=10):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def team_list_reseller(rid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("""SELECT id, client_id, plan, expires_at,
-            commission_paid, added_at FROM team_clients
-            WHERE reseller_id=? ORDER BY id DESC""", (rid,)).fetchall()
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("""SELECT id, client_id, plan, expires_at,
+                commission_paid, added_at FROM team_clients
+                WHERE reseller_id=? ORDER BY id DESC""", (rid,)).fetchall()
+        finally:
+            conn.close()
+    except Exception:
+        return []
 
 
 def team_add_client(reseller_id, client_id, plan="free", expires=None):
@@ -2201,27 +3109,77 @@ def team_add_client(reseller_id, client_id, plan="free", expires=None):
         conn.commit()
         _dirty()
         return c.lastrowid
-    finally: conn.close()
+    finally:
+        conn.close()
 
 
 def team_reseller_stats(rid):
-    conn = sqlite3.connect(DB_FILE)
     try:
-        r = conn.execute("""SELECT COUNT(*), COALESCE(SUM(commission_paid),0)
-            FROM team_clients WHERE reseller_id=?""", (rid,)).fetchone()
-        return (r[0] or 0, r[1] or 0) if r else (0, 0)
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            r = conn.execute("""SELECT COUNT(*),
+                COALESCE(SUM(commission_paid),0)
+                FROM team_clients WHERE reseller_id=?""", (rid,)).fetchone()
+            return (r[0] or 0, r[1] or 0) if r else (0, 0)
+        finally:
+            conn.close()
+    except Exception:
+        return (0, 0)
 
 
 def team_count_clients():
-    conn = sqlite3.connect(DB_FILE)
     try:
-        return conn.execute("SELECT COUNT(*) FROM team_clients").fetchone()[0]
-    finally: conn.close()
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            return conn.execute("SELECT COUNT(*) FROM team_clients"
+                                ).fetchone()[0]
+        finally:
+            conn.close()
+    except Exception:
+        return 0
 
 
-# ══════════════════════ END OF PART 3 ══════════════════════
-D("✅ Part 3 loaded — Queue + Payments + Bulk + Force + Team + Store + Analytics + Stats + Bonus + Retry + Coupons", "ok")
+# ══════════════════════ SYNC BOTS FROM CONFIG ══════════════════════
+def sync_bots_from_config():
+    """
+    Sync bots from config (BOT_TOKENS) into DB.
+    Server split 50/50 based on config lists.
+    Auto-dedupe + auto-assign server.
+    """
+    existing = {r[0] for r in db_list_bots()}
+    added_free = 0
+    added_paid = 0
+    skipped = 0
+
+    # Add free server bots
+    for tok in FREE_SERVER_TOKENS:
+        if tok in existing:
+            skipped += 1
+            continue
+        info = bot_get_me(tok)
+        if info and db_add_bot(tok, info["username"], info["id"],
+                               server="free"):
+            added_free += 1
+            existing.add(tok)
+
+    # Add paid server bots
+    for tok in PAID_SERVER_TOKENS:
+        if tok in existing:
+            skipped += 1
+            continue
+        info = bot_get_me(tok)
+        if info and db_add_bot(tok, info["username"], info["id"],
+                               server="paid"):
+            added_paid += 1
+            existing.add(tok)
+
+    D(f"Bot sync: +{added_free} free, +{added_paid} paid, "
+      f"{skipped} skipped", "ok")
+    return added_free + added_paid
+
+
+# ══════════════════════ END OF PART 4 ══════════════════════
+D("✅ Part 4 loaded — DB Part 3 (Queue, Payments, Store, Coupons, Stats)", "ok")
 # ══════════════════════ LANGUAGES ══════════════════════
 LANG_STRINGS = {
     "en": {
@@ -2251,6 +3209,8 @@ LANG_STRINGS = {
         "trust_score":"Trust Score", "post_history":"Post History",
         "store":"Emoji Store", "reseller":"Reseller Panel",
         "help_title":"How to Make Owner Admin",
+        "server":"Server", "free_server":"Free Server",
+        "paid_server":"Paid Server", "your_server":"Your Server",
     },
     "ur": {
         "welcome":"خوش آمدید", "send_reactions":"ری ایکشن بھیجیں",
@@ -2280,6 +3240,8 @@ LANG_STRINGS = {
         "trust_score":"ٹرسٹ سکور", "post_history":"پوسٹ ہسٹری",
         "store":"ایموجی اسٹور", "reseller":"ری سیلر پینل",
         "help_title":"اونر کو ایڈمن کیسے بنائیں",
+        "server":"سرور", "free_server":"مفت سرور",
+        "paid_server":"پڈ سرور", "your_server":"آپ کا سرور",
     },
     "hi": {
         "welcome":"वापसी पर स्वागत", "send_reactions":"रिएक्शन भेजें",
@@ -2309,6 +3271,8 @@ LANG_STRINGS = {
         "trust_score":"ट्रस्ट स्कोर", "post_history":"पोस्ट इतिहास",
         "store":"इमोजी स्टोर", "reseller":"रीसेलर पैनल",
         "help_title":"मालिक को एडमिन कैसे बनाएं",
+        "server":"सर्वर", "free_server":"फ्री सर्वर",
+        "paid_server":"पेड सर्वर", "your_server":"आपका सर्वर",
     },
     "ar": {
         "welcome":"مرحباً بعودتك", "send_reactions":"إرسال التفاعلات",
@@ -2338,6 +3302,8 @@ LANG_STRINGS = {
         "trust_score":"درجة الثقة", "post_history":"سجل المنشورات",
         "store":"متجر الرموز", "reseller":"لوحة الموزع",
         "help_title":"كيفية جعل المالك مشرفًا",
+        "server":"خادم", "free_server":"خادم مجاني",
+        "paid_server":"خادم مدفوع", "your_server":"خادمك",
     },
     "ru": {
         "welcome":"С возвращением", "send_reactions":"Реакции",
@@ -2367,6 +3333,8 @@ LANG_STRINGS = {
         "trust_score":"Рейтинг", "post_history":"История",
         "store":"Магазин", "reseller":"Реселлер",
         "help_title":"Как сделать владельца админом",
+        "server":"Сервер", "free_server":"Бесплатный",
+        "paid_server":"Платный", "your_server":"Ваш сервер",
     },
     "es": {
         "welcome":"Bienvenido", "send_reactions":"Reacciones",
@@ -2396,6 +3364,8 @@ LANG_STRINGS = {
         "trust_score":"Confianza", "post_history":"Historial",
         "store":"Tienda", "reseller":"Revendedor",
         "help_title":"Cómo hacer admin al dueño",
+        "server":"Servidor", "free_server":"Gratis",
+        "paid_server":"Pago", "your_server":"Tu servidor",
     },
     "id": {
         "welcome":"Selamat Datang", "send_reactions":"Kirim Reaksi",
@@ -2425,6 +3395,8 @@ LANG_STRINGS = {
         "trust_score":"Trust Score", "post_history":"Riwayat",
         "store":"Toko", "reseller":"Reseller",
         "help_title":"Cara menjadikan pemilik sebagai admin",
+        "server":"Server", "free_server":"Gratis",
+        "paid_server":"Berbayar", "your_server":"Server Anda",
     },
 }
 
@@ -2446,13 +3418,12 @@ def L(uid, key):
 
 
 def L_static(lang, key):
-    """Get translated string for specific lang code"""
     return LANG_STRINGS.get(lang, LANG_STRINGS["en"]).get(key, key)
 
 
 # ══════════════════════ HELP TEXT (Multi-Lang) ══════════════════════
 def get_help_text(uid=None):
-    """Complete help guide for making owner admin — multi-lang"""
+    """Complete help guide for making owner admin"""
     uname = get_owner_username()
     oid = get_owner_id()
 
@@ -2470,32 +3441,27 @@ def get_help_text(uid=None):
             f"👤 یوزرنیم: @{uname}\n"
             f"🆔 آئی ڈی: `{oid}`\n\n"
             f"{DIV}\n📋 **کیسے ایڈمن بنائیں؟**\n{DIV}\n\n"
-            f"**1️⃣ اپنے چینل/گروپ کو کھولیں**\n"
-            f"   ٹیلیگرام پر جائیں اور وہ چینل/گروپ کھولیں جہاں ری ایکشن بھیجنے ہیں\n\n"
+            f"**1️⃣ اپنے چینل/گروپ کو کھولیں**\n\n"
             f"**2️⃣ ایڈمنسٹریٹرز میں جائیں**\n"
-            f"   چینل/گروپ کا نام دبائیں → Administrators / ایڈمنسٹریٹرز\n\n"
+            f"   چینل/گروپ کا نام دبائیں → Administrators\n\n"
             f"**3️⃣ نیا ایڈمن شامل کریں**\n"
-            f"   Add Admin / نیا ایڈمن دبائیں\n"
             f"   🔍 سرچ میں لکھیں: `@{uname}`\n"
-            f"   یا آئی ڈی ڈالیں: `{oid}`\n\n"
+            f"   یا آئی ڈی: `{oid}`\n\n"
             f"**4️⃣ تمام اجازتیں دیں** ⚠️\n"
             f"   ✅ Change Info\n"
-            f"   ✅ Add New Admins / نئے ایڈمن شامل کریں\n"
-            f"   ✅ Post Messages / پیغامات بھیجیں\n"
-            f"   ✅ Edit Messages / پیغامات میں ترمیم\n"
-            f"   ✅ Delete Messages / پیغامات حذف کریں\n"
-            f"   ✅ Invite Users / صارفین مدعو کریں\n"
-            f"   ✅ Pin Messages / پیغامات پن کریں\n"
+            f"   ✅ Add New Admins\n"
+            f"   ✅ Post Messages\n"
+            f"   ✅ Edit Messages\n"
+            f"   ✅ Delete Messages\n"
+            f"   ✅ Invite Users\n"
+            f"   ✅ Pin Messages\n"
             f"   ✅ Manage Voice Chats\n"
-            f"   ✅ Ban Users / صارفین کو بین کریں\n\n"
-            f"**5️⃣ محفوظ کریں**\n"
-            f"   Save / محفوظ کریں دبائیں ✅\n\n"
+            f"   ✅ Ban Users\n\n"
+            f"**5️⃣ محفوظ کریں** ✅\n\n"
             f"{DIV}\n⚠️ **اہم نوٹ**\n{DIV}\n"
             f"• یہ عمل صرف **ایک بار** کرنا ہے\n"
-            f"• اونر کو **ایڈمن رہنے دیں** — نہ ہٹائیں\n"
-            f"• ری ایکشن بھیجنے والے بوٹ **خود** ایڈمن بنیں گے اور **خود** ہٹ جائیں گے\n"
+            f"• اونر کو **ایڈمن رہنے دیں**\n"
             f"• آپ کے اصل ایڈمن **محفوظ** رہیں گے\n\n"
-            f"{DIV}\n❓ مسئلہ ہو تو رابطہ کریں\n{DIV}\n"
             f"💬 @{uname}"
         )
 
@@ -2508,186 +3474,88 @@ def get_help_text(uid=None):
             f"👤 यूज़रनेम: @{uname}\n"
             f"🆔 आईडी: `{oid}`\n\n"
             f"{DIV}\n📋 **एडमिन कैसे बनाएं?**\n{DIV}\n\n"
-            f"**1️⃣ अपना चैनल/ग्रुप खोलें**\n"
-            f"   टेलीग्राम पर वह चैनल/ग्रुप खोलें\n\n"
-            f"**2️⃣ एडमिनिस्ट्रेटर्स में जाएं**\n"
-            f"   चैनल/ग्रुप का नाम दबाएं → Administrators\n\n"
+            f"**1️⃣ अपना चैनल/ग्रुप खोलें**\n\n"
+            f"**2️⃣ एडमिनिस्ट्रेटर्स में जाएं**\n\n"
             f"**3️⃣ नया एडमिन जोड़ें**\n"
-            f"   Add Admin दबाएं\n"
-            f"   🔍 सर्च में लिखें: `@{uname}`\n"
-            f"   या आईडी डालें: `{oid}`\n\n"
+            f"   🔍 सर्च: `@{uname}`\n"
+            f"   या आईडी: `{oid}`\n\n"
             f"**4️⃣ सभी परमिशन दें** ⚠️\n"
-            f"   ✅ Change Info\n"
-            f"   ✅ Add New Admins\n"
-            f"   ✅ Post Messages\n"
-            f"   ✅ Edit Messages\n"
-            f"   ✅ Delete Messages\n"
-            f"   ✅ Invite Users\n"
-            f"   ✅ Pin Messages\n"
-            f"   ✅ Manage Voice Chats\n"
-            f"   ✅ Ban Users\n\n"
-            f"**5️⃣ सेव करें**\n"
-            f"   Save दबाएं ✅\n\n"
-            f"{DIV}\n⚠️ **ज़रूरी बात**\n{DIV}\n"
-            f"• यह काम सिर्फ **एक बार** करना है\n"
-            f"• मालिक को **एडमिन रहने दें** — हटाएं नहीं\n"
-            f"• रिएक्शन भेजने वाले बॉट **खुद** एडमिन बनेंगे और **खुद** हट जाएंगे\n"
-            f"• आपके असली एडमिन **सुरक्षित** रहेंगे\n\n"
-            f"{DIV}\n❓ परेशानी हो तो संपर्क करें\n{DIV}\n"
+            f"   ✅ Change Info / Add Admins / Post / Edit / Delete\n"
+            f"   ✅ Invite / Pin / Manage Voice / Ban\n\n"
+            f"**5️⃣ सेव करें** ✅\n\n"
+            f"{DIV}\n⚠️ **ज़रूरी**\n{DIV}\n"
+            f"• सिर्फ **एक बार** करना है\n"
+            f"• मालिक को **एडमिन रहने दें**\n\n"
             f"💬 @{uname}"
         )
 
     if lang == "ar":
         return (
             f"{STAR_LINE}\n📖 **مساعدة — جعل المالك مشرفًا** 📖\n{STAR_LINE}\n\n"
-            f"❌ **هذا مطلوب أولاً!**\n"
-            f"قبل إرسال التفاعلات، اجعل المالك مشرفًا.\n\n"
+            f"❌ **هذا مطلوب أولاً!**\n\n"
             f"{DIV}\n👑 **بيانات المالك**\n{DIV}\n"
-            f"👤 اسم المستخدم: @{uname}\n"
-            f"🆔 المعرف: `{oid}`\n\n"
-            f"{DIV}\n📋 **كيف تصبح مشرفًا؟**\n{DIV}\n\n"
-            f"**1️⃣ افتح قناتك/مجموعتك**\n\n"
+            f"👤 @{uname}\n"
+            f"🆔 `{oid}`\n\n"
+            f"**1️⃣ افتح قناتك/مجموعتك**\n"
             f"**2️⃣ اذهب إلى المشرفين**\n"
-            f"   اضغط على اسم القناة → Administrators\n\n"
-            f"**3️⃣ أضف مشرفًا جديدًا**\n"
-            f"   اضغط Add Admin\n"
-            f"   🔍 ابحث: `@{uname}`\n"
-            f"   أو المعرف: `{oid}`\n\n"
-            f"**4️⃣ امنح جميع الصلاحيات** ⚠️\n"
-            f"   ✅ Change Info\n"
-            f"   ✅ Add New Admins\n"
-            f"   ✅ Post Messages\n"
-            f"   ✅ Edit Messages\n"
-            f"   ✅ Delete Messages\n"
-            f"   ✅ Invite Users\n"
-            f"   ✅ Pin Messages\n"
-            f"   ✅ Manage Voice Chats\n"
-            f"   ✅ Ban Users\n\n"
-            f"**5️⃣ احفظ**\n"
-            f"   اضغط Save ✅\n\n"
-            f"{DIV}\n⚠️ **ملاحظة مهمة**\n{DIV}\n"
-            f"• افعل هذا **مرة واحدة** فقط\n"
-            f"• اترك المالك **مشرفًا** — لا تحذفه\n"
-            f"• البوتات التي ترسل التفاعلات ستصبح مشرفة **تلقائيًا** وستُزال **تلقائيًا**\n"
-            f"• مشرفوك الأصليون **آمنون**\n\n"
-            f"{DIV}\n❓ للدعم\n{DIV}\n"
+            f"**3️⃣ أضف مشرفًا**\n"
+            f"   `@{uname}` أو `{oid}`\n"
+            f"**4️⃣ امنح جميع الصلاحيات** ✅\n"
+            f"**5️⃣ احفظ** ✅\n\n"
             f"💬 @{uname}"
         )
 
     if lang == "ru":
         return (
-            f"{STAR_LINE}\n📖 **Помощь — как сделать владельца админом** 📖\n{STAR_LINE}\n\n"
-            f"❌ **Сначала это!**\n"
-            f"Перед отправкой реакций сделайте владельца админом.\n\n"
-            f"{DIV}\n👑 **Данные владельца**\n{DIV}\n"
-            f"👤 Юзернейм: @{uname}\n"
-            f"🆔 ID: `{oid}`\n\n"
-            f"{DIV}\n📋 **Как добавить в админы?**\n{DIV}\n\n"
-            f"**1️⃣ Откройте канал/группу**\n\n"
-            f"**2️⃣ Перейдите в администраторы**\n"
-            f"   Нажмите на название → Administrators\n\n"
-            f"**3️⃣ Добавьте админа**\n"
-            f"   Нажмите Add Admin\n"
-            f"   🔍 Поиск: `@{uname}`\n"
-            f"   или ID: `{oid}`\n\n"
-            f"**4️⃣ Дайте все права** ⚠️\n"
-            f"   ✅ Change Info\n"
-            f"   ✅ Add New Admins\n"
-            f"   ✅ Post Messages\n"
-            f"   ✅ Edit Messages\n"
-            f"   ✅ Delete Messages\n"
-            f"   ✅ Invite Users\n"
-            f"   ✅ Pin Messages\n"
-            f"   ✅ Manage Voice Chats\n"
-            f"   ✅ Ban Users\n\n"
-            f"**5️⃣ Сохраните**\n"
-            f"   Нажмите Save ✅\n\n"
-            f"{DIV}\n⚠️ **Важно**\n{DIV}\n"
-            f"• Делайте это только **один раз**\n"
-            f"• Оставьте владельца **админом** — не удаляйте\n"
-            f"• Боты добавляются и удаляются **автоматически**\n"
-            f"• Ваши админы **в безопасности**\n\n"
-            f"{DIV}\n❓ Поддержка\n{DIV}\n"
+            f"{STAR_LINE}\n📖 **Помощь — владелец админом** 📖\n{STAR_LINE}\n\n"
+            f"❌ **Это обязательно!**\n\n"
+            f"{DIV}\n👑 **Владелец**\n{DIV}\n"
+            f"👤 @{uname}\n"
+            f"🆔 `{oid}`\n\n"
+            f"**1️⃣ Откройте канал/группу**\n"
+            f"**2️⃣ Администраторы**\n"
+            f"**3️⃣ Добавить админа**\n"
+            f"   `@{uname}` или `{oid}`\n"
+            f"**4️⃣ Дайте ВСЕ права** ✅\n"
+            f"**5️⃣ Сохраните** ✅\n\n"
             f"💬 @{uname}"
         )
 
     if lang == "es":
         return (
-            f"{STAR_LINE}\n📖 **Ayuda — Cómo hacer admin al dueño** 📖\n{STAR_LINE}\n\n"
-            f"❌ **¡Esto es obligatorio!**\n"
-            f"Antes de enviar reacciones, haz admin al dueño.\n\n"
-            f"{DIV}\n👑 **Datos del dueño**\n{DIV}\n"
-            f"👤 Usuario: @{uname}\n"
-            f"🆔 ID: `{oid}`\n\n"
-            f"{DIV}\n📋 **Cómo hacer admin?**\n{DIV}\n\n"
-            f"**1️⃣ Abre tu canal/grupo**\n\n"
-            f"**2️⃣ Ve a Administradores**\n"
-            f"   Toca el nombre → Administrators\n\n"
-            f"**3️⃣ Añade nuevo admin**\n"
-            f"   Toca Add Admin\n"
-            f"   🔍 Busca: `@{uname}`\n"
-            f"   o ID: `{oid}`\n\n"
-            f"**4️⃣ Da TODOS los permisos** ⚠️\n"
-            f"   ✅ Change Info\n"
-            f"   ✅ Add New Admins\n"
-            f"   ✅ Post Messages\n"
-            f"   ✅ Edit Messages\n"
-            f"   ✅ Delete Messages\n"
-            f"   ✅ Invite Users\n"
-            f"   ✅ Pin Messages\n"
-            f"   ✅ Manage Voice Chats\n"
-            f"   ✅ Ban Users\n\n"
-            f"**5️⃣ Guarda**\n"
-            f"   Toca Save ✅\n\n"
-            f"{DIV}\n⚠️ **Nota importante**\n{DIV}\n"
-            f"• Hazlo **solo una vez**\n"
-            f"• Deja al dueño **como admin** — no lo quites\n"
-            f"• Los bots se añaden y quitan **automáticamente**\n"
-            f"• Tus admins reales están **seguros**\n\n"
-            f"{DIV}\n❓ Soporte\n{DIV}\n"
+            f"{STAR_LINE}\n📖 **Ayuda — Hacer admin al dueño** 📖\n{STAR_LINE}\n\n"
+            f"❌ **¡Obligatorio!**\n\n"
+            f"{DIV}\n👑 **Dueño**\n{DIV}\n"
+            f"👤 @{uname}\n"
+            f"🆔 `{oid}`\n\n"
+            f"**1️⃣ Abre tu canal/grupo**\n"
+            f"**2️⃣ Administradores**\n"
+            f"**3️⃣ Añadir admin**\n"
+            f"   `@{uname}` o `{oid}`\n"
+            f"**4️⃣ Dar TODOS los permisos** ✅\n"
+            f"**5️⃣ Guardar** ✅\n\n"
             f"💬 @{uname}"
         )
 
     if lang == "id":
         return (
-            f"{STAR_LINE}\n📖 **Bantuan — Cara menjadikan pemilik admin** 📖\n{STAR_LINE}\n\n"
-            f"❌ **Ini wajib dulu!**\n"
-            f"Sebelum kirim reaksi, jadikan pemilik sebagai admin.\n\n"
-            f"{DIV}\n👑 **Data Pemilik**\n{DIV}\n"
-            f"👤 Username: @{uname}\n"
-            f"🆔 ID: `{oid}`\n\n"
-            f"{DIV}\n📋 **Cara jadi admin?**\n{DIV}\n\n"
-            f"**1️⃣ Buka channel/grup**\n\n"
-            f"**2️⃣ Ke Administrator**\n"
-            f"   Tap nama → Administrators\n\n"
-            f"**3️⃣ Tambah admin baru**\n"
-            f"   Tap Add Admin\n"
-            f"   🔍 Cari: `@{uname}`\n"
-            f"   atau ID: `{oid}`\n\n"
-            f"**4️⃣ Beri SEMUA izin** ⚠️\n"
-            f"   ✅ Change Info\n"
-            f"   ✅ Add New Admins\n"
-            f"   ✅ Post Messages\n"
-            f"   ✅ Edit Messages\n"
-            f"   ✅ Delete Messages\n"
-            f"   ✅ Invite Users\n"
-            f"   ✅ Pin Messages\n"
-            f"   ✅ Manage Voice Chats\n"
-            f"   ✅ Ban Users\n\n"
-            f"**5️⃣ Simpan**\n"
-            f"   Tap Save ✅\n\n"
-            f"{DIV}\n⚠️ **Catatan Penting**\n{DIV}\n"
-            f"• Lakukan ini **hanya sekali**\n"
-            f"• Biarkan pemilik **tetap admin** — jangan hapus\n"
-            f"• Bot ditambah & dihapus **otomatis**\n"
-            f"• Admin asli Anda **aman**\n\n"
-            f"{DIV}\n❓ Dukungan\n{DIV}\n"
+            f"{STAR_LINE}\n📖 **Bantuan — Pemilik jadi admin** 📖\n{STAR_LINE}\n\n"
+            f"❌ **Wajib dulu!**\n\n"
+            f"{DIV}\n👑 **Pemilik**\n{DIV}\n"
+            f"👤 @{uname}\n"
+            f"🆔 `{oid}`\n\n"
+            f"**1️⃣ Buka channel/grup**\n"
+            f"**2️⃣ Administrator**\n"
+            f"**3️⃣ Tambah admin**\n"
+            f"   `@{uname}` atau `{oid}`\n"
+            f"**4️⃣ Beri SEMUA izin** ✅\n"
+            f"**5️⃣ Simpan** ✅\n\n"
             f"💬 @{uname}"
         )
 
     # English default
     return (
-        f"{STAR_LINE}\n📖 **HELP — How to Make Owner Admin** 📖\n{STAR_LINE}\n\n"
+        f"{STAR_LINE}\n📖 **HELP — Make Owner Admin** 📖\n{STAR_LINE}\n\n"
         f"❌ **Required first!**\n"
         f"Before sending reactions, you MUST make the owner an admin.\n\n"
         f"{DIV}\n👑 **OWNER INFO**\n{DIV}\n"
@@ -2726,7 +3594,6 @@ def get_help_text(uid=None):
 
 # ══════════════════════ BOT API HELPERS ══════════════════════
 def bot_get_me(token):
-    """Get bot info from token"""
     try:
         r = requests.get(f"https://api.telegram.org/bot{token}/getMe",
                          timeout=10).json()
@@ -2736,7 +3603,7 @@ def bot_get_me(token):
 
 
 def bot_reaction(token, chat_id, msg_id, emoji):
-    """Send a single reaction. Returns (ok, description, retry_after)"""
+    """Send single reaction. Returns (ok, desc, retry_sec)"""
     url = f"https://api.telegram.org/bot{token}/setMessageReaction"
     payload = {
         "chat_id": chat_id,
@@ -2760,7 +3627,6 @@ def bot_reaction(token, chat_id, msg_id, emoji):
 
 
 def bot_send_message(token, chat_id, text):
-    """Send message. Returns (ok, description)"""
     url = f"https://api.telegram.org/bot{token}/sendMessage"
     payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
     try:
@@ -2771,7 +3637,6 @@ def bot_send_message(token, chat_id, text):
 
 
 def bot_send_photo(token, chat_id, photo_url, caption=""):
-    """Send photo. Returns (ok, description)"""
     url = f"https://api.telegram.org/bot{token}/sendPhoto"
     payload = {"chat_id": chat_id, "photo": photo_url,
                "caption": caption, "parse_mode": "HTML"}
@@ -2782,22 +3647,8 @@ def bot_send_photo(token, chat_id, photo_url, caption=""):
         return False, str(e)
 
 
-def sync_bots():
-    """Sync bot tokens from BOT_TOKENS list into DB"""
-    ex = {r[0] for r in db_list_bots()}
-    added = 0
-    for tok in BOT_TOKENS:
-        if tok in ex: continue
-        info = bot_get_me(tok)
-        if info and db_add_bot(tok, info["username"], info["id"]):
-            added += 1
-            ex.add(tok)
-    return db_list_bots(), added
-
-
 # ══════════════════════ PARSE HELPERS ══════════════════════
 def parse_channel_link(link):
-    """Parse a channel/group link. Returns (chat_ref, invite_hash)"""
     link = link.strip()
     if "t.me/+" in link:
         h = link.split("+")[-1].split("?")[0]
@@ -2818,7 +3669,6 @@ def parse_channel_link(link):
 
 
 def parse_post_link(link):
-    """Parse a post link. Returns (chat_ref, msg_id)"""
     link = link.strip()
     m = re.match(r"https?://t\.me/c/(\d+)/(\d+)", link)
     if m:
@@ -2833,10 +3683,11 @@ def parse_post_link(link):
 
 
 def to_bot_api_chat_id(chat_id):
-    """Convert chat_id to Bot API format"""
     s = str(chat_id)
-    if s.startswith("-100"): return s
-    if s.startswith("-"): return "-100" + s.lstrip("-")
+    if s.startswith("-100"):
+        return s
+    if s.startswith("-"):
+        return "-100" + s.lstrip("-")
     return "-100" + s
 
 
@@ -2845,7 +3696,8 @@ def is_channel(entity):
 
 
 def is_group(entity):
-    if isinstance(entity, Chat): return True
+    if isinstance(entity, Chat):
+        return True
     if isinstance(entity, Channel) and getattr(entity, 'megagroup', False):
         return True
     return False
@@ -2857,7 +3709,6 @@ def is_permanent_admin(username):
 
 # ══════════════════════ BUTTON HELPER ══════════════════════
 def btn(text, data=None, url=None, style=None):
-    """Create button with optional style"""
     if url:
         b = Button.url(text, url)
     else:
@@ -2877,11 +3728,12 @@ def btn(text, data=None, url=None, style=None):
 
 # ══════════════════════ SAFE EDIT / ANSWER ══════════════════════
 async def safe_edit(event, text, buttons=None, alert=None):
-    """Edit message safely with flood protection"""
     try:
         if alert:
-            try: await event.answer(alert, alert=True)
-            except Exception: pass
+            try:
+                await event.answer(alert, alert=True)
+            except Exception:
+                pass
         key = getattr(event, "chat_id", 0)
         now = time.time()
         wait = 1.5 - (now - _LAST_EDIT_TIME.get(key, 0))
@@ -2914,7 +3766,6 @@ async def safe_edit(event, text, buttons=None, alert=None):
 
 
 async def safe_answer(event, text=None, alert=False):
-    """Answer callback safely"""
     try:
         if text:
             await event.answer(text, alert=alert)
@@ -2926,7 +3777,6 @@ async def safe_answer(event, text=None, alert=False):
 
 # ══════════════════════ SAFE ENTITY ══════════════════════
 async def safe_get_entity(ref, cache_key=None, cache_store=None):
-    """Get entity with cache + backup fallback"""
     global RESOLVE_FLOOD_UNTIL
     if RESOLVE_FLOOD_UNTIL and datetime.now() < RESOLVE_FLOOD_UNTIL:
         raise Exception("Resolve flood")
@@ -2974,7 +3824,6 @@ async def safe_get_entity(ref, cache_key=None, cache_store=None):
 
 
 async def safe_get_owner_entity():
-    """Get owner entity with long cache"""
     global RESOLVE_FLOOD_UNTIL
     now = datetime.now()
     if RESOLVE_FLOOD_UNTIL and now < RESOLVE_FLOOD_UNTIL:
@@ -3007,74 +3856,112 @@ def clear_owner_cache():
     OWNER_ENTITY_CACHE["expires_at"] = None
 
 
-# ══════════════════════ END OF PART 4 ══════════════════════
-D("✅ Part 4 loaded — Languages + Bot API + Helpers + Safe Edit + Entity Cache", "ok")
-# ══════════════════════ BOT POOL MANAGEMENT ══════════════════════
-def is_bot_flooded(token):
-    """Check if bot is in flood wait"""
-    u = FLOOD_UNTIL.get(token)
-    if u is None: return False
+# ══════════════════════ END OF PART 5 ══════════════════════
+D("✅ Part 5 loaded — Languages + Help + Bot API + Helpers", "ok")
+# ══════════════════════ BOT POOL (DUAL-SERVER AWARE) ══════════════════════
+def get_pool(server):
+    """Get pool dict for a server"""
+    return PAID_POOL if server == "paid" else FREE_POOL
+
+
+def get_flood_map(server):
+    """Get flood dict for a server"""
+    return PAID_FLOOD_UNTIL if server == "paid" else FREE_FLOOD_UNTIL
+
+
+def is_bot_flooded(token, server=None):
+    """Check if bot is in flood wait (server-aware)"""
+    if server:
+        flood_map = get_flood_map(server)
+        u = flood_map.get(token)
+    else:
+        u = FLOOD_UNTIL.get(token)
+        if u is None:
+            u = FREE_FLOOD_UNTIL.get(token) or PAID_FLOOD_UNTIL.get(token)
+    if u is None:
+        return False
     if datetime.now() >= u:
-        FLOOD_UNTIL.pop(token, None)
+        if server:
+            get_flood_map(server).pop(token, None)
+        else:
+            FLOOD_UNTIL.pop(token, None)
+            FREE_FLOOD_UNTIL.pop(token, None)
+            PAID_FLOOD_UNTIL.pop(token, None)
         return False
     return True
 
 
-def mark_bot_flooded(token, sec):
+def mark_bot_flooded(token, sec, server=None):
     """Mark bot as flooded"""
-    FLOOD_UNTIL[token] = datetime.now() + timedelta(seconds=sec)
+    until = datetime.now() + timedelta(seconds=sec)
+    FLOOD_UNTIL[token] = until
+    if server == "paid":
+        PAID_FLOOD_UNTIL[token] = until
+    elif server == "free":
+        FREE_FLOOD_UNTIL[token] = until
 
 
 def cleanup_bot_pool():
-    """Remove stale bots from pool"""
+    """Remove stale bots from both pools"""
     now = datetime.now()
-    stale = []
     ft = now - timedelta(minutes=BOT_BUSY_TIMEOUT + 1)
-    for tok, info in list(BOT_POOL.items()):
-        if not isinstance(info, dict):
-            stale.append(tok)
-            continue
-        bu = info.get("busy_until")
-        lu = info.get("last_used")
-        if bu and bu < now:
-            stale.append(tok)
-            continue
-        if lu and lu < ft:
-            stale.append(tok)
-            continue
-    for tok in stale:
-        BOT_POOL.pop(tok, None)
-    # Cleanup flood tracker
-    for tok in list(FLOOD_UNTIL.keys()):
-        if FLOOD_UNTIL[tok] < now:
-            FLOOD_UNTIL.pop(tok, None)
-    return len(stale)
+    cleaned = 0
+
+    for pool in (FREE_POOL, PAID_POOL):
+        stale = []
+        for tok, info in list(pool.items()):
+            if not isinstance(info, dict):
+                stale.append(tok)
+                continue
+            bu = info.get("busy_until")
+            lu = info.get("last_used")
+            if bu and bu < now:
+                stale.append(tok)
+                continue
+            if lu and lu < ft:
+                stale.append(tok)
+                continue
+        for tok in stale:
+            pool.pop(tok, None)
+            cleaned += 1
+
+    # Cleanup floods
+    for fm in (FLOOD_UNTIL, FREE_FLOOD_UNTIL, PAID_FLOOD_UNTIL):
+        for tok in list(fm.keys()):
+            if fm[tok] < now:
+                fm.pop(tok, None)
+
+    return cleaned
 
 
-async def acquire_bots(count, uid):
+async def acquire_bots(count, uid, server):
     """
-    Acquire N free bots from pool.
+    Acquire N free bots from specified server pool.
     Returns (list_of_(token, username), wait_sec)
     """
     async with BOT_POOL_LOCK:
         cleanup_bot_pool()
-        bots = db_list_bots()
+        bots = db_list_bots(server=server)
+        pool = get_pool(server)
+        flood_map = get_flood_map(server)
         now = datetime.now()
         free = []
+
         for tok, uname, bid, added in bots:
             if is_permanent_admin(uname):
                 continue
-            if is_bot_flooded(tok):
+            if is_bot_flooded(tok, server):
                 continue
-            info = BOT_POOL.get(tok)
+            info = pool.get(tok)
             bu = info.get("busy_until") if isinstance(info, dict) else None
             if bu is None or now >= bu:
                 free.append((tok, uname))
             if len(free) >= count:
                 break
+
         if free:
             for tok, uname in free:
-                BOT_POOL[tok] = {
+                pool[tok] = {
                     "username": uname,
                     "busy_until": now + timedelta(minutes=BOT_BUSY_TIMEOUT),
                     "last_used": now,
@@ -3083,54 +3970,83 @@ async def acquire_bots(count, uid):
         return None, 30
 
 
-async def release_bots(bot_list):
+async def release_bots(bot_list, server):
     """Release bots back to pool"""
     async with BOT_POOL_LOCK:
         now = datetime.now()
+        pool = get_pool(server)
         for tok, uname in bot_list:
-            info = BOT_POOL.get(tok)
+            info = pool.get(tok)
             if info:
                 info["busy_until"] = now
                 info["last_used"] = now
 
 
-def get_pool_status():
-    """Get detailed pool status"""
+def get_pool_status(server=None):
+    """Get detailed pool status for one or both servers"""
     now = datetime.now()
-    all_bots = db_list_bots()
-    total = len(all_bots)
-    perm = sum(1 for b in all_bots if is_permanent_admin(b[1]))
-    flooded = sum(1 for t in FLOOD_UNTIL if FLOOD_UNTIL[t] > now)
-    busy = 0
-    free = 0
-    for tok, uname, bid, added in all_bots:
-        if is_permanent_admin(uname): continue
-        if tok in FLOOD_UNTIL and FLOOD_UNTIL[tok] > now: continue
-        info = BOT_POOL.get(tok)
-        if isinstance(info, dict) and info.get("busy_until") and \
-           info["busy_until"] > now:
-            busy += 1
-        else:
-            free += 1
-    return {
-        "total": total, "permanent": perm,
-        "visible": total - perm, "free": free,
-        "busy": busy, "flooded": flooded
-    }
+    result = {}
+
+    servers_to_check = [server] if server else ["free", "paid"]
+
+    for sv in servers_to_check:
+        all_bots = db_list_bots(server=sv)
+        pool = get_pool(sv)
+        flood_map = get_flood_map(sv)
+        total = len(all_bots)
+        perm = sum(1 for b in all_bots if is_permanent_admin(b[1]))
+        flooded = sum(1 for t in flood_map if flood_map[t] > now)
+        busy = 0
+        free = 0
+        for tok, uname, bid, added in all_bots:
+            if is_permanent_admin(uname):
+                continue
+            if tok in flood_map and flood_map[tok] > now:
+                continue
+            info = pool.get(tok)
+            if isinstance(info, dict) and info.get("busy_until") and \
+               info["busy_until"] > now:
+                busy += 1
+            else:
+                free += 1
+        result[sv] = {
+            "total": total, "permanent": perm, "visible": total - perm,
+            "free": free, "busy": busy, "flooded": flooded
+        }
+
+    if server:
+        return result[server]
+    return result
 
 
-def reset_bot_pool():
-    """Reset pool — clear busy + flood"""
-    op = len(BOT_POOL)
-    of = len(FLOOD_UNTIL)
-    BOT_POOL.clear()
+def reset_bot_pool(server=None):
+    """Reset pool(s) — clear busy + flood"""
+    if server == "free":
+        op = len(FREE_POOL)
+        of = len(FREE_FLOOD_UNTIL)
+        FREE_POOL.clear()
+        FREE_FLOOD_UNTIL.clear()
+        return op, of
+    if server == "paid":
+        op = len(PAID_POOL)
+        of = len(PAID_FLOOD_UNTIL)
+        PAID_POOL.clear()
+        PAID_FLOOD_UNTIL.clear()
+        return op, of
+    # Reset both
+    op = len(FREE_POOL) + len(PAID_POOL)
+    of = len(FREE_FLOOD_UNTIL) + len(PAID_FLOOD_UNTIL)
+    FREE_POOL.clear()
+    PAID_POOL.clear()
+    FREE_FLOOD_UNTIL.clear()
+    PAID_FLOOD_UNTIL.clear()
     FLOOD_UNTIL.clear()
+    BOT_POOL.clear()
     return op, of
 
 
 # ══════════════════════ REAL ACCOUNTS ══════════════════════
 def discover_session_files():
-    """Find all .session files in SESSIONS_DIR"""
     if not os.path.isdir(SESSIONS_DIR):
         return []
     try:
@@ -3143,9 +4059,9 @@ def discover_session_files():
 
 
 def is_real_flooded(sf):
-    """Check if session is flooded"""
     u = REAL_FLOOD_UNTIL.get(sf)
-    if u is None: return False
+    if u is None:
+        return False
     if datetime.now() >= u:
         REAL_FLOOD_UNTIL.pop(sf, None)
         return False
@@ -3153,24 +4069,19 @@ def is_real_flooded(sf):
 
 
 def mark_real_flooded(sf, sec):
-    """Mark real session as flooded"""
     REAL_FLOOD_UNTIL[sf] = datetime.now() + timedelta(seconds=sec)
 
 
 def real_count_available():
-    """How many real sessions are free"""
     return sum(1 for f in discover_session_files()
                if not is_real_flooded(f))
 
 
 def real_count_flooded():
-    """How many real sessions are flooded"""
-    return sum(1 for f in discover_session_files()
-               if is_real_flooded(f))
+    return sum(1 for f in discover_session_files() if is_real_flooded(f))
 
 
 def real_get_status():
-    """Detailed real accounts status"""
     files = discover_session_files()
     flooded = real_count_flooded()
     busy = len(REAL_CLIENTS)
@@ -3185,27 +4096,28 @@ def real_get_status():
 
 
 async def get_real_client(sf):
-    """Get or create a real client from session file"""
     async with REAL_CLIENT_LOCK:
-        # ✅ MAX_CLIENTS limit — RAM optimization
         if len(REAL_CLIENTS) >= MAX_CLIENTS:
             to_remove = list(REAL_CLIENTS.keys())[
                 :max(1, len(REAL_CLIENTS) - MAX_CLIENTS + 1)]
             for k in to_remove:
-                try: await REAL_CLIENTS[k].disconnect()
-                except Exception: pass
+                try:
+                    await REAL_CLIENTS[k].disconnect()
+                except Exception:
+                    pass
                 REAL_CLIENTS.pop(k, None)
-        # Return cached if connected
         if sf in REAL_CLIENTS:
             c = REAL_CLIENTS[sf]
             try:
-                if c.is_connected(): return c
+                if c.is_connected():
+                    return c
             except Exception:
                 pass
-            try: await c.disconnect()
-            except Exception: pass
+            try:
+                await c.disconnect()
+            except Exception:
+                pass
             REAL_CLIENTS.pop(sf, None)
-        # Create new client
         path = os.path.join(SESSIONS_DIR, sf.replace(".session", ""))
         if not os.path.exists(path + ".session"):
             return None
@@ -3223,18 +4135,13 @@ async def get_real_client(sf):
 
 
 async def real_send_reaction(sf, chat_ref, msg_id, emoji):
-    """
-    Send reaction using a real account.
-    Returns (ok, err, retry_sec)
-    """
     if is_real_flooded(sf):
         return False, "flooded", 0
     client = await get_real_client(sf)
     if not client:
         return False, "login_failed", 0
     try:
-        entity = await asyncio.wait_for(
-            client.get_entity(chat_ref), timeout=20)
+        entity = await asyncio.wait_for(client.get_entity(chat_ref), timeout=20)
         await asyncio.wait_for(
             client(SendReactionRequest(
                 peer=entity, msg_id=msg_id,
@@ -3249,10 +4156,6 @@ async def real_send_reaction(sf, chat_ref, msg_id, emoji):
 
 async def send_reactions_real(chat_ref, msg_id, count,
                                emoji_pool=None, on_progress=None):
-    """
-    Send reactions using real accounts.
-    Returns dict with ok/fail/flooded/total
-    """
     files = discover_session_files()
     if not files:
         return {"ok": 0, "fail": 0, "flooded": 0, "total": 0}
@@ -3261,21 +4164,16 @@ async def send_reactions_real(chat_ref, msg_id, count,
         return {"ok": 0, "fail": 0, "flooded": 0, "total": 0}
     random.shuffle(available)
     senders = available[:min(count, len(available))]
-
-    # Emoji pool
     if emoji_pool:
         valid = [e for e in emoji_pool if e in ALL_REACTIONS]
         emojis = valid if valid else DEFAULT_REACTIONS
     else:
         emojis = DEFAULT_REACTIONS + ["🥰", "😍", "💯", "🎉", "😎", "👏"]
-
     ok = fail = flooded = 0
     total = len(senders)
-
     for i, sf in enumerate(senders, 1):
         emoji = random.choice(emojis)
-        success, err, wait = await real_send_reaction(
-            sf, chat_ref, msg_id, emoji)
+        success, err, wait = await real_send_reaction(sf, chat_ref, msg_id, emoji)
         if success:
             ok += 1
         elif wait > 0:
@@ -3284,38 +4182,37 @@ async def send_reactions_real(chat_ref, msg_id, count,
         else:
             fail += 1
         if on_progress:
-            try: await on_progress(i, total, ok)
-            except Exception: pass
+            try:
+                await on_progress(i, total, ok)
+            except Exception:
+                pass
         await asyncio.sleep(REAL_COOLDOWN)
-
     return {"ok": ok, "fail": fail, "flooded": flooded, "total": total}
 
 
 async def close_all_real_clients():
-    """Disconnect all loaded real clients"""
     for sf, c in list(REAL_CLIENTS.items()):
-        try: await c.disconnect()
-        except Exception: pass
+        try:
+            await c.disconnect()
+        except Exception:
+            pass
     REAL_CLIENTS.clear()
 
 
 # ══════════════════════ JOIN / APPROVAL CHECKS ══════════════════════
 async def is_joined(uid):
-    """Check if user joined all force channels"""
     if not feat_force_join() or OWNER_IS(uid):
         return True
     channels = db_list_force_channels(only_active=True)
     if not channels:
         return True
     for fc in channels:
-        # Try bot first
         try:
             await asyncio.wait_for(
                 bot.get_permissions(fc[1], uid), timeout=8)
             continue
         except Exception:
             pass
-        # Try admin client
         try:
             await asyncio.wait_for(
                 admin_client(GetParticipantRequest(
@@ -3327,26 +4224,26 @@ async def is_joined(uid):
 
 
 def is_approved(uid):
-    """Check if user is approved"""
-    if OWNER_IS(uid): return True
-    if db_is_banned(uid): return False
+    if OWNER_IS(uid):
+        return True
+    if db_is_banned(uid):
+        return False
     return db_approval_status(uid) == "approved"
 
 
 # ══════════════════════ ADMIN CHECKS ══════════════════════
 async def is_admin_in(entity, user_id):
-    """Check if user_id is admin in entity"""
     try:
         perms = await asyncio.wait_for(
             admin_client.get_permissions(entity, user_id), timeout=10)
-        if perms is None: return False
+        if perms is None:
+            return False
         return getattr(perms, 'is_admin', False)
     except Exception:
         return False
 
 
 async def check_owner_admin(entity):
-    """Check if owner is admin in entity"""
     try:
         oe = await safe_get_owner_entity()
         return await is_admin_in(entity, oe.id)
@@ -3355,10 +4252,6 @@ async def check_owner_admin(entity):
 
 
 async def get_current_admin_bots(entity):
-    """
-    Get list of admin bots in entity.
-    Returns [(username, user_id), ...]
-    """
     admins = []
     try:
         result = await asyncio.wait_for(
@@ -3375,24 +4268,23 @@ async def get_current_admin_bots(entity):
     return admins
 
 
-async def get_our_admin_bots(entity):
+async def get_our_admin_bots(entity, server=None):
     """
-    ✅ Get ONLY our own reaction bots that are admin.
-    Skips permanent admins + original admins.
-    Returns [(token, username, user_id), ...]
+    Get ONLY our reaction bots that are admin (server-aware).
+    Skips permanent + original admins.
     """
     all_admins = await get_current_admin_bots(entity)
     if not all_admins:
         return []
-    # Get our bot tokens mapped by username
-    db_bots = db_list_bots()
+    if server:
+        db_bots = db_list_bots(server=server)
+    else:
+        db_bots = db_list_bots()
     uname_to_token = {u: t for t, u, b, a in db_bots}
     result = []
     for uname, uid in all_admins:
-        # Skip permanent admin bots
         if is_permanent_admin(uname):
             continue
-        # Skip bots not in our DB (original admins)
         tok = uname_to_token.get(uname)
         if not tok:
             continue
@@ -3401,11 +4293,7 @@ async def get_our_admin_bots(entity):
 
 
 async def get_non_our_admin_bots(entity):
-    """
-    Get bots that are admin but NOT in our DB.
-    These are original/other admins — DO NOT TOUCH.
-    Returns [(username, user_id), ...]
-    """
+    """Original admins (never touch)"""
     all_admins = await get_current_admin_bots(entity)
     if not all_admins:
         return []
@@ -3420,12 +4308,8 @@ async def get_non_our_admin_bots(entity):
     return result
 
 
-# ══════════════════════ MAKE BOT ADMIN / REMOVE ══════════════════════
+# ══════════════════════ MAKE / REMOVE ADMIN ══════════════════════
 async def make_bot_admin(entity, bot_entity, atype):
-    """
-    Make a bot admin with proper rights.
-    Returns (ok, reason)
-    """
     if atype == "channel":
         rights = ChatAdminRights(
             change_info=False, post_messages=True, edit_messages=False,
@@ -3455,10 +4339,6 @@ async def make_bot_admin(entity, bot_entity, atype):
 
 
 async def remove_admin_rights(entity, user_id, username):
-    """
-    Remove admin rights from a bot.
-    ✅ NEVER remove permanent admin bots.
-    """
     if is_permanent_admin(username):
         return True
     empty = ChatAdminRights(
@@ -3481,17 +4361,11 @@ async def remove_admin_rights(entity, user_id, username):
 
 
 async def remove_admin_by_username(entity, username):
-    """
-    Remove admin using bot's username.
-    Looks up bot in our DB, then removes.
-    ✅ Only removes OUR bots.
-    """
     if is_permanent_admin(username):
         return False
-    # Find bot's user_id from our DB
     bot_row = db_get_bot_by_username(username)
     if not bot_row:
-        return False  # Not our bot
+        return False
     try:
         be = await safe_get_entity(
             username, cache_key=f"bot:{username}",
@@ -3503,15 +4377,10 @@ async def remove_admin_by_username(entity, username):
 
 # ══════════════════════ ADD ONE BOT ══════════════════════
 async def add_one_bot(entity, bot_token, atype, cache_key):
-    """
-    Add a bot to chat (invite + promote).
-    Returns (ok, reason)
-    """
     info = bot_get_me(bot_token)
     if not info:
         return False, "invalid"
     username = info["username"]
-    # Resolve bot entity
     try:
         be = await safe_get_entity(
             username, cache_key=f"bot:{username}",
@@ -3519,20 +4388,17 @@ async def add_one_bot(entity, bot_token, atype, cache_key):
     except Exception as e:
         return False, f"resolve: {str(e)[:40]}"
 
-    # For channels — direct promote
     if atype == "channel":
         if await is_admin_in(entity, be.id):
             return True, "already_admin"
         return await make_bot_admin(entity, be, "channel")
 
-    # For groups — invite then promote
     try:
         await asyncio.wait_for(
             admin_client(GetParticipantRequest(
                 channel=entity, participant=be.id)),
             timeout=10)
     except UserNotParticipantError:
-        # Invite
         try:
             await asyncio.wait_for(
                 admin_client(InviteToChannelRequest(
@@ -3540,7 +4406,6 @@ async def add_one_bot(entity, bot_token, atype, cache_key):
                 timeout=15)
             await asyncio.sleep(2)
         except Exception:
-            # Try AddChatUserRequest for basic groups
             try:
                 await asyncio.wait_for(
                     admin_client(AddChatUserRequest(
@@ -3559,10 +4424,6 @@ async def add_one_bot(entity, bot_token, atype, cache_key):
 
 # ══════════════════════ ENSURE OWNER ADMIN ══════════════════════
 async def ensure_owner_admin(entity, cache_key):
-    """
-    Ensure owner is admin in the chat.
-    ✅ Cached — only once per chat per session.
-    """
     if cache_key and ADMIN_CACHE.get(cache_key, {}).get("owner_done"):
         return True, "cached"
     try:
@@ -3596,11 +4457,49 @@ async def ensure_owner_admin(entity, cache_key):
         return False, f"owner: {str(e)[:50]}"
 
 
-# ══════════════════════ END OF PART 5 ══════════════════════
-D("✅ Part 5 loaded — Bot Pool + Real Accounts + Admin Checks", "ok")
+# ══════════════════════ SYNC BOTS (STARTUP) ══════════════════════
+def sync_bots():
+    """
+    Sync bots from config into DB with server assignment.
+    Uses PART 1 dedupe lists.
+    """
+    existing = {r[0] for r in db_list_bots()}
+    added_free = 0
+    added_paid = 0
+    skipped = 0
+
+    # Free server
+    for tok in FREE_SERVER_TOKENS:
+        if tok in existing:
+            skipped += 1
+            continue
+        info = bot_get_me(tok)
+        if info and db_add_bot(tok, info["username"], info["id"],
+                               server="free"):
+            added_free += 1
+            existing.add(tok)
+
+    # Paid server
+    for tok in PAID_SERVER_TOKENS:
+        if tok in existing:
+            skipped += 1
+            continue
+        info = bot_get_me(tok)
+        if info and db_add_bot(tok, info["username"], info["id"],
+                               server="paid"):
+            added_paid += 1
+            existing.add(tok)
+
+    D(f"Bot sync: +{added_free} free, +{added_paid} paid, "
+      f"{skipped} skipped (existing)", "ok")
+    return added_free + added_paid
+
+
+# ══════════════════════ END OF PART 6 ══════════════════════
+D("✅ Part 6 loaded — Dual-Server Bot Pool + Real Accounts + Admin Checks", "ok")
 # ══════════════════════ FAILED BOT TRACKER ══════════════════════
 def track_failed_bot(task_key, bot_username, reason=""):
-    """Track a failed bot for this task"""
+    """Track failed bot per task"""
     if task_key not in FAILED_BOTS_TRACKER:
         FAILED_BOTS_TRACKER[task_key] = {}
     if bot_username not in FAILED_BOTS_TRACKER[task_key]:
@@ -3612,56 +4511,53 @@ def track_failed_bot(task_key, bot_username, reason=""):
 
 
 def get_failed_bots(task_key):
-    """Get failed bots for task"""
     return FAILED_BOTS_TRACKER.get(task_key, {})
 
 
 def is_bot_failed(task_key, bot_username):
-    """Check if bot failed in this task"""
     return bot_username in get_failed_bots(task_key)
 
 
 def clear_failed_bots(task_key):
-    """Clear task tracker"""
     FAILED_BOTS_TRACKER.pop(task_key, None)
 
 
-# ══════════════════════ SINGLE BOT REACTION WITH FALLBACK ══════════════════════
-def send_reaction_with_fallback(token, chat_id, msg_id, primary_emoji):
+# ══════════════════════ SINGLE REACTION WITH FALLBACK ══════════════════════
+def send_reaction_with_fallback(token, chat_id, msg_id, primary_emoji,
+                                 server=None):
     """
     🔥 Send reaction with fallback chain.
-    If primary fails → try ❤️ → try 👍 → try 🔥
+    Primary → ❤️ → 👍 → 🔥 → 🥰 → 🎉 → 💯 → 😍 → 👏
     Returns (ok, used_emoji, err)
     """
-    # Try primary first
+    # Try primary
     ok, desc, retry = bot_reaction(token, chat_id, msg_id, primary_emoji)
     if ok:
         return True, primary_emoji, ""
-    # If flood — no fallback, just report
     if retry > 0:
         return False, primary_emoji, f"flood:{retry}"
-    # Try fallback chain
+    # Fallback chain
     if feat_fallback():
         for fb_emoji in FALLBACK_REACTIONS:
             if fb_emoji == primary_emoji:
                 continue
             ok, desc, retry = bot_reaction(token, chat_id, msg_id, fb_emoji)
             if ok:
-                D(f"🩹 Fallback worked: {fb_emoji} for {primary_emoji}",
-                  "fallback")
+                D(f"🩹 Fallback: {fb_emoji} for {primary_emoji}", "fallback")
                 return True, fb_emoji, ""
             if retry > 0:
                 return False, primary_emoji, f"flood:{retry}"
-    return False, primary_emoji, desc[:80] if desc else "unknown"
+    return False, primary_emoji, (desc[:80] if desc else "unknown")
 
 
-# ══════════════════════ SEND BATCH REACTIONS ══════════════════════
+# ══════════════════════ SEND BATCH REACTIONS (SERVER-AWARE) ══════════════════════
 async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
-                                post_link, uid, emoji_mode="default",
+                                post_link, uid, server,
+                                emoji_mode="default",
                                 custom_emojis=None, task_key=None,
                                 on_progress=None):
     """
-    🔥 Send reactions using a batch of bots (with fallback + tracking).
+    🔥 Send reactions from a batch with fallback + tracking.
     Returns (ok_count, skip_count, failed_bots_list)
     """
     if not bot_batch:
@@ -3669,7 +4565,7 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
 
     api_chat_id = to_bot_api_chat_id(chat_id)
 
-    # Build emoji pool
+    # Emoji pool
     if emoji_mode == "custom" and custom_emojis:
         pool = [e for e in custom_emojis if e in ALL_REACTIONS]
         if not pool:
@@ -3685,43 +4581,38 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
 
     for idx, (token, uname) in enumerate(bot_batch, 1):
         # Skip flooded
-        if is_bot_flooded(token):
+        if is_bot_flooded(token, server):
             skip += 1
             continue
-
-        # Skip already-failed bots in this task
+        # Skip already-failed in this task
         if task_key and is_bot_failed(task_key, uname):
             skip += 1
             continue
 
-        # Pick primary emoji
         emoji = pool.pop(0) if pool else random.choice(DEFAULT_REACTIONS)
 
         # 🔥 Send with fallback
         ok_f, used_emoji, err = send_reaction_with_fallback(
-            token, api_chat_id, msg_id, emoji)
+            token, api_chat_id, msg_id, emoji, server=server)
 
         if ok_f:
             ok += 1
             try:
                 db_save_reaction(uid, chat_title, chat_id, post_link,
                                  msg_id, used_emoji, uname, "ok",
-                                 method="bot")
+                                 method="bot", server=server)
                 stats_bump(uid, ok=True)
             except Exception:
                 pass
         else:
-            # Failed — track it
             if "flood:" in err:
-                # Flood — mark and skip
                 try:
                     wait = int(err.split(":")[1])
                 except Exception:
                     wait = 30
-                mark_bot_flooded(token, wait)
+                mark_bot_flooded(token, wait, server)
                 skip += 1
             else:
-                # Real fail — track as failed bot
                 skip += 1
                 failed_bots.append((token, uname))
                 if task_key:
@@ -3729,67 +4620,76 @@ async def send_batch_reactions(chat_id, msg_id, bot_batch, chat_title,
                 try:
                     db_save_reaction(uid, chat_title, chat_id, post_link,
                                      msg_id, emoji, uname, "fail",
-                                     method="bot")
+                                     method="bot", server=server)
                     stats_bump(uid, ok=False)
                 except Exception:
                     pass
 
-        # Progress callback (throttled)
         if on_progress and (idx % 5 == 0 or idx == total):
-            try: await on_progress(idx, total, ok)
-            except Exception: pass
+            try:
+                await on_progress(idx, total, ok)
+            except Exception:
+                pass
 
-        # Small delay between reactions
         await asyncio.sleep(0.6)
 
     return ok, skip, failed_bots
 
 
-# ══════════════════════ MAIN: SMART REACTION ENGINE ══════════════════════
-async def process_reactions_rotating(event, uid, chat_link, post_link, count,
-                                      emoji_mode="default",
+# ══════════════════════ MAIN SMART ENGINE (SERVER-AWARE) ══════════════════════
+async def process_reactions_rotating(event, uid, chat_link, post_link,
+                                      count, emoji_mode="default",
                                       custom_emojis=None,
                                       is_auto_watch=False):
     """
-    🔥 SMART REACTION ENGINE v2
+    🔥 SMART REACTION ENGINE v3 — Dual Server
 
-    Strategy:
-    1. Resolve chat + post
-    2. Ensure owner is admin
-    3. Phase 1: Existing our-admin-bots (jo pehle se admin hain)
-    4. Phase 2: Batch 1 (50 bots) — add → react → remove
-    5. Phase 3: Batch 2 (chota) — same
-    6. Phase 4: Batch 3 (aur chota) — same
-    7. Phase 5: Failed bots retry
-    8. Repeat until target count reached OR max cycles
+    Phases:
+    1. Existing our-admin-bots (server-specific)
+    2. Adaptive batch add
+    3. React from batch (with fallback)
+    4. Remove our bots (SAFE)
+    5. Failed bots retry
     """
     global TASK_RUNNING, TASK_OWNER_UID
 
-    # ─── Parse links ───
+    # ═════ Determine server ═════
+    server = get_user_server(uid)
+    D(f"[ENGINE] User {uid} → server: {server}", "server")
+
+    # ═════ Parse links ═════
     chat_ref, invite_hash = parse_channel_link(chat_link)
     post_ref, msg_id = parse_post_link(post_link)
 
     if not msg_id:
         if event:
-            await safe_edit(event, "❌ Invalid post link", buttons=kb_back(uid))
+            await safe_edit(event, "❌ Invalid post link",
+                            buttons=kb_back(uid))
         return 0
 
     user_state = USER_STATES.get(uid, {})
     chat_type = user_state.get("chat_type", "channel")
 
-    total_bots = db_count_bots()
+    total_bots = db_count_bots(server=server)
     want = min(count, total_bots)
+
+    if want <= 0:
+        if event:
+            await safe_edit(event,
+                            f"❌ No bots available on {get_server_label(server)} server",
+                            buttons=kb_back(uid))
+        return 0
 
     if event:
         try:
             await event.edit(
-                f"⏳ **Starting smart engine...**\n\n"
+                f"⏳ **Starting {get_server_label(server)} engine...**\n\n"
                 f"🎯 Target: **{want}** reactions\n"
                 f"🤖 Available bots: **{total_bots}**")
         except Exception:
             pass
 
-    # ─── Resolve chat entity ───
+    # ═════ Resolve chat ═════
     try:
         if invite_hash and not post_ref:
             try:
@@ -3814,7 +4714,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     actual_type = ("channel" if is_channel(entity)
                    else ("group" if is_group(entity) else chat_type))
 
-    # ─── Verify post exists ───
+    # ═════ Verify post ═════
     try:
         post_msg = await asyncio.wait_for(
             admin_client.get_messages(entity, ids=msg_id), timeout=15)
@@ -3826,7 +4726,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     except Exception:
         pass
 
-    # ─── Owner admin check (skip for auto-watch) ───
+    # ═════ Owner admin check ═════
     if not is_auto_watch and ADMIN_CHECK_ENABLED and not OWNER_IS(uid):
         if event:
             try:
@@ -3836,15 +4736,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         owner_is_admin = await check_owner_admin(entity)
         if not owner_is_admin:
             if event:
-                await safe_edit(
-                    event,
-                    get_admin_needed_message(chat_title, uid),
-                    buttons=kb_owner_needed(uid))
+                await safe_edit(event,
+                                get_admin_needed_message(chat_title, uid),
+                                buttons=kb_owner_needed(uid))
             if uid in USER_STATES:
                 USER_STATES[uid] = {}
             return 0
 
-    # ─── Ensure owner is admin ───
+    # ═════ Ensure owner admin ═════
     cache_key = str(real_id)
     ok_owner, reason_owner = await ensure_owner_admin(entity, cache_key)
     if not ok_owner:
@@ -3853,45 +4752,45 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                             buttons=kb_back(uid))
         return 0
 
-    # ─── Task key for tracking ───
-    task_key = f"{uid}:{real_id}:{msg_id}"
-    clear_failed_bots(task_key)  # fresh start
+    # ═════ Task key ═════
+    task_key = f"{uid}:{real_id}:{msg_id}:{server}"
+    clear_failed_bots(task_key)
 
-    # ─── Main loop ───
+    # ═════ Main loop ═════
     reactions_done = 0
     cycle = 0
     failed_batches = 0
     cycle_log = []
-    all_failed_bots = []          # bots that failed across all cycles
-    used_bots = set()             # bots already used
+    all_failed_bots = []
+    used_bots = set()
 
     while reactions_done < want and cycle < MAX_CYCLES:
         cycle += 1
         remaining = want - reactions_done
 
-        # Progress display
         if event:
             bar = progress_bar(reactions_done, want)
             await safe_edit(
                 event,
-                f"🎬 **Cycle {cycle}/{MAX_CYCLES}**\n{DIV}\n\n"
+                f"🎬 **Cycle {cycle}/{MAX_CYCLES}** {get_server_label(server)}\n"
+                f"{DIV}\n\n"
                 f"📊 `{bar}` {reactions_done}/{want}\n"
                 f"⏳ Remaining: **{remaining}**\n"
-                f"❌ Failed bots: **{len(all_failed_bots)}**")
+                f"❌ Failed: **{len(all_failed_bots)}**")
 
         # ══════════════════════════════════════════
         # PHASE 1: Existing our-admin-bots
         # ══════════════════════════════════════════
-        our_admins = await get_our_admin_bots(entity)
-        # Filter: skip flooded, skip already used, skip failed
+        our_admins = await get_our_admin_bots(entity, server=server)
         phase1_bots = []
         for tok, uname, bid in our_admins:
-            if is_bot_flooded(tok): continue
-            if uname in used_bots: continue
-            if is_bot_failed(task_key, uname): continue
+            if is_bot_flooded(tok, server):
+                continue
+            if uname in used_bots:
+                continue
+            if is_bot_failed(task_key, uname):
+                continue
             phase1_bots.append((tok, uname))
-
-        # Cap at remaining
         phase1_bots = phase1_bots[:remaining]
 
         if phase1_bots and reactions_done < want:
@@ -3902,12 +4801,12 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                     f"📊 {progress_bar(reactions_done, want)} "
                     f"{reactions_done}/{want}")
 
-            # Reserve in pool
+            pool = get_pool(server)
             for tok, uname in phase1_bots:
-                BOT_POOL.setdefault(tok, {})
-                BOT_POOL[tok]["busy_until"] = (
+                pool.setdefault(tok, {})
+                pool[tok]["busy_until"] = (
                     datetime.now() + timedelta(minutes=BOT_BUSY_TIMEOUT))
-                BOT_POOL[tok]["username"] = uname
+                pool[tok]["username"] = uname
                 used_bots.add(uname)
 
             async def on_p1_prog(i, t, ok):
@@ -3922,14 +4821,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
 
             ok1, skip1, fail1 = await send_batch_reactions(
                 real_id, msg_id, phase1_bots, chat_title, post_link,
-                uid, emoji_mode=emoji_mode,
-                custom_emojis=custom_emojis,
+                uid, server,
+                emoji_mode=emoji_mode, custom_emojis=custom_emojis,
                 task_key=task_key, on_progress=on_p1_prog)
 
             reactions_done += ok1
             all_failed_bots.extend(fail1)
 
-            # Remove our bots from admin
+            # Remove our bots
             for tok, uname in phase1_bots:
                 try:
                     await asyncio.wait_for(
@@ -3938,21 +4837,16 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                     await asyncio.sleep(0.3)
                 except Exception:
                     pass
-            await release_bots(phase1_bots)
+            await release_bots(phase1_bots, server)
 
-            # Check if done
             if reactions_done >= want:
                 break
 
         # ══════════════════════════════════════════
-        # PHASE 2: Add new batch (adaptive size)
+        # PHASE 2: Add new batch (adaptive)
         # ══════════════════════════════════════════
         remaining = want - reactions_done
 
-        # Adaptive batch size:
-        # Cycle 1-2: full batch (45)
-        # Cycle 3-4: medium batch (25)
-        # Cycle 5+: small batch (10)
         if cycle <= 2:
             batch_size = min(BATCH_SIZE, remaining + 5)
         elif cycle <= 4:
@@ -3963,15 +4857,15 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         if event:
             await safe_edit(
                 event,
-                f"🤖 **Phase 2** — Adding batch of {batch_size}\n"
+                f"🤖 **Phase 2** — Adding batch of {batch_size} "
+                f"({get_server_label(server)})\n"
                 f"📊 {progress_bar(reactions_done, want)} "
                 f"{reactions_done}/{want}")
 
-        acquired, wait_sec = await acquire_bots(batch_size, uid)
+        acquired, wait_sec = await acquire_bots(batch_size, uid, server)
         if acquired is None:
-            # Wait and retry
             await asyncio.sleep(wait_sec)
-            acquired, wait_sec = await acquire_bots(batch_size, uid)
+            acquired, wait_sec = await acquire_bots(batch_size, uid, server)
         if acquired is None:
             failed_batches += 1
             if event:
@@ -3982,7 +4876,6 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 break
             continue
 
-        # Filter acquired: skip used/failed
         to_add = []
         for tok, uname in acquired:
             if uname in used_bots:
@@ -3990,12 +4883,10 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             if is_bot_failed(task_key, uname):
                 continue
             to_add.append((tok, uname))
-
-        # Cap at remaining
         to_add = to_add[:remaining]
 
         if not to_add:
-            await release_bots(acquired)
+            await release_bots(acquired, server)
             failed_batches += 1
             if failed_batches >= MAX_FAILED_BATCHES:
                 break
@@ -4018,11 +4909,10 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 pass
             await asyncio.sleep(0.6)
 
-        # Release non-promoted
         non_promoted = [(t, u) for t, u in acquired
                         if (t, u) not in promoted]
         if non_promoted:
-            await release_bots(non_promoted)
+            await release_bots(non_promoted, server)
 
         if not promoted:
             failed_batches += 1
@@ -4031,7 +4921,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             continue
 
         # ══════════════════════════════════════════
-        # PHASE 3: Send reactions from new batch
+        # PHASE 3: React from new batch
         # ══════════════════════════════════════════
         if event:
             await safe_edit(
@@ -4052,15 +4942,15 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
 
         ok2, skip2, fail2 = await send_batch_reactions(
             real_id, msg_id, promoted, chat_title, post_link,
-            uid, emoji_mode=emoji_mode,
-            custom_emojis=custom_emojis,
+            uid, server,
+            emoji_mode=emoji_mode, custom_emojis=custom_emojis,
             task_key=task_key, on_progress=on_p3_prog)
 
         reactions_done += ok2
         all_failed_bots.extend(fail2)
 
         # ══════════════════════════════════════════
-        # PHASE 4: Remove our bots (SAFE — only ours)
+        # PHASE 4: Remove our bots (SAFE)
         # ══════════════════════════════════════════
         for tok, uname in promoted:
             try:
@@ -4071,9 +4961,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             except Exception:
                 pass
 
-        await release_bots(promoted)
+        await release_bots(promoted, server)
 
-        # ─── Success tracking ───
         if ok2 > 0:
             failed_batches = 0
         else:
@@ -4083,11 +4972,11 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 break
 
         cycle_log.append((cycle, ok2))
-        D(f"[CYCLE {cycle}] +{ok2} (total {reactions_done}/{want})",
-          "cycle")
+        D(f"[CYCLE {cycle}] +{ok2} (total {reactions_done}/{want}) "
+          f"server={server}", "cycle")
 
     # ══════════════════════════════════════════
-    # PHASE 5: Failed bots retry (if enabled)
+    # PHASE 5: Failed bots retry
     # ══════════════════════════════════════════
     remaining = want - reactions_done
     if remaining > 0 and all_failed_bots and FAILED_BOT_RETRY:
@@ -4096,15 +4985,13 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                 event,
                 f"🔄 **Phase 5** — Retrying failed bots\n"
                 f"🎯 Need: **{remaining}** more")
-        # Get unique failed bots
         failed_tokens = list(set(all_failed_bots))[:remaining]
         if failed_tokens:
-            # Reactivate pool
+            pool = get_pool(server)
             for tok, uname in failed_tokens:
-                BOT_POOL.setdefault(tok, {})
-                BOT_POOL[tok]["busy_until"] = (
+                pool.setdefault(tok, {})
+                pool[tok]["busy_until"] = (
                     datetime.now() + timedelta(minutes=BOT_BUSY_TIMEOUT))
-            # Try to add + react
             re_added = []
             for tok, uname in failed_tokens:
                 try:
@@ -4119,11 +5006,10 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
             if re_added:
                 ok5, _, _ = await send_batch_reactions(
                     real_id, msg_id, re_added, chat_title, post_link,
-                    uid, emoji_mode=emoji_mode,
-                    custom_emojis=custom_emojis,
+                    uid, server,
+                    emoji_mode=emoji_mode, custom_emojis=custom_emojis,
                     task_key=task_key)
                 reactions_done += ok5
-                # Remove
                 for tok, uname in re_added:
                     try:
                         await asyncio.wait_for(
@@ -4131,7 +5017,7 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
                             timeout=PER_BOT_TIMEOUT)
                     except Exception:
                         pass
-                await release_bots(re_added)
+                await release_bots(re_added, server)
 
     # ══════════════════════════════════════════
     # FINAL REPORT
@@ -4150,7 +5036,8 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
         txt = (
             f"🎉 **COMPLETE!** 🎉\n{STAR_LINE}\n\n"
             f"📢 **{chat_title}**\n"
-            f"📩 Post: **#{msg_id}**\n\n"
+            f"📩 Post: **#{msg_id}**\n"
+            f"🖥️ Server: **{get_server_label(server)}**\n\n"
             f"{DIV}\n"
             f"🎯 Requested: **{count}**\n"
             f"✅ Success: **{reactions_done}**\n"
@@ -4171,14 +5058,14 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
 
         await safe_edit(event, txt, buttons=kb_back(uid))
 
-    # ─── Analytics ───
+    # ═════ Analytics ═════
     try:
         post_analytics_add(uid, real_id, msg_id, chat_title,
-                           reactions_done, count)
+                           reactions_done, count, server=server)
     except Exception:
         pass
 
-    # ─── Cleanup ───
+    # ═════ Cleanup ═════
     clear_failed_bots(task_key)
     if uid in USER_STATES and event:
         USER_STATES[uid] = {}
@@ -4186,14 +5073,10 @@ async def process_reactions_rotating(event, uid, chat_link, post_link, count,
     return reactions_done
 
 
-# ══════════════════════ END OF PART 6 ══════════════════════
-D("✅ Part 6 loaded — Smart Reaction Engine (batch + fallback + tracking)", "ok")
+# ══════════════════════ END OF PART 7 ══════════════════════
+D("✅ Part 7 loaded — Smart Reaction Engine (Dual Server)", "ok")
 # ══════════════════════ GET ADMIN CHATS ══════════════════════
 async def get_admin_chats():
-    """
-    Get all chats where admin_client is admin.
-    Returns [{"entity": ..., "id": ..., "title": ...}, ...]
-    """
     chats = []
     try:
         me = await admin_client.get_me()
@@ -4217,15 +5100,10 @@ async def get_admin_chats():
 
 # ══════════════════════ BROADCAST ══════════════════════
 async def broadcast_message(text=None, photo_url=None, on_progress=None):
-    """
-    Broadcast to all admin chats.
-    Returns (ok, fail, total)
-    """
     chats = await get_admin_chats()
     total = len(chats)
     if total == 0:
         return 0, 0, 0
-
     ok_n = fail_n = 0
     for idx, chat in enumerate(chats, 1):
         api = to_bot_api_chat_id(chat["id"])
@@ -4245,15 +5123,16 @@ async def broadcast_message(text=None, photo_url=None, on_progress=None):
         except Exception:
             fail_n += 1
         if on_progress and idx % 5 == 0:
-            try: await on_progress(idx, total, ok_n)
-            except Exception: pass
+            try:
+                await on_progress(idx, total, ok_n)
+            except Exception:
+                pass
         await asyncio.sleep(BROADCAST_DELAY)
     return ok_n, fail_n, total
 
 
-# ══════════════════════ QUEUE LOOP ══════════════════════
+# ══════════════════════ QUEUE LOOP (SERVER-AWARE) ══════════════════════
 async def queue_loop():
-    """Process scheduled queue jobs"""
     global TASK_RUNNING, TASK_OWNER_UID
     while True:
         try:
@@ -4266,8 +5145,7 @@ async def queue_loop():
             now = datetime.now()
             for job in pending:
                 (qid, user_id, cl, pl, rc, em, ce, st,
-                 status, cr, ex, err) = job
-                # Check schedule
+                 status, cr, ex, err, sv) = job
                 if st:
                     try:
                         if datetime.strptime(st, "%Y-%m-%d %H:%M:%S") > now:
@@ -4277,7 +5155,7 @@ async def queue_loop():
                 TASK_RUNNING = True
                 TASK_OWNER_UID = user_id
                 try:
-                    D(f"[QUEUE] Job #{qid} for {user_id}", "queue")
+                    D(f"[QUEUE] Job #{qid} for {user_id} on {sv}", "queue")
                     ce_list = (ce.split(",") if ce else None)
                     result = await process_reactions_rotating(
                         None, user_id, cl, pl, rc,
@@ -4285,7 +5163,8 @@ async def queue_loop():
                         is_auto_watch=True)
                     db_update_queue(
                         qid, status="done",
-                        executed_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                        executed_at=datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"))
                     try:
                         await bot.send_message(
                             user_id,
@@ -4297,7 +5176,8 @@ async def queue_loop():
                 except Exception as e:
                     db_update_queue(
                         qid, status="failed",
-                        executed_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        executed_at=datetime.now().strftime(
+                            "%Y-%m-%d %H:%M:%S"),
                         error=str(e)[:200])
                     D(f"[QUEUE] Job #{qid} failed: {str(e)[:80]}", "fail")
                 finally:
@@ -4310,9 +5190,8 @@ async def queue_loop():
             await asyncio.sleep(30)
 
 
-# ══════════════════════ AUTO-RETRY LOOP ══════════════════════
+# ══════════════════════ AUTO-RETRY LOOP (SERVER-AWARE) ══════════════════════
 async def retry_loop():
-    """Process auto-retry queue"""
     global TASK_RUNNING, TASK_OWNER_UID
     while True:
         try:
@@ -4323,7 +5202,8 @@ async def retry_loop():
             if not jobs:
                 continue
             for job in jobs:
-                rid, user_id, cl, pl, count, em, ce, att, mx = job
+                (rid, user_id, cl, pl, count, em, ce, att, mx,
+                 sv) = job
                 TASK_RUNNING = True
                 TASK_OWNER_UID = user_id
                 try:
@@ -4358,9 +5238,8 @@ async def retry_loop():
             await asyncio.sleep(30)
 
 
-# ══════════════════════ WATCHER LOOP ══════════════════════
+# ══════════════════════ WATCHER LOOP (SERVER-AWARE) ══════════════════════
 async def watcher_loop():
-    """Auto-watch new posts and react"""
     global TASK_RUNNING, TASK_OWNER_UID
     while True:
         try:
@@ -4373,7 +5252,7 @@ async def watcher_loop():
                 continue
             for w in watchers:
                 (wid, user_id, chat_id, ct, cl, cty, rc, em, ces,
-                 lpid, act, cr, lr) = w
+                 lpid, act, cr, lr, sv) = w
                 if not act or not can_use_feature(user_id, "autowatch"):
                     continue
                 try:
@@ -4391,7 +5270,6 @@ async def watcher_loop():
                     TASK_OWNER_UID = user_id
                     try:
                         ce_list = (ces.split(",") if ces else None)
-                        # Build post link for private channels
                         chat_str = str(chat_id).replace("-100", "")
                         pl = f"https://t.me/c/{chat_str}/{newest}"
                         await process_reactions_rotating(
@@ -4426,13 +5304,13 @@ async def watcher_loop():
 
 # ══════════════════════ POOL CLEANER LOOP ══════════════════════
 async def pool_cleaner_loop():
-    """Periodically clean bot pool + flood states"""
     while True:
         try:
             await asyncio.sleep(POOL_CLEANUP_INTERVAL)
             cleaned = cleanup_bot_pool()
             if cleaned > 0:
-                D(f"[POOL] Cleaned {cleaned} stale bots", "pool")
+                D(f"[POOL] Cleaned {cleaned} stale bots (both servers)",
+                  "pool")
         except asyncio.CancelledError:
             return
         except Exception as e:
@@ -4441,15 +5319,17 @@ async def pool_cleaner_loop():
 
 # ══════════════════════ HEALTH CHECK LOOP ══════════════════════
 async def health_check_loop():
-    """Log health status every 2 minutes"""
     while True:
         try:
             await asyncio.sleep(120)
             uptime = int(time.time() - _start_time)
+            fs = get_pool_status("free")
+            ps = get_pool_status("paid")
             D(
                 f"HEALTH up={uptime}s "
                 f"task={TASK_RUNNING} "
-                f"pool={len(BOT_POOL)} "
+                f"FREE[{fs['free']}f/{fs['busy']}b/{fs['flooded']}fl] "
+                f"PAID[{ps['free']}f/{ps['busy']}b/{ps['flooded']}fl] "
                 f"clients={len(REAL_CLIENTS)} "
                 f"users={db_total_users()} "
                 f"sessions={real_count_available()}",
@@ -4462,7 +5342,6 @@ async def health_check_loop():
 
 # ══════════════════════ DAILY SUMMARY LOOP ══════════════════════
 async def daily_summary_loop():
-    """Send daily summary to owner at configured time"""
     last_sent = None
     while True:
         try:
@@ -4477,8 +5356,11 @@ async def daily_summary_loop():
                 last_sent = today
                 tot, tr, mr = db_revenue_stats()
                 ref_stats = db_count_referrals()
-                pool = get_pool_status()
+                fs = get_pool_status("free")
+                ps = get_pool_status("paid")
                 real = real_get_status()
+                bot_stats = db_bot_stats()
+
                 txt = (
                     f"📊 **DAILY SUMMARY** — {today}\n"
                     f"{STAR_LINE}\n\n"
@@ -4489,11 +5371,14 @@ async def daily_summary_loop():
                     f"💫 Today: **{db_reactions_today()}**\n"
                     f"💫 Total: **{db_total_reactions()}**\n"
                     f"🎁 Referrals: **{ref_stats['valid']}**\n\n"
-                    f"🤖 Bots:\n"
-                    f"   Total: **{pool['total']}**\n"
-                    f"   Free: **{pool['free']}**\n"
-                    f"   Busy: **{pool['busy']}**\n"
-                    f"   Flooded: **{pool['flooded']}**\n\n"
+                    f"🖥️ **FREE SERVER**\n"
+                    f"   🤖 {fs['visible']} bots\n"
+                    f"   🟢 {fs['free']} / 🔴 {fs['busy']} / 🌊 {fs['flooded']}\n\n"
+                    f"💎 **PAID SERVER**\n"
+                    f"   🤖 {ps['visible']} bots\n"
+                    f"   🟢 {ps['free']} / 🔴 {ps['busy']} / 🌊 {ps['flooded']}\n\n"
+                    f"📊 Total bots: **{bot_stats['total']}** "
+                    f"(F:{bot_stats['free']} / P:{bot_stats['paid']})\n\n"
                     f"👤 Sessions:\n"
                     f"   Available: **{real['available']}/{real['total']}**\n"
                     f"   Flooded: **{real['flooded']}**\n"
@@ -4516,8 +5401,47 @@ async def daily_summary_loop():
             await asyncio.sleep(60)
 
 
-# ══════════════════════ END OF PART 7 ══════════════════════
-D("✅ Part 7 loaded — Broadcast + All Background Loops", "ok")
+# ══════════════════════ STARTUP SYNC BOTS LOOP ══════════════════════
+async def startup_bot_sync():
+    """
+    Runs once at startup — ensures bot_servers table is complete.
+    Assigns server='free' or 'paid' to any bot missing it.
+    """
+    try:
+        await asyncio.sleep(5)  # wait for startup
+        conn = sqlite3.connect(DB_FILE)
+        try:
+            c = conn.cursor()
+            # Bots without server column set
+            rows = c.execute("""SELECT token, username FROM bots
+                WHERE server IS NULL OR server=''""").fetchall()
+            for tok, uname in rows:
+                # Assign based on config lists
+                if tok in FREE_SERVER_TOKENS:
+                    c.execute("""UPDATE bots SET server='free'
+                        WHERE token=?""", (tok,))
+                elif tok in PAID_SERVER_TOKENS:
+                    c.execute("""UPDATE bots SET server='paid'
+                        WHERE token=?""", (tok,))
+                else:
+                    c.execute("""UPDATE bots SET server='free'
+                        WHERE token=?""", (tok,))
+            # Sync bot_servers table
+            c.execute("""INSERT OR IGNORE INTO bot_servers
+                (token, username, server)
+                SELECT token, username, COALESCE(server, 'free')
+                FROM bots""")
+            conn.commit()
+        finally:
+            conn.close()
+        _dirty()
+        D("Startup bot-server sync complete", "server")
+    except Exception as e:
+        D_err(e, "startup_bot_sync")
+
+
+# ══════════════════════ END OF PART 8 ══════════════════════
+D("✅ Part 8 loaded — Broadcast + Loops (Dual Server)", "ok")
 # ══════════════════════ USER KEYBOARDS ══════════════════════
 def kb_join():
     """Force join channels keyboard"""
@@ -4536,48 +5460,39 @@ def kb_request_access(uid=None):
 
 
 def kb_welcome(uid=None):
-    """Main welcome menu — full user dashboard"""
+    """Main welcome menu"""
     rows = [
-        # Row 1: Main send reactions
         [btn(f"💫 {L(uid, 'send_reactions')}", data=b"react_flow",
              style="success")],
-        # Row 2: Dashboard + Daily Bonus
         [btn(f"📊 {L(uid, 'dashboard')}", data=b"dashboard",
              style="primary"),
          btn(f"🎁 {L(uid, 'daily_bonus')}", data=b"daily_bonus",
              style="success")],
-        # Row 3: Queue + Bulk
         [btn(f"⏰ {L(uid, 'queue')} 💎", data=b"queue_menu",
              style="primary"),
          btn(f"📦 {L(uid, 'bulk')} 💎", data=b"bulk_menu",
              style="primary")],
-        # Row 4: Auto-Watch + Templates
         [btn(f"📡 {L(uid, 'auto_watch')} 💎", data=b"watch_flow",
              style="primary"),
          btn(f"📝 {L(uid, 'templates')} 💎", data=b"templates_menu",
              style="primary")],
-        # Row 5: Store + Post History
         [btn(f"🏪 {L(uid, 'store')}", data=b"store_menu",
              style="success"),
          btn(f"📜 {L(uid, 'post_history')}", data=b"post_history",
              style="primary")],
-        # Row 6: Referral + Buy Plan
         [btn(f"🎁 {L(uid, 'referral')}", data=b"referral_menu",
              style="success"),
          btn(f"💰 {L(uid, 'buy_plan')}", data=b"plans_menu",
              style="success")],
-        # Row 7: Notifications + Language
         [btn(f"🔔 {L(uid, 'notifications')}", data=b"notif_menu",
              style="primary"),
          btn(f"🌍 {L(uid, 'language')}", data=b"lang_menu",
              style="primary")],
-        # Row 8: Help (NEW) + Info + Support
         [btn(f"❓ {L(uid, 'help')}", data=b"help", style="success"),
          btn(f"ℹ️ {L(uid, 'info')}", data=b"info", style="primary")],
         [btn(f"💬 {L(uid, 'support')}", data=b"support",
              style="primary")],
     ]
-    # Owner panel
     if OWNER_IS(uid):
         rows.append([btn(f"👑 {L(uid, 'owner_panel')}",
                          data=b"owner_panel", style="danger")])
@@ -4585,7 +5500,6 @@ def kb_welcome(uid=None):
 
 
 def kb_help(uid=None):
-    """Help menu keyboard"""
     return [
         [btn("📖 Full Guide", data=b"help_full", style="success")],
         [btn("👑 Owner Username", data=b"help_username",
@@ -4599,7 +5513,6 @@ def kb_help(uid=None):
 
 
 def kb_owner_needed(uid=None):
-    """Shown when owner is not admin"""
     return [
         [btn(f"📖 {L(uid, 'help')}", data=b"help_full",
              style="success")],
@@ -4633,15 +5546,14 @@ def kb_chat_type(uid=None):
 
 
 def kb_reaction_count(uid=None):
-    """Reaction count selection"""
+    """Reaction count selection (uses correct server)"""
     limit = get_user_limit(uid) if uid else DEFAULT_FREE_COUNT
-    tv = db_count_visible_bots()
-    ta = db_count_bots()
+    server = get_user_server(uid) if uid else "free"
+    tv = db_count_visible_bots(server=server)
 
     if OWNER_IS(uid):
-        # Owner — full control
         return [
-            [btn(f"🌟 All ({ta})", data=b"rc:all", style="success")],
+            [btn(f"🌟 All ({tv})", data=b"rc:all", style="success")],
             [btn("10", data=b"rc:10", style="primary"),
              btn("20", data=b"rc:20", style="primary"),
              btn("50", data=b"rc:50", style="primary")],
@@ -4651,7 +5563,6 @@ def kb_reaction_count(uid=None):
             [btn(f"🔙 {L(uid, 'back')}", data=b"home", style="primary")],
         ]
 
-    # Normal user — up to plan limit
     effective_limit = min(limit, tv)
     rows = []
     row = []
@@ -4664,12 +5575,10 @@ def kb_reaction_count(uid=None):
     if row:
         rows.append(row)
 
-    # Max shortcut
     rows.append([btn(f"🎁 {effective_limit} MAX",
                      data=f"rc:{effective_limit}".encode(),
                      style="success")])
 
-    # More (upgrade)
     if limit < MAX_REACTIONS:
         rows.append([btn("🔥 More 💎", data=b"rc_more",
                          style="danger")])
@@ -4680,7 +5589,6 @@ def kb_reaction_count(uid=None):
 
 
 def kb_emoji_choice(uid=None):
-    """Emoji mode selection"""
     return [
         [btn(f"🎯 {L(uid, 'default_emoji')}", data=b"emoji:default",
              style="success")],
@@ -4695,13 +5603,11 @@ def kb_emoji_choice(uid=None):
 
 
 def kb_emoji_packs(uid=None):
-    """Emoji packs menu"""
     rows = [
         [btn(f"🎨 {k.title()} — {' '.join(e[:3])}",
              data=f"pack:{k}".encode(), style="primary")]
         for k, e in EMOJI_PACKS.items()
     ]
-    # Custom packs
     for cp in db_list_custom_packs():
         cpid, name, emojis, price, is_paid = cp
         pre = "💎" if is_paid else "🎨"
@@ -4741,7 +5647,6 @@ def kb_bulk_menu(uid=None):
 
 
 def kb_templates_menu(uid):
-    """Templates list with use/delete"""
     ts = db_list_templates(uid)
     rows = [[btn("➕ New Template", data=b"tpl:new",
                  style="success")]]
@@ -4770,7 +5675,6 @@ def kb_referral_menu(uid):
 
 
 def kb_plans_menu(uid=None):
-    """Plans selection"""
     rows = [
         [btn(f"{PLAN_NAMES[k]} — {PLAN_LIMITS[k]}/post",
              data=f"plan:{k}".encode(), style="primary")]
@@ -4784,7 +5688,6 @@ def kb_plans_menu(uid=None):
 
 
 def kb_plan_durations(plan, uid=None):
-    """Duration selection for a plan"""
     rows = []
     for days, label in DURATIONS.items():
         price = get_plan_price(plan, days)
@@ -4798,7 +5701,6 @@ def kb_plan_durations(plan, uid=None):
 
 
 def kb_lang_menu(uid):
-    """Language selection"""
     u = db_get_user_full(uid)
     cur = u[18] if u and len(u) > 18 else "en"
     rows = []
@@ -4828,10 +5730,12 @@ def kb_back(uid=None):
 
 
 def kb_mode_choice(uid=None):
-    """Send reactions mode selection"""
+    """Reaction mode selection"""
     has_real = user_has_realaccounts(uid) if uid else False
+    server = get_user_server(uid) if uid else "free"
+    server_label = get_server_label(server)
     return [
-        [btn("👑 With Admin", data=b"mode:with",
+        [btn(f"👑 With Admin ({server_label})", data=b"mode:with",
              style="primary")],
         [btn(f"🔓 Without Admin {'💎' if not has_real else ''}",
              data=b"mode:without", style="success")],
@@ -4840,7 +5744,7 @@ def kb_mode_choice(uid=None):
     ]
 
 
-# ── NEW FEATURE KEYBOARDS ──
+# ── Feature Keyboards ──
 def kb_dashboard(uid):
     return [
         [btn("🔄 Refresh", data=b"dashboard", style="success"),
@@ -4879,7 +5783,6 @@ def kb_post_history(uid):
 
 
 def kb_store(uid):
-    """Emoji store menu"""
     packs = store_list(active_only=True)
     rows = []
     for p in packs[:8]:
@@ -4900,7 +5803,6 @@ def kb_store(uid):
 
 
 def kb_store_view(pid, uid):
-    """Single store pack view"""
     owns = store_user_owns(uid, pid)
     p = store_get(pid)
     if not p:
@@ -4922,7 +5824,6 @@ def kb_store_view(pid, uid):
 
 
 def kb_store_mine(uid):
-    """My purchases"""
     return [
         [btn("🔄 Refresh", data=b"store_mine", style="success")],
         [btn(f"🔙 {L(uid, 'back')}", data=b"store_menu",
@@ -4930,190 +5831,240 @@ def kb_store_mine(uid):
     ]
 
 
-# ══════════════════════ END OF PART 8 ══════════════════════
-D("✅ Part 8 loaded — User Keyboards (incl. Help)", "ok")
+# ══════════════════════ END OF PART 9 ══════════════════════
+D("✅ Part 9 loaded — User Keyboards (Server-Aware)", "ok")
 # ══════════════════════ OWNER KEYBOARDS ══════════════════════
 def kb_owner():
-    """Main owner panel"""
+    """Main owner panel with server management"""
     auto = "✅" if is_auto_approve() else "❌"
-    vis = db_count_visible_bots()
-    sess = real_count_available()
-    total_sess = len(discover_session_files())
+    stats = db_bot_stats()
+    real_status = real_get_status()
+    free_s = get_pool_status("free")
+    paid_s = get_pool_status("paid")
+
     return [
-        # Row 1: Analytics + Users
+        # Row 1
         [btn("📊 Analytics", data=b"op:analytics", style="success"),
          btn("👥 Users", data=b"op:users", style="primary")],
-        # Row 2: Revenue + Payments
+        # Row 2
         [btn("💰 Revenue", data=b"op:revenue", style="primary"),
          btn("💳 Payments", data=b"op:payments", style="danger")],
-        # Row 3: Bots + Broadcast
-        [btn(f"🤖 Bots ({vis})", data=b"op:bots", style="primary"),
+        # Row 3: Bot info
+        [btn(f"🤖 Bots: {stats['total']}",
+              data=b"op:bots", style="primary"),
          btn("📢 Broadcast", data=b"op:broadcast", style="danger")],
-        # Row 4: Real Accounts + RA Plans (FIXED)
-        [btn(f"👤 Sessions ({sess}/{total_sess})",
+        # Row 4: SERVER MANAGEMENT (NEW)
+        [btn(f"🖥️ Free Server ({stats['free']})",
+              data=b"srv:panel:free", style="success"),
+         btn(f"💎 Paid Server ({stats['paid']})",
+              data=b"srv:panel:paid", style="primary")],
+        # Row 5: Sessions + RA Plans
+        [btn(f"👤 Sessions ({real_status['available']}/"
+              f"{real_status['total']})",
               data=b"op:ra", style="success"),
          btn("⚙️ RA Plans", data=b"op:ra_plans", style="primary")],
-        # Row 5: Owner Info + Coupons
+        # Row 6
         [btn("👤 Owner Info", data=b"op:owner_info", style="success"),
          btn("🎟️ Coupons", data=b"op:coupons", style="success")],
-        # Row 6: Store + Retry
+        # Row 7
         [btn("🏪 Emoji Store", data=b"op:store", style="primary"),
          btn("🔄 Auto-Retry", data=b"op:retry", style="primary")],
-        # Row 7: Bulk Users + Rate Limits
+        # Row 8
         [btn("👥 Bulk Users", data=b"op:bulk_users", style="primary"),
          btn("📈 Rate Limits", data=b"op:rate_limits", style="primary")],
-        # Row 8: Auto-approve + Free count
+        # Row 9
         [btn(f"🔓 Auto:{auto}", data=b"op:toggle_auto",
-             style="success"),
+              style="success"),
          btn(f"⚙️ Free:{get_free_count()}", data=b"op:setfree",
-             style="primary")],
-        # Row 9: Features + Plan Prices
+              style="primary")],
+        # Row 10
         [btn("🎛️ Features", data=b"op:features", style="primary"),
          btn("💰 Prices", data=b"op:plan_prices", style="success")],
-        # Row 10: Paid Features
+        # Row 11
         [btn("💎 PAID FEATURES", data=b"op:paid_features",
-             style="danger")],
-        # Row 11: Force Channels + Team
+              style="danger")],
+        # Row 12
         [btn("📢 Force Ch", data=b"op:force_channels",
-             style="primary"),
+              style="primary"),
          btn("👥 Team", data=b"op:team", style="success")],
-        # Row 12: Custom Packs + Watchers
+        # Row 13
         [btn("🎨 Custom Packs", data=b"op:emoji_packs",
-             style="primary"),
+              style="primary"),
          btn("📡 Watchers", data=b"op:watchers", style="primary")],
-        # Row 13: Referrals + Queue
+        # Row 14
         [btn("🎁 Referrals", data=b"op:referrals", style="success"),
          btn("⏰ Queue", data=b"op:queue", style="primary")],
-        # Row 14: Pool + Reset
+        # Row 15: Pool status (both)
         [btn("📊 Pool", data=b"op:pool_status", style="primary"),
          btn("🧹 RESET POOL", data=b"op:reset_pool",
-             style="danger")],
-        # Row 15: Backup + Add User
+              style="danger")],
+        # Row 16
         [btn("🔄 Auto Backup", data=b"op:ghsync", style="success"),
          btn("➕ Add User", data=b"op:adduser", style="success")],
-        # Row 16: Pending + Approved
+        # Row 17
         [btn("⏳ Pending", data=b"op:pending", style="danger"),
          btn("✅ Approved", data=b"op:approved", style="success")],
-        # Row 17: Recent + Main
+        # Row 18
         [btn("📜 Recent", data=b"op:recent", style="primary"),
          btn("🔙 Main", data=b"home", style="primary")],
     ]
 
 
-# ══════════════════════ 🔥 REAL ACCOUNTS PANEL (FIXED) ══════════════════════
-def kb_ra_panel():
-    """Real Accounts management panel — FIXED"""
-    status = real_get_status()
-    rows = []
-    # Status summary
-    rows.append([
-        btn(f"📊 Total: {status['total']}", data=b"op:ra",
-            style="primary"),
-        btn(f"✅ Free: {status['available']}", data=b"op:ra",
-            style="success"),
-    ])
-    rows.append([
-        btn(f"🌊 Flooded: {status['flooded']}", data=b"op:ra",
-            style="danger"),
-        btn(f"💾 Loaded: {status['loaded']}/{status['max_clients']}",
-            data=b"op:ra", style="primary"),
-    ])
-    rows.append([btn("🔄 Refresh", data=b"op:ra", style="success")])
-    rows.append([btn("📋 List Sessions", data=b"ra:list",
-                     style="primary")])
-    rows.append([btn("🌊 Clear Floods", data=b"ra:clear_floods",
-                     style="danger")])
-    rows.append([btn("🔌 Disconnect All", data=b"ra:disconnect_all",
-                     style="danger")])
-    rows.append([btn("🧪 Test All Sessions", data=b"ra:test_all",
-                     style="success")])
-    rows.append([btn("📤 Upload Session", data=b"ra:upload_info",
-                     style="primary")])
-    rows.append([btn("🔙 Back", data=b"owner_panel",
-                     style="primary")])
+# ══════════════════════ 🔥 SERVER MANAGEMENT ══════════════════════
+def kb_server_panel(server):
+    """Detailed server management panel"""
+    pool = get_pool_status(server)
+    label = get_server_label(server)
+    other = "paid" if server == "free" else "free"
+    other_label = get_server_label(other)
+
+    # Get bot list preview
+    bots = db_list_visible_bots(server=server)
+
+    rows = [
+        # Stats
+        [btn(f"📊 Total: {pool['total']}", data=f"srv:refresh:{server}",
+              style="primary"),
+         btn(f"🟢 Free: {pool['free']}", data=f"srv:refresh:{server}",
+              style="success")],
+        [btn(f"🔴 Busy: {pool['busy']}", data=f"srv:refresh:{server}",
+              style="danger"),
+         btn(f"🌊 Flooded: {pool['flooded']}",
+              data=f"srv:refresh:{server}", style="primary")],
+        # Actions
+        [btn("🔄 Refresh", data=f"srv:refresh:{server}",
+              style="success")],
+        [btn("📋 List All Bots", data=f"srv:list:{server}",
+              style="primary")],
+        [btn("🌊 Clear Floods", data=f"srv:clear_floods:{server}",
+              style="danger")],
+        [btn("🧹 Reset Pool", data=f"srv:reset:{server}",
+              style="danger")],
+        [btn(f"🔀 Move All → {other_label}",
+              data=f"srv:move_all:{server}", style="danger")],
+        [btn("📤 Bulk Move", data=f"srv:bulk_move:{server}",
+              style="primary")],
+        [btn("➕ Add Bot to Server",
+              data=f"srv:add_bot:{server}", style="success")],
+        [btn("🧪 Test All Bots", data=f"srv:test_all:{server}",
+              style="primary")],
+        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+    ]
     return rows
 
 
-def kb_ra_plans():
-    """RA Plan limits — FIXED"""
-    rows = []
-    for plan in ["free", "basic", "pro", "premium"]:
-        lim = plan_ra_limit(plan)
-        enabled = plan_has_realaccounts(plan)
-        st = "✅" if enabled else "❌"
-        rows.append([
-            btn(f"{st} {PLAN_NAMES[plan]}",
-                data=f"rap:toggle:{plan}".encode(),
-                style="success" if enabled else "danger"),
-            btn(f"👤 {lim} sessions",
-                data=f"rap:edit:{plan}".encode(),
-                style="primary"),
-        ])
-    rows.append([btn("🔙 Back", data=b"owner_panel",
-                     style="primary")])
-    return rows
+def kb_bot_list(server, page=0):
+    """Paginated bot list for a server"""
+    bots = db_list_visible_bots(server=server)
+    per_page = 10
+    start = page * per_page
+    end = start + per_page
+    page_bots = bots[start:end]
+    total = len(bots)
+    total_pages = (total + per_page - 1) // per_page
 
+    now = datetime.now()
+    flood_map = get_flood_map(server)
+    pool = get_pool(server)
 
-def kb_sessions_panel():
-    """Session management panel — FIXED"""
-    files = discover_session_files()
     rows = []
-    # Header stats
-    status = real_get_status()
+    for i, b in enumerate(page_bots, start=start+1):
+        tok, uname, bid, added = b
+        # Status
+        st = "🟢"
+        if tok in flood_map and flood_map[tok] > now:
+            st = "🌊"
+        else:
+            info = pool.get(tok)
+            if (isinstance(info, dict) and info.get("busy_until")
+                    and info["busy_until"] > now):
+                st = "🔴"
+        rows.append([btn(f"{st} {i}. @{uname}",
+                         data=f"bot:info:{server}:{tok[:20]}",
+                         style="primary")])
+
+    # Pagination
+    nav = []
+    if page > 0:
+        nav.append(btn("⬅️ Prev",
+                       data=f"srv:list:{server}:{page-1}".encode(),
+                       style="primary"))
+    if page < total_pages - 1:
+        nav.append(btn("Next ➡️",
+                       data=f"srv:list:{server}:{page+1}".encode(),
+                       style="primary"))
+    if nav:
+        rows.append(nav)
+
     rows.append([
-        btn(f"📁 {status['total']} sessions", data=b"op:ra",
-            style="primary"),
-        btn(f"🌊 {status['flooded']} flooded", data=b"op:ra",
-            style="danger"),
+        btn(f"📄 Page {page+1}/{total_pages}",
+            data=f"srv:list:{server}:{page}".encode(),
+            style="success")
     ])
-    # First 10 sessions
-    for i, sf in enumerate(files[:10], 1):
-        flooded = "🌊" if is_real_flooded(sf) else "🟢"
-        loaded = "💾" if sf in REAL_CLIENTS else "📁"
-        rows.append([
-            btn(f"{flooded}{loaded} {sf.replace('.session','')[:20]}",
-                data=f"ra:info:{sf}".encode(),
-                style="danger" if flooded == "🌊" else "primary"),
-        ])
-    if len(files) > 10:
-        rows.append([btn(f"... +{len(files)-10} more",
-                         data=b"ra:list", style="primary")])
-    rows.append([btn("🔄 Refresh", data=b"op:ra", style="success")])
-    rows.append([btn("🔙 Back", data=b"op:ra", style="primary")])
+    rows.append([
+        btn(f"🔙 {get_server_label(server)}",
+            data=f"srv:panel:{server}".encode(),
+            style="danger")
+    ])
     return rows
 
 
-def kb_session_info(sf):
-    """Single session info panel"""
-    flooded = is_real_flooded(sf)
-    loaded = sf in REAL_CLIENTS
-    flood_until = REAL_FLOOD_UNTIL.get(sf)
-    flood_txt = "—"
-    if flood_until:
-        remaining = int((flood_until - datetime.now()).total_seconds())
-        flood_txt = f"{remaining}s" if remaining > 0 else "expired"
+# ══════════════════════ USER SERVER ASSIGNMENT ══════════════════════
+def kb_user_server(tuid):
+    """Server assignment keyboard for a user"""
+    u = db_get_user_full(tuid)
+    if not u:
+        return [[btn("❌ Not found", data=b"op:users",
+                     style="danger")]]
+
+    current = get_user_server(tuid)
+    plan = u[15] or "free"
+    override = u[27] if len(u) > 27 else None
+
     return [
-        [btn(f"📁 {sf}", data=b"op:ra", style="primary")],
-        [btn(f"🌊 Flooded: {'✅' if flooded else '❌'}",
-             data=b"op:ra",
-             style="danger" if flooded else "success")],
-        [btn(f"💾 Loaded: {'✅' if loaded else '❌'}",
-             data=b"op:ra", style="primary")],
-        [btn(f"⏱️ Flood till: {flood_txt}", data=b"op:ra",
-             style="primary")],
-        [btn("🧪 Test", data=f"ra:test:{sf}".encode(),
-             style="success"),
-         btn("🔄 Reset Flood", data=f"ra:reset:{sf}".encode(),
-             style="primary")],
-        [btn("🔌 Disconnect", data=f"ra:disconnect:{sf}".encode(),
-             style="danger")],
-        [btn("🔙 Back", data=b"ra:list", style="primary")],
+        [btn(f"👤 User: `{tuid}`",
+              data=f"um:panel:{tuid}".encode(), style="primary")],
+        [btn(f"💰 Plan: {plan}",
+              data=f"um:panel:{tuid}".encode(), style="success")],
+        [btn(f"🖥️ Current Server: {get_server_label(current)}",
+              data=f"usrv:refresh:{tuid}".encode(), style="primary")],
+        [btn(f"📝 Override: {override or 'None'}",
+              data=f"usrv:refresh:{tuid}".encode(), style="primary")],
+        [btn("🆓 Force FREE Server",
+              data=f"usrv:set:free:{tuid}".encode(),
+              style="success")],
+        [btn("💎 Force PAID Server",
+              data=f"usrv:set:paid:{tuid}".encode(),
+              style="success")],
+        [btn("🔄 Reset (Use Plan Default)",
+              data=f"usrv:reset:{tuid}".encode(),
+              style="primary")],
+        [btn("🔙 Back",
+              data=f"um:panel:{tuid}".encode(),
+              style="danger")],
     ]
 
 
-# ══════════════════════ FEATURES / PRICES ══════════════════════
+def kb_bulk_move(server):
+    """Bulk move bots panel"""
+    other = "paid" if server == "free" else "free"
+    return [
+        [btn("🔀 Move ALL bots", data=f"srv:move_all:{server}".encode(),
+              style="danger")],
+        [btn("📊 Move only FLOODED",
+              data=f"srv:move_flooded:{server}".encode(),
+              style="primary")],
+        [btn("📊 Move only BUSY",
+              data=f"srv:move_busy:{server}".encode(),
+              style="primary")],
+        [btn("🔙 Back",
+              data=f"srv:panel:{server}".encode(),
+              style="primary")],
+    ]
+
+
+# ══════════════════════ FEATURES ══════════════════════
 def kb_features():
-    """Feature toggles"""
     def t(k, l):
         return f"{'✅' if cfg_bool(k) else '❌'} {l}"
     return [
@@ -5165,12 +6116,12 @@ def kb_features():
              data=b"ft:toggle:team_reseller_enabled", style="success")],
         [btn(t("upsell_enabled", "Upsell"),
              data=b"ft:toggle:upsell_enabled", style="primary")],
-        # ✅ NEW: Smart reaction toggles
         [btn(t("smart_reaction_enabled", "Smart Reaction"),
-             data=b"ft:toggle:smart_reaction_enabled",
-             style="success")],
+             data=b"ft:toggle:smart_reaction_enabled", style="success")],
         [btn(t("fallback_enabled", "Fallback Reactions"),
              data=b"ft:toggle:fallback_enabled", style="primary")],
+        [btn(t("dual_server_enabled", "Dual Server"),
+             data=b"ft:toggle:dual_server_enabled", style="success")],
         [btn("🔙 Back", data=b"owner_panel", style="danger")],
     ]
 
@@ -5197,7 +6148,6 @@ def kb_plan_prices_durations(plan):
 
 
 def kb_paid_features():
-    """Paid feature toggles"""
     def t(k, l):
         paid = cfg_bool(f"paid_{k}", False)
         st = "💎 PAID" if paid else "🆓 FREE"
@@ -5266,17 +6216,22 @@ def kb_emoji_packs_manage():
 
 # ══════════════════════ USER MANAGEMENT ══════════════════════
 def kb_user_manage(uid):
-    """Single user management panel"""
     u = db_get_user_full(uid)
     if not u:
         return [[btn("❌ Not found", data=b"op:users",
                      style="danger")]]
-    def yn(v): return "✅" if v else "❌"
+    def yn(v):
+        return "✅" if v else "❌"
     plan = u[15] or "free"
     fb = u[17] or 0
-    try: ra_ov = u[26] if len(u) > 26 else -1
-    except Exception: ra_ov = -1
+    try:
+        ra_ov = u[26] if len(u) > 26 else -1
+    except Exception:
+        ra_ov = -1
     ra_lbl = ra_ov if ra_ov >= 0 else "Plan"
+    current_server = get_user_server(uid)
+    server_label = get_server_label(current_server)
+
     return [
         [btn(f"{yn(not u[5])} {'BANNED' if u[5] else 'Active'}",
               data=f"um:ban:{uid}".encode(),
@@ -5287,6 +6242,8 @@ def kb_user_manage(uid):
              style="success")],
         [btn(f"🎁 Balance: {fb}", data=f"um:balance:{uid}".encode(),
              style="primary")],
+        [btn(f"🖥️ Server: {server_label}",
+              data=f"usrv:panel:{uid}".encode(), style="success")],
         [btn(f"👤 RA Limit: {ra_lbl}",
               data=f"um:ra:{uid}".encode(), style="success")],
         [btn(f"👥 Team: {u[23] or 'user'}",
@@ -5411,11 +6368,113 @@ def kb_bulk_users():
     ]
 
 
+# ══════════════════════ RA PANELS (FIXED) ══════════════════════
+def kb_ra_panel():
+    status = real_get_status()
+    rows = [
+        [btn(f"📊 Total: {status['total']}", data=b"op:ra",
+             style="primary"),
+         btn(f"✅ Free: {status['available']}", data=b"op:ra",
+             style="success")],
+        [btn(f"🌊 Flooded: {status['flooded']}", data=b"op:ra",
+             style="danger"),
+         btn(f"💾 Loaded: {status['loaded']}/{status['max_clients']}",
+             data=b"op:ra", style="primary")],
+        [btn("🔄 Refresh", data=b"op:ra", style="success")],
+        [btn("📋 List Sessions", data=b"ra:list",
+             style="primary")],
+        [btn("🌊 Clear Floods", data=b"ra:clear_floods",
+             style="danger")],
+        [btn("🔌 Disconnect All", data=b"ra:disconnect_all",
+             style="danger")],
+        [btn("🧪 Test All", data=b"ra:test_all", style="success")],
+        [btn("📤 Upload Info", data=b"ra:upload_info",
+             style="primary")],
+        [btn("🔙 Back", data=b"owner_panel", style="primary")],
+    ]
+    return rows
+
+
+def kb_ra_plans():
+    rows = []
+    for plan in ["free", "basic", "pro", "premium"]:
+        lim = plan_ra_limit(plan)
+        enabled = plan_has_realaccounts(plan)
+        st = "✅" if enabled else "❌"
+        rows.append([
+            btn(f"{st} {PLAN_NAMES[plan]}",
+                data=f"rap:toggle:{plan}".encode(),
+                style="success" if enabled else "danger"),
+            btn(f"👤 {lim}",
+                data=f"rap:edit:{plan}".encode(),
+                style="primary"),
+        ])
+    rows.append([btn("🔙 Back", data=b"owner_panel",
+                     style="primary")])
+    return rows
+
+
+def kb_sessions_panel():
+    files = discover_session_files()
+    status = real_get_status()
+    rows = [
+        [btn(f"📁 {status['total']} sessions", data=b"op:ra",
+             style="primary"),
+         btn(f"🌊 {status['flooded']} flooded", data=b"op:ra",
+             style="danger")],
+    ]
+    for i, sf in enumerate(files[:10], 1):
+        flooded = "🌊" if is_real_flooded(sf) else "🟢"
+        loaded = "💾" if sf in REAL_CLIENTS else "📁"
+        rows.append([
+            btn(f"{flooded}{loaded} {sf.replace('.session','')[:20]}",
+                data=f"ra:info:{sf}".encode(),
+                style="danger" if flooded == "🌊" else "primary"),
+        ])
+    if len(files) > 10:
+        rows.append([btn(f"... +{len(files)-10} more",
+                         data=b"ra:list", style="primary")])
+    rows.append([btn("🔄 Refresh", data=b"op:ra", style="success")])
+    rows.append([btn("🔙 Back", data=b"op:ra", style="primary")])
+    return rows
+
+
+def kb_session_info(sf):
+    flooded = is_real_flooded(sf)
+    loaded = sf in REAL_CLIENTS
+    flood_until = REAL_FLOOD_UNTIL.get(sf)
+    flood_txt = "—"
+    if flood_until:
+        remaining = int((flood_until - datetime.now()).total_seconds())
+        flood_txt = f"{remaining}s" if remaining > 0 else "expired"
+    return [
+        [btn(f"📁 {sf[:30]}", data=b"op:ra", style="primary")],
+        [btn(f"🌊 Flooded: {'✅' if flooded else '❌'}",
+             data=b"op:ra",
+             style="danger" if flooded else "success")],
+        [btn(f"💾 Loaded: {'✅' if loaded else '❌'}",
+             data=b"op:ra", style="primary")],
+        [btn(f"⏱️ Flood till: {flood_txt}", data=b"op:ra",
+             style="primary")],
+        [btn("🧪 Test", data=f"ra:test:{sf}".encode(),
+             style="success"),
+         btn("🔄 Reset", data=f"ra:reset:{sf}".encode(),
+             style="primary")],
+        [btn("🔌 Disconnect", data=f"ra:disconnect:{sf}".encode(),
+             style="danger")],
+        [btn("🔙 Back", data=b"ra:list", style="primary")],
+    ]
+
+
+# ══════════════════════ END OF PART 10 ══════════════════════
+D("✅ Part 10 loaded — Owner Keyboards + Server Management", "ok")
 # ══════════════════════ MESSAGE TEMPLATES ══════════════════════
 def get_admin_needed_message(chat_title, uid=None):
-    """Message shown when owner is not admin"""
+    """Owner admin required message"""
     return (
-        f"{STAR_LINE}\n⚠️ **IMPORTANT — READ FIRST** ⚠️\n{STAR_LINE}\n\n"
+        f"{STAR_LINE}\n"
+        f"⚠️ **IMPORTANT — READ FIRST** ⚠️\n"
+        f"{STAR_LINE}\n\n"
         f"📢 **{chat_title}**\n\n"
         f"❌ Before sending reactions, make the OWNER admin in your "
         f"channel/group!\n\n"
@@ -5443,7 +6502,7 @@ def get_admin_needed_message(chat_title, uid=None):
 
 
 def get_welcome_message(first_name, uid, auto_approved=True):
-    """Welcome message shown on /start"""
+    """Welcome message with server info"""
     limit = get_user_limit(uid)
     u = db_get_user_full(uid)
     aw = u[9] if u else 0
@@ -5452,6 +6511,11 @@ def get_welcome_message(first_name, uid, auto_approved=True):
     plan_name = PLAN_NAMES.get(plan, PLAN_NAMES['free'])
     yes_no = "✅ YES" if auto_approved else "⏳ NO"
     aw_state = "✅" if aw else "🔒"
+
+    # Server info
+    server = get_user_server(uid)
+    server_label = get_server_label(server)
+    server_bot_count = db_count_visible_bots(server=server)
 
     stats = stats_get(uid)
     total = stats[1] if stats and len(stats) > 1 else 0
@@ -5472,6 +6536,7 @@ def get_welcome_message(first_name, uid, auto_approved=True):
         f"{DIV}\n"
         f"📊 **YOUR INFO**\n"
         f"{DIV}\n"
+        f"🖥️ Server: **{server_label}** ({server_bot_count} bots)\n"
         f"💰 Plan: **{plan_name}**\n"
         f"🎁 Limit: **{limit}** per post\n"
         f"💎 Balance: **{fb}**\n"
@@ -5485,7 +6550,12 @@ def get_welcome_message(first_name, uid, auto_approved=True):
 
 
 def get_approved_notify_message(first_name, uid=None):
-    """Notification when user is approved"""
+    """Approval notification — server-aware"""
+    limit = get_user_limit(uid) if uid else DEFAULT_FREE_COUNT
+    server = get_user_server(uid) if uid else "free"
+    server_label = get_server_label(server)
+    server_bots = db_count_visible_bots(server=server) if uid else 0
+
     return (
         f"{STAR_LINE}\n"
         f"{SPARKLE} 🎉 **APPROVED** 🎉 {SPARKLE}\n"
@@ -5493,11 +6563,15 @@ def get_approved_notify_message(first_name, uid=None):
         f"👋 Welcome, **{first_name}**!\n"
         f"✅ Access granted!\n\n"
         f"{DIV}\n"
+        f"🖥️ Your Server: **{server_label}**\n"
+        f"🤖 Available Bots: **{server_bots}**\n"
+        f"🎁 Limit: **{limit}** per post\n"
+        f"{DIV}\n\n"
+        f"{DIV}\n"
         f"👑 Owner: @{get_owner_username()}\n"
         f"🆔 ID: `{get_owner_id()}`\n"
         f"{DIV}\n\n"
         f"⚠️ Make owner admin in your chat!\n\n"
-        f"🎁 {DEFAULT_FREE_COUNT} reactions per post\n"
         f"🚀 Send /start to begin!"
     )
 
@@ -5545,17 +6619,116 @@ def get_banned_message(uid=None):
     )
 
 
-# ══════════════════════ END OF PART 9 ══════════════════════
-D("✅ Part 9 loaded — Owner Keyboards + RA/Session panels + Templates", "ok")
+# ══════════════════════ SERVER INFO HELPERS ══════════════════════
+def get_server_summary_text(server):
+    """Short server summary for display"""
+    pool = get_pool_status(server)
+    label = get_server_label(server)
+    return (
+        f"{label} Server\n"
+        f"🤖 Total: **{pool['visible']}** bots\n"
+        f"🟢 Free: **{pool['free']}**\n"
+        f"🔴 Busy: **{pool['busy']}**\n"
+        f"🌊 Flooded: **{pool['flooded']}**"
+    )
+
+
+def get_dual_server_status_text():
+    """Full dual-server status text"""
+    fs = get_pool_status("free")
+    ps = get_pool_status("paid")
+    stats = db_bot_stats()
+    return (
+        f"🖥️ **DUAL SERVER STATUS**\n"
+        f"{STAR_LINE}\n\n"
+        f"🆓 **FREE SERVER**\n"
+        f"   📊 Total: **{fs['total']}** bots\n"
+        f"   🟢 Free: **{fs['free']}**\n"
+        f"   🔴 Busy: **{fs['busy']}**\n"
+        f"   🌊 Flooded: **{fs['flooded']}**\n\n"
+        f"💎 **PAID SERVER**\n"
+        f"   📊 Total: **{ps['total']}** bots\n"
+        f"   🟢 Free: **{ps['free']}**\n"
+        f"   🔴 Busy: **{ps['busy']}**\n"
+        f"   🌊 Flooded: **{ps['flooded']}**\n\n"
+        f"{DIV}\n"
+        f"📊 Total: **{stats['total']}** bots\n"
+        f"🆓 Free: **{stats['free']}** | 💎 Paid: **{stats['paid']}**\n"
+        f"🔒 Permanent: **{stats['permanent']}**"
+    )
+
+
+def get_user_plan_info_text(uid):
+    """User's plan & server info"""
+    u = db_get_user_full(uid)
+    if not u:
+        return "❌ User not found"
+    plan = u[15] or "free"
+    exp = u[16] or "N/A"
+    fb = u[17] or 0
+    limit = get_user_limit(uid)
+    server = get_user_server(uid)
+    server_label = get_server_label(server)
+    ra_lim, ra_src = get_user_ra_limit(uid)
+    return (
+        f"👤 **YOUR ACCOUNT INFO**\n"
+        f"{STAR_LINE}\n\n"
+        f"🆔 ID: `{uid}`\n"
+        f"📛 Name: **{u[1] or '—'}**\n\n"
+        f"{DIV}\n"
+        f"🖥️ Server: **{server_label}**\n"
+        f"💰 Plan: **{PLAN_NAMES.get(plan, PLAN_NAMES['free'])}**\n"
+        f"📅 Expires: **{exp[:10] if exp != 'N/A' else 'N/A'}**\n"
+        f"🎁 Limit: **{limit}** per post\n"
+        f"💎 Balance: **{fb}**\n"
+        f"👤 RA Limit: **{ra_lim}** ({ra_src})\n"
+        f"{DIV}"
+    )
+
+
+def get_bot_info_text(bot_row):
+    """Bot info display"""
+    if not bot_row:
+        return "❌ Bot not found"
+    tok, uname, bid, added = bot_row[:4]
+    server = bot_row[4] if len(bot_row) > 4 else "free"
+    label = get_server_label(server)
+    now = datetime.now()
+    st = "🟢 Active"
+    if is_bot_flooded(tok, server):
+        st = "🌊 Flooded"
+    else:
+        pool = get_pool(server)
+        info = pool.get(tok)
+        if (isinstance(info, dict) and info.get("busy_until")
+                and info["busy_until"] > now):
+            st = "🔴 Busy"
+    return (
+        f"🤖 **BOT INFO**\n"
+        f"{DIV}\n\n"
+        f"👤 @{uname}\n"
+        f"🆔 `{bid}`\n"
+        f"🖥️ Server: **{label}**\n"
+        f"📊 Status: **{st}**\n"
+        f"📅 Added: **{added[:16] if added else '—'}**\n\n"
+        f"{DIV}\n"
+        f"🔑 Token: `{tok[:20]}...`"
+    )
+
+
+# ══════════════════════ END OF PART 11 ══════════════════════
+D("✅ Part 11 loaded — Message Templates (Server-Aware)", "ok")
 # ══════════════════════ /start COMMAND ══════════════════════
 @bot.on(events.NewMessage(pattern="/start"))
 async def on_start(event):
     try:
-        if event.is_channel: return
+        if event.is_channel:
+            return
         uid = event.sender_id
-        if uid is None: return
+        if uid is None:
+            return
 
-        # Referral code parse
+        # Parse referral code
         text = event.text or ""
         ref_code = None
         if " " in text:
@@ -5563,7 +6736,7 @@ async def on_start(event):
             if len(parts) > 1 and parts[1].startswith("ref_"):
                 ref_code = parts[1][4:]
 
-        # Get sender info
+        # Get sender
         try:
             sender = await event.get_sender()
             if sender is None or isinstance(sender, (Channel, Chat)):
@@ -5574,7 +6747,6 @@ async def on_start(event):
         except Exception:
             fn, un = "User", None
 
-        # Save user
         existing = db_get_user(uid)
         is_new = existing is None
         db_save_user(uid, fn, un)
@@ -5585,12 +6757,12 @@ async def on_start(event):
             if rid and rid != uid:
                 db_add_referral(rid, uid)
 
-        # Banned check
+        # Banned
         if db_is_banned(uid):
             await event.reply(get_banned_message(uid))
             return
 
-        # Auto-approve logic
+        # Auto-approve
         auto = is_auto_approve()
         if not OWNER_IS(uid):
             status = db_approval_status(uid)
@@ -5599,7 +6771,7 @@ async def on_start(event):
                     db_set_approval(uid, "approved",
                                     approved_by=get_owner_id())
 
-        # Force join check
+        # Force join
         if not await is_joined(uid):
             await event.reply(
                 f"{STAR_LINE}\n"
@@ -5625,14 +6797,18 @@ async def on_start(event):
 
         # Owner dashboard
         if OWNER_IS(uid):
+            stats = db_bot_stats()
+            real_status = real_get_status()
             await event.reply(
                 f"{STAR_LINE}\n"
                 f"👑 **OWNER DASHBOARD**\n"
                 f"{STAR_LINE}\n\n"
-                f"🤖 Bots: **{db_count_visible_bots()}**\n"
+                f"🤖 Total Bots: **{stats['total']}**\n"
+                f"   🆓 Free: **{stats['free']}**\n"
+                f"   💎 Paid: **{stats['paid']}**\n\n"
                 f"👥 Users: **{db_total_users()}**\n"
-                f"👤 Sessions: **{real_count_available()}/"
-                f"{len(discover_session_files())}**\n"
+                f"👤 Sessions: **{real_status['available']}/"
+                f"{real_status['total']}**\n"
                 f"📡 Watchers: **{len(db_list_watchers())}**\n"
                 f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n\n"
                 f"{SPARKLE} Welcome back, boss! 👑",
@@ -5657,7 +6833,6 @@ async def on_start(event):
             await event.reply(get_rejected_message(uid))
             return
 
-        # Default: auto-create approval
         db_set_approval(uid, "approved", approved_by=get_owner_id())
         await event.reply(
             get_welcome_message(fn, uid, auto_approved=True),
@@ -5671,10 +6846,13 @@ async def on_start(event):
 @bot.on(events.NewMessage)
 async def on_msg(event):
     try:
-        if event.is_channel: return
+        if event.is_channel:
+            return
         uid = event.sender_id
-        if uid is None: return
-        if event.text and event.text.startswith("/"): return
+        if uid is None:
+            return
+        if event.text and event.text.startswith("/"):
+            return
 
         # Save user
         try:
@@ -5689,10 +6867,12 @@ async def on_msg(event):
 
         db_save_user(uid, fn, un)
 
-        if db_is_banned(uid): return
+        if db_is_banned(uid):
+            return
 
         text = (event.text or "").strip()
-        if not text: return
+        if not text:
+            return
 
         # ══════════════════════════════════════════
         # ═════ OWNER STATES ═════
@@ -5701,7 +6881,7 @@ async def on_msg(event):
             state = USER_STATES[uid]
             step = state.get("step")
 
-            # ── Owner Info edit ──
+            # ── Owner info edit ──
             if step == "oi_wait_uname":
                 t = text.lstrip("@")
                 if not t or len(t) > 32:
@@ -5725,7 +6905,7 @@ async def on_msg(event):
                                   buttons=kb_owner())
                 return
 
-            # ── Coupon create flow ──
+            # ── Coupon flow ──
             if step == "cop_wait_code":
                 t = text.upper()
                 if len(t) < 3 or len(t) > 30:
@@ -5773,12 +6953,12 @@ async def on_msg(event):
                 await event.reply(
                     f"✅ **Coupon created!**\n\n"
                     f"🎟️ Code: `{code}`\n"
-                    f"💰 Discount: {pct}% + {flat}rs\n"
+                    f"💰 {pct}% + {flat}rs\n"
                     f"📊 Max uses: {max_u if max_u else '∞'}",
                     buttons=kb_coupons_manage())
                 return
 
-            # ── Store manage flow ──
+            # ── Store pack add ──
             if step == "storem_wait_name":
                 state["sm_name"] = text[:40]
                 state["step"] = "storem_wait_emojis"
@@ -5819,8 +6999,7 @@ async def on_msg(event):
                     f"✅ **Store pack added!**\n\n"
                     f"🏪 {name}\n"
                     f"💰 {price}rs\n"
-                    f"🎨 {len(emojis)} emojis\n"
-                    f"🆔 Pack #{pid}",
+                    f"🎨 {len(emojis)} emojis",
                     buttons=kb_store_manage())
                 return
 
@@ -5938,7 +7117,7 @@ async def on_msg(event):
                                   buttons=kb_emoji_packs_manage())
                 return
 
-            # ── Broadcast text ──
+            # ── Broadcast ──
             if step == "wait_bc_text":
                 del USER_STATES[uid]
                 msg = await event.reply("📢 Broadcasting...")
@@ -6008,6 +7187,40 @@ async def on_msg(event):
                                   buttons=kb_user_manage(target))
                 return
 
+            # ── Server bulk move ──
+            if step == "srv_add_bot_token":
+                if ":" not in text or len(text) < 30:
+                    await event.reply("❌ Invalid bot token")
+                    return
+                srv = state.get("server", "free")
+                info = bot_get_me(text.strip())
+                if not info:
+                    await event.reply("❌ Invalid token (getMe failed)")
+                    return
+                db_add_bot(text.strip(), info["username"], info["id"],
+                           server=srv)
+                del USER_STATES[uid]
+                await event.reply(
+                    f"✅ Bot added to {get_server_label(srv)}\n"
+                    f"👤 @{info['username']}",
+                    buttons=kb_server_panel(srv))
+                return
+
+            # ── Server test ──
+            if step == "srv_test_token":
+                srv = state.get("server", "free")
+                tok = text.strip()
+                info = bot_get_me(tok)
+                if info:
+                    await event.reply(
+                        f"✅ **Bot OK**\n"
+                        f"👤 @{info['username']}\n"
+                        f"🆔 `{info['id']}`",
+                        buttons=kb_server_panel(srv))
+                else:
+                    await event.reply("❌ Invalid token")
+                return
+
         # ══════════════════════════════════════════
         # ═════ USER VALIDATION ═════
         # ══════════════════════════════════════════
@@ -6035,7 +7248,7 @@ async def on_msg(event):
         # ═════ USER INPUT FLOWS ═════
         # ══════════════════════════════════════════
 
-        # ── Queue flow ──
+        # ── Queue ──
         if step == "queue_wait_chat":
             state["q_chat"] = text
             state["step"] = "queue_wait_post"
@@ -6054,7 +7267,7 @@ async def on_msg(event):
                 buttons=kb_reaction_count(uid))
             return
 
-        # ── Bulk flow ──
+        # ── Bulk ──
         if step == "bulk_wait_chat":
             state["b_chat"] = text
             state["step"] = "bulk_wait_posts"
@@ -6073,11 +7286,11 @@ async def on_msg(event):
             state["step"] = "bulk_wait_count"
             USER_STATES[uid] = state
             await event.reply(
-                f"✅ {len(posts)} posts. Per post count?:",
+                f"✅ {len(posts)} posts. Per post?:",
                 buttons=kb_reaction_count(uid))
             return
 
-        # ── Template flow ──
+        # ── Template ──
         if step == "tpl_wait_name":
             state["tpl_name"] = text[:20]
             state["step"] = "tpl_wait_emojis"
@@ -6098,7 +7311,7 @@ async def on_msg(event):
                               buttons=kb_templates_menu(uid))
             return
 
-        # ── Reaction flow: channel ──
+        # ── Reaction flow ──
         if step == "wait_channel":
             state["channel_link"] = text
             state["step"] = "wait_post"
@@ -6117,7 +7330,7 @@ async def on_msg(event):
                 buttons=kb_reaction_count(uid))
             return
 
-        # ── Custom emoji input ──
+        # ── Custom emoji ──
         if step == "wait_custom_emoji":
             emojis = []
             for p in re.split(r"[,\s]+", text):
@@ -6135,7 +7348,7 @@ async def on_msg(event):
             await _run_reactions(event, uid)
             return
 
-        # ── Watch add flow ──
+        # ── Watch add ──
         if step == "watch_wait_link":
             state["watch_link"] = text
             state["watch_chat_type"] = state.get("chat_type", "channel")
@@ -6175,7 +7388,7 @@ async def on_msg(event):
             await _finalize_watch_add(event, uid)
             return
 
-        # ── Watch edit flows ──
+        # ── Watch edit ──
         if step == "watch_edit_count":
             if not text.isdigit():
                 await event.reply("❌ Number required")
@@ -6207,15 +7420,6 @@ async def on_msg(event):
                               style="primary")]])
             return
 
-        # ── Coupon apply (user) ──
-        if step == "user_coupon_code":
-            code = text.upper()
-            state["coupon_code"] = code
-            del USER_STATES[uid]
-            await event.reply(f"✅ Coupon `{code}` saved!",
-                              buttons=kb_plans_menu(uid))
-            return
-
         # ── Default fallback ──
         await event.reply("👉 Use the buttons or /start",
                           buttons=kb_welcome(uid))
@@ -6226,7 +7430,6 @@ async def on_msg(event):
 
 # ══════════════════════ FINALIZERS ══════════════════════
 async def _finalize_watch_add(event, uid):
-    """Complete watch add flow"""
     try:
         state = USER_STATES.get(uid, {})
         link = state.get("watch_link")
@@ -6234,8 +7437,8 @@ async def _finalize_watch_add(event, uid):
         count = state.get("watch_count", 5)
         custom = state.get("watch_custom_emojis")
         mode = "custom" if custom else "default"
+        server = get_user_server(uid)
 
-        # Resolve chat
         try:
             chat_ref, invite = parse_channel_link(link)
             if invite:
@@ -6258,7 +7461,6 @@ async def _finalize_watch_add(event, uid):
         chat_id = entity.id
         chat_title = getattr(entity, "title", "Unknown")
 
-        # Check duplicate
         for w in db_list_watchers(uid):
             if w[2] == chat_id:
                 await event.reply(f"⚠️ Already watching {chat_title}")
@@ -6266,7 +7468,6 @@ async def _finalize_watch_add(event, uid):
                     USER_STATES[uid] = {}
                 return
 
-        # Get last post id
         try:
             msgs = await asyncio.wait_for(
                 admin_client.get_messages(entity, limit=1), timeout=15)
@@ -6274,9 +7475,8 @@ async def _finalize_watch_add(event, uid):
         except Exception:
             last = 0
 
-        # Save watcher
         db_add_watcher(uid, chat_id, chat_title, link, cty,
-                       count, mode, custom, last)
+                       count, mode, custom, last, server=server)
 
         await event.reply(
             f"🎉 **WATCH ADDED**\n"
@@ -6284,22 +7484,21 @@ async def _finalize_watch_add(event, uid):
             f"📢 {chat_title}\n"
             f"🎯 {count}/post\n"
             f"✏️ {mode}\n"
+            f"🖥️ {get_server_label(server)}\n"
             f"🟢 **ACTIVE!**",
             buttons=[
                 [btn("📋 My Watches", data=b"watch:list",
                      style="primary")],
                 [btn("🏠 Home", data=b"home", style="success")],
             ])
-
         if uid in USER_STATES:
             USER_STATES[uid] = {}
-
     except Exception as e:
         D_err(e, "_finalize_watch_add")
 
 
 async def _run_reactions(event, uid):
-    """Launch reaction flow — smart mode selection"""
+    """Launch reaction flow with server-aware mode"""
     global TASK_RUNNING, TASK_OWNER_UID
 
     now = time.time()
@@ -6339,8 +7538,9 @@ async def _run_reactions(event, uid):
 
     USER_LAST_REQUEST[uid] = now
 
-    # Determine mode
-    user_ra_limit, ra_src = get_user_ra_limit(uid)
+    server = get_user_server(uid)
+    user_ra_limit, _ = get_user_ra_limit(uid)
+
     if chosen_mode == "without_admin":
         use_real = (user_has_realaccounts(uid)
                     and real_count_available() > 0
@@ -6356,7 +7556,6 @@ async def _run_reactions(event, uid):
     TASK_OWNER_UID = uid
     try:
         if use_real:
-            # ═════ Real accounts mode ═════
             post_ref, msg_id = parse_post_link(pl)
             if not msg_id:
                 await safe_edit(event, "❌ Invalid post link",
@@ -6380,7 +7579,7 @@ async def _run_reactions(event, uid):
                 f"👤 **WITHOUT ADMIN MODE**\n"
                 f"{DIV}\n\n"
                 f"🎯 Sending {real_count}\n"
-                f"🔓 No admin needed ✅\n\n"
+                f"🔓 No admin needed ✅\n"
                 f"⚡ Processing...")
 
             async def on_prog(i, total, ok):
@@ -6414,13 +7613,10 @@ async def _run_reactions(event, uid):
                 f"{DIV}\n\n"
                 f"🚀 **{bar}** {res['ok']}/{real_count}",
                 buttons=kb_back(uid))
-
         else:
-            # ═════ Bot mode (smart engine) ═════
             await process_reactions_rotating(
                 event, uid, cl, pl, count,
                 emoji_mode=em, custom_emojis=ce)
-
     except Exception as e:
         D_err(e, "_run_reactions")
         try:
@@ -6433,14 +7629,11 @@ async def _run_reactions(event, uid):
         TASK_OWNER_UID = None
 
 
-# ══════════════════════ END OF PART 10 ══════════════════════
-D("✅ Part 10 loaded — /start + on_msg + Help + Owner States + _run_reactions", "ok")
-# ══════════════════════ CALLBACK HANDLER — PART 1 (USER) ══════════════════════
+# ══════════════════════ END OF PART 12 ══════════════════════
+D("✅ Part 12 loaded — /start + on_msg + Owner States (Server-Aware)", "ok")
+# ══════════════════════ USER CALLBACK HANDLER ══════════════════════
 @bot.on(events.CallbackQuery)
 async def on_cb_user(event):
-    """User callback handler — all user buttons"""
-    global TASK_RUNNING, TASK_OWNER_UID
-
     try:
         data = event.data.decode()
         uid = event.sender_id
@@ -6449,7 +7642,17 @@ async def on_cb_user(event):
 
     try:
         # ══════════════════════════════════════════
-        # ═════ SUPPORT / HELP / REQUEST ACCESS ═════
+        # ═════ SKIP OWNER-ONLY (handled by on_cb_owner) ═════
+        # ══════════════════════════════════════════
+        if data.startswith(("op:", "um:", "ft:", "pp:", "pf:",
+                            "fc:", "team:", "cp:", "cop:", "storem:",
+                            "retry:", "gh:", "bc:", "payv:",
+                            "bulk:", "ra:", "rap:", "oi:",
+                            "srv:", "usrv:", "bot:")):
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ SUPPORT / HELP ═════
         # ══════════════════════════════════════════
         if data == "support":
             await safe_answer(event, "💬")
@@ -6464,7 +7667,7 @@ async def on_cb_user(event):
                 buttons=kb_support(uid))
             return
 
-        # ═════ HELP — 🔥 NEW ═════
+        # ═════ HELP ═════
         if data == "help":
             await safe_answer(event, "❓")
             await safe_edit(
@@ -6587,7 +7790,8 @@ async def on_cb_user(event):
 
         # ═════ APPROVE / REJECT (owner) ═════
         if data.startswith("approve:"):
-            if not OWNER_IS(uid): return
+            if not OWNER_IS(uid):
+                return
             target = int(data.split(":")[1])
             db_set_approval(target, "approved",
                             approved_by=get_owner_id())
@@ -6603,7 +7807,8 @@ async def on_cb_user(event):
             return
 
         if data.startswith("reject:"):
-            if not OWNER_IS(uid): return
+            if not OWNER_IS(uid):
+                return
             target = int(data.split(":")[1])
             db_set_approval(target, "rejected",
                             approved_by=get_owner_id())
@@ -6660,29 +7865,8 @@ async def on_cb_user(event):
 
         # ═════ INFO ═════
         if data == "info":
-            user = db_get_user(uid)
-            u = db_get_user_full(uid)
-            limit = get_user_limit(uid)
-            plan = u[15] or "free"
-            fb = u[17] or 0
-            aw = u[9] if u else 0
-            rc, re_earned = db_get_referral_stats(uid)
-            exp = u[16] or "N/A"
-            ra_lim, ra_src = get_user_ra_limit(uid)
-            await safe_edit(
-                event,
-                f"ℹ️ **YOUR INFO**\n"
-                f"{DIV}\n\n"
-                f"🆔 `{uid}`\n"
-                f"📛 {user[1] if user else '—'}\n"
-                f"💰 Plan: **{PLAN_NAMES.get(plan, PLAN_NAMES['free'])}**\n"
-                f"📅 Expires: **{exp[:10] if exp != 'N/A' else 'N/A'}**\n"
-                f"🎁 Limit: **{limit}** per post\n"
-                f"💎 Balance: **{fb}**\n"
-                f"📡 Auto-Watch: **{'✅' if aw else '🔒'}**\n"
-                f"👤 RA Limit: **{ra_lim}** ({ra_src})\n"
-                f"🎁 Referrals: **{rc}** ({re_earned} earned)",
-                buttons=kb_back(uid))
+            await safe_edit(event, get_user_plan_info_text(uid),
+                            buttons=kb_back(uid))
             return
 
         # ══════════════════════════════════════════
@@ -6706,11 +7890,15 @@ async def on_cb_user(event):
             success_rate = int(ok_c / max(1, ok_c + fail_c) * 100)
             can_bonus = ("✅ Available"
                          if bonus_can_claim(uid) else "⏳ Claimed")
+            server = get_user_server(uid)
+            server_label = get_server_label(server)
+            server_bots = db_count_visible_bots(server=server)
             await safe_edit(
                 event,
                 f"📊 **YOUR DASHBOARD**\n"
                 f"{STAR_LINE}\n\n"
-                f"👤 ID: `{uid}`\n\n"
+                f"👤 ID: `{uid}`\n"
+                f"🖥️ Server: **{server_label}** ({server_bots} bots)\n\n"
                 f"{DIV}\n"
                 f"💫 **Total Sent:** {total}\n"
                 f"📅 **Today:** {today}\n"
@@ -6854,7 +8042,6 @@ async def on_cb_user(event):
                     event, f"❌ Need {price}rs, you have {fb}",
                     alert=True)
                 return
-            # Deduct balance
             conn = sqlite3.connect(DB_FILE)
             try:
                 conn.execute("""UPDATE users SET free_balance =
@@ -7088,8 +8275,7 @@ async def on_cb_user(event):
                 f"🔗 **YOUR LINK**\n"
                 f"{DIV}\n\n"
                 f"`{link}`\n\n"
-                f"💰 You get **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}** "
-                f"free reactions\n"
+                f"💰 You get **+{REFERRAL_REWARD + FRIEND_VALID_REWARD}**\n"
                 f"🎁 Friend gets **+{FRIEND_VALID_REWARD}** too!",
                 buttons=kb_referral_menu(uid))
             return
@@ -7135,7 +8321,8 @@ async def on_cb_user(event):
                 f"🥈 Pro — 50/post\n"
                 f"🥇 Premium — 200/post\n"
                 f"{DIV}\n\n"
-                f"💎 Unlock premium features!\n\n"
+                f"💎 Unlock premium features!\n"
+                f"💎 Premium unlocks PAID server!\n\n"
                 f"Choose a plan:",
                 buttons=kb_plans_menu(uid))
             return
@@ -7154,7 +8341,8 @@ async def on_cb_user(event):
                 event,
                 f"{PLAN_NAMES[plan_key]}\n"
                 f"{DIV}\n\n"
-                f"🎁 Limit: **{PLAN_LIMITS[plan_key]}/post**\n\n"
+                f"🎁 Limit: **{PLAN_LIMITS[plan_key]}/post**\n"
+                f"🖥️ Server: **💎 PAID**\n\n"
                 f"Choose duration:",
                 buttons=kb_plan_durations(plan_key, uid))
             return
@@ -7172,7 +8360,8 @@ async def on_cb_user(event):
                 f"{STAR_LINE}\n\n"
                 f"📦 **{PLAN_NAMES[plan_key]}**\n"
                 f"📅 Duration: **{DURATIONS[days]}**\n"
-                f"💰 Price: **{price}rs**\n\n"
+                f"💰 Price: **{price}rs**\n"
+                f"🖥️ Server: **💎 PAID**\n\n"
                 f"{DIV}\n"
                 f"📞 Contact the owner to purchase:\n\n"
                 f"👑 @{get_owner_username()}",
@@ -7257,16 +8446,21 @@ async def on_cb_user(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ MODE SELECTION ═════
+        # ═════ REACTION MODE ═════
         # ══════════════════════════════════════════
         if data == "react_flow":
             if not feat_manual():
                 await safe_answer(event, "💎 PAID!", alert=True)
                 return
+            server = get_user_server(uid)
+            server_label = get_server_label(server)
+            server_bots = db_count_visible_bots(server=server)
             await safe_edit(
                 event,
                 f"🎯 **SEND REACTIONS**\n"
                 f"{STAR_LINE}\n\n"
+                f"🖥️ Your Server: **{server_label}**\n"
+                f"🤖 Available: **{server_bots}** bots\n\n"
                 f"**Choose your mode:**\n\n"
                 f"👑 **With Admin** — Bots handle it\n"
                 f"   _Owner must be admin in your chat_\n\n"
@@ -7434,7 +8628,8 @@ async def on_cb_user(event):
         if data == "rc:all":
             if not OWNER_IS(uid):
                 return
-            count = len(db_list_bots())
+            server = get_user_server(uid)
+            count = db_count_visible_bots(server=server)
             state = USER_STATES.get(uid, {})
             state["reaction_count"] = count
             USER_STATES[uid] = state
@@ -7450,15 +8645,15 @@ async def on_cb_user(event):
                 count = int(data.split(":")[1])
             except Exception:
                 return
-            visible = db_count_visible_bots()
+            server = get_user_server(uid)
+            visible = db_count_visible_bots(server=server)
             if not OWNER_IS(uid):
                 limit = get_user_limit(uid)
                 if count > limit:
                     await safe_answer(event, f"❌ Max {limit}",
                                       alert=True)
                     return
-            actual = min(count, visible if not OWNER_IS(uid)
-                         else db_count_bots())
+            actual = min(count, visible)
             await safe_answer(event, f"✅ {actual}", alert=True)
             state = USER_STATES.get(uid, {})
             state["reaction_count"] = actual
@@ -7566,7 +8761,7 @@ async def on_cb_user(event):
             if not w or (not OWNER_IS(uid) and w[1] != uid):
                 await safe_answer(event, "❌", alert=True)
                 return
-            wid, wuid, cid, ct, cl, cty, rc, em, ce, lpid, act, cr, lr = w
+            wid, wuid, cid, ct, cl, cty, rc, em, ce, lpid, act, cr, lr, sv = w
             st = "🟢 ACTIVE" if act else "🔴 PAUSED"
             last_run_txt = lr[:16] if lr else "Never"
             await safe_edit(
@@ -7578,6 +8773,7 @@ async def on_cb_user(event):
                 f"✏️ Emoji: {em}\n"
                 f"📊 Last post: #{lpid}\n"
                 f"🕒 Last run: {last_run_txt}\n"
+                f"🖥️ Server: {get_server_label(sv)}\n"
                 f"🔄 Status: {st}",
                 buttons=[
                     [btn("🔴 OFF" if act else "🟢 ON",
@@ -7687,15 +8883,8 @@ async def on_cb_user(event):
                             buttons=kb_back(uid))
             return
 
-        # ══════════════════════════════════════════
-        # ═════ IGNORE OWNER BUTTONS (handled in Part 12)
-        # ══════════════════════════════════════════
-        if data.startswith(("op:", "um:", "ft:", "pp:", "pf:",
-                            "fc:", "team:", "cp:", "cop:", "storem:",
-                            "retry:", "gh:", "bc:", "payv:",
-                            "bulk:", "ra:", "rap:")):
-            # These are handled by on_cb_owner (Part 12)
-            return
+        # ═════ Unknown ═════
+        await safe_answer(event, "⚠️ Not implemented", alert=True)
 
     except Exception as e:
         D_err(e, "on_cb_user")
@@ -7705,27 +8894,23 @@ async def on_cb_user(event):
             pass
 
 
-# ══════════════════════ END OF PART 11 ══════════════════════
-D("✅ Part 11 loaded — User Callback Handler (with Help flow)", "ok")
-# ══════════════════════ CALLBACK HANDLER — PART 2 (OWNER) ══════════════════════
+# ══════════════════════ END OF PART 13 ══════════════════════
+D("✅ Part 13 loaded — User Callbacks (Server-Aware)", "ok")
+# ══════════════════════ OWNER CALLBACK HANDLER ══════════════════════
 @bot.on(events.CallbackQuery)
 async def on_cb_owner(event):
-    """Owner callback handler — all owner buttons"""
-    global TASK_RUNNING, TASK_OWNER_UID
-
     try:
         data = event.data.decode()
         uid = event.sender_id
     except Exception:
         return
 
-    # ══════════════════════════════════════════
-    # ═════ OWNER ONLY GUARD ═════
-    # ══════════════════════════════════════════
+    # ═════ OWNER-ONLY GUARD ═════
     owner_prefixes = (
         "op:", "um:", "ft:", "pp:", "pf:", "fc:", "team:",
         "cp:", "cop:", "storem:", "retry:", "gh:", "bc:",
         "payv:", "ra:", "rap:", "oi:", "bulk:",
+        "srv:", "usrv:", "bot:",
     )
     if not data.startswith(owner_prefixes) and data != "owner_panel":
         return
@@ -7740,24 +8925,25 @@ async def on_cb_owner(event):
         # ══════════════════════════════════════════
         if data == "owner_panel":
             await safe_answer(event, "👑")
-            now = datetime.now()
-            busy = sum(1 for t, i in BOT_POOL.items()
-                       if isinstance(i, dict) and i.get("busy_until")
-                       and i["busy_until"] > now)
-            flooded = sum(1 for t in FLOOD_UNTIL
-                          if FLOOD_UNTIL[t] > now)
+            stats = db_bot_stats()
             real_status = real_get_status()
+            fs = get_pool_status("free")
+            ps = get_pool_status("paid")
             await safe_edit(
                 event,
                 f"👑 **OWNER PANEL**\n"
-                f"{DIV}\n\n"
+                f"{STAR_LINE}\n\n"
+                f"🖥️ **DUAL SERVER**\n"
+                f"   🆓 Free: {stats['free']} | 💎 Paid: {stats['paid']}\n"
+                f"   🔒 Permanent: {stats['permanent']}\n\n"
+                f"📊 **POOL STATUS**\n"
+                f"   🆓 F: 🟢{fs['free']} 🔴{fs['busy']} 🌊{fs['flooded']}\n"
+                f"   💎 P: 🟢{ps['free']} 🔴{ps['busy']} 🌊{ps['flooded']}\n\n"
                 f"👥 Users: **{db_total_users()}**\n"
                 f"💫 Reactions: **{db_total_reactions()}**\n"
                 f"📅 Today: **{db_reactions_today()}**\n"
-                f"🤖 Bots: **{db_count_visible_bots()}**\n"
                 f"👤 Sessions: **{real_status['available']}/"
                 f"{real_status['total']}**\n"
-                f"🔴 Busy: **{busy}**  🌊 Flooded: **{flooded}**\n"
                 f"📡 Watchers: **{len(db_list_watchers())}**\n"
                 f"⏰ Queue: **{len(db_list_queue(status='pending'))}**\n"
                 f"🎟️ Coupons: **{len(coupon_list())}**\n"
@@ -7765,6 +8951,384 @@ async def on_cb_owner(event):
                 f"🔓 Auto: **{'✅' if is_auto_approve() else '❌'}**\n"
                 f"🎁 Free: **{get_free_count()}**",
                 buttons=kb_owner())
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ SERVER MANAGEMENT 🔥 ═════
+        # ══════════════════════════════════════════
+        if data.startswith("srv:panel:"):
+            server = data.split(":")[2]
+            pool = get_pool_status(server)
+            label = get_server_label(server)
+            await safe_edit(
+                event,
+                f"{label} **SERVER**\n"
+                f"{STAR_LINE}\n\n"
+                f"🤖 Total: **{pool['total']}** bots\n"
+                f"🟢 Free: **{pool['free']}**\n"
+                f"🔴 Busy: **{pool['busy']}**\n"
+                f"🌊 Flooded: **{pool['flooded']}**\n"
+                f"🔒 Permanent: **{pool['permanent']}**\n\n"
+                f"{DIV}\n"
+                f"Manage bots on this server:",
+                buttons=kb_server_panel(server))
+            return
+
+        if data.startswith("srv:refresh:"):
+            server = data.split(":")[2]
+            await safe_answer(event, "🔄", alert=True)
+            pool = get_pool_status(server)
+            label = get_server_label(server)
+            await safe_edit(
+                event,
+                f"{label} **SERVER**\n"
+                f"{STAR_LINE}\n\n"
+                f"🤖 Total: **{pool['total']}**\n"
+                f"🟢 Free: **{pool['free']}**\n"
+                f"🔴 Busy: **{pool['busy']}**\n"
+                f"🌊 Flooded: **{pool['flooded']}**",
+                buttons=kb_server_panel(server))
+            return
+
+        if data.startswith("srv:list:"):
+            parts = data.split(":")
+            server = parts[2]
+            page = int(parts[3]) if len(parts) > 3 else 0
+            bots = db_list_visible_bots(server=server)
+            total = len(bots)
+            await safe_answer(event, f"📋 {total} bots", alert=True)
+            await safe_edit(
+                event,
+                f"📋 **{get_server_label(server)} BOTS** "
+                f"({total})\n{DIV}",
+                buttons=kb_bot_list(server, page))
+            return
+
+        if data.startswith("srv:clear_floods:"):
+            server = data.split(":")[2]
+            flood_map = get_flood_map(server)
+            n = len(flood_map)
+            flood_map.clear()
+            if server == "free":
+                FLOOD_UNTIL.pop if False else None
+            await safe_answer(event, f"🌊 Cleared {n}", alert=True)
+            await safe_edit(
+                event,
+                f"✅ Cleared {n} floods on "
+                f"{get_server_label(server)}",
+                buttons=kb_server_panel(server))
+            return
+
+        if data.startswith("srv:reset:"):
+            server = data.split(":")[2]
+            op, of = reset_bot_pool(server)
+            await safe_answer(event, "🧹 Reset", alert=True)
+            await safe_edit(
+                event,
+                f"🧹 **RESET {get_server_label(server)}**\n\n"
+                f"Cleared {op} busy bots\n"
+                f"Cleared {of} floods",
+                buttons=kb_server_panel(server))
+            return
+
+        if data.startswith("srv:move_all:"):
+            server = data.split(":")[2]
+            other = "paid" if server == "free" else "free"
+            bots = db_list_visible_bots(server=server)
+            moved = 0
+            for b in bots:
+                tok = b[0]
+                if db_move_bot_server(tok, other):
+                    moved += 1
+            await safe_answer(event, f"🔀 {moved} moved", alert=True)
+            await safe_edit(
+                event,
+                f"✅ Moved {moved} bots\n"
+                f"From: {get_server_label(server)}\n"
+                f"To: {get_server_label(other)}",
+                buttons=[
+                    [btn(f"🔙 {get_server_label(server)}",
+                         data=f"srv:panel:{server}".encode(),
+                         style="primary")],
+                    [btn(f"👉 {get_server_label(other)}",
+                         data=f"srv:panel:{other}".encode(),
+                         style="success")],
+                ])
+            return
+
+        if data.startswith("srv:bulk_move:"):
+            server = data.split(":")[2]
+            await safe_edit(
+                event,
+                f"📦 **BULK MOVE**\n"
+                f"{DIV}\n\n"
+                f"From: {get_server_label(server)}\n"
+                f"Choose option:",
+                buttons=kb_bulk_move(server))
+            return
+
+        if data.startswith("srv:move_flooded:"):
+            server = data.split(":")[2]
+            other = "paid" if server == "free" else "free"
+            flood_map = get_flood_map(server)
+            bots = db_list_visible_bots(server=server)
+            moved = 0
+            for b in bots:
+                if b[0] in flood_map:
+                    if db_move_bot_server(b[0], other):
+                        moved += 1
+                        flood_map.pop(b[0], None)
+            await safe_answer(event, f"🔀 {moved}", alert=True)
+            await safe_edit(
+                event,
+                f"✅ Moved {moved} flooded bots → "
+                f"{get_server_label(other)}",
+                buttons=kb_server_panel(server))
+            return
+
+        if data.startswith("srv:move_busy:"):
+            server = data.split(":")[2]
+            other = "paid" if server == "free" else "free"
+            pool = get_pool(server)
+            bots = db_list_visible_bots(server=server)
+            moved = 0
+            now = datetime.now()
+            for b in bots:
+                info = pool.get(b[0])
+                if (isinstance(info, dict) and info.get("busy_until")
+                        and info["busy_until"] > now):
+                    if db_move_bot_server(b[0], other):
+                        moved += 1
+                        pool.pop(b[0], None)
+            await safe_answer(event, f"🔀 {moved}", alert=True)
+            await safe_edit(
+                event,
+                f"✅ Moved {moved} busy bots → "
+                f"{get_server_label(other)}",
+                buttons=kb_server_panel(server))
+            return
+
+        if data.startswith("srv:add_bot:"):
+            server = data.split(":")[2]
+            USER_STATES[uid] = {
+                "step": "srv_add_bot_token",
+                "server": server
+            }
+            await safe_edit(
+                event,
+                f"➕ **ADD BOT TO {get_server_label(server)}**\n"
+                f"{DIV}\n\n"
+                f"Send bot token (from @BotFather):\n"
+                f"_Format:_ `123456:ABC-DEF...`",
+                buttons=[[btn("🔙 Cancel",
+                              data=f"srv:panel:{server}".encode(),
+                              style="danger")]])
+            return
+
+        if data.startswith("srv:test_all:"):
+            server = data.split(":")[2]
+            await safe_answer(event, "🧪 Testing...", alert=True)
+            bots = db_list_visible_bots(server=server)
+            if not bots:
+                await safe_edit(event, "❌ No bots",
+                                buttons=kb_server_panel(server))
+                return
+            msg = await event.edit(
+                f"🧪 Testing {len(bots)} bots...")
+            results = []
+            for i, b in enumerate(bots[:20], 1):
+                tok, uname = b[0], b[1]
+                info = bot_get_me(tok)
+                if info:
+                    results.append(f"✅ @{uname}")
+                else:
+                    results.append(f"❌ @{uname}")
+                if i % 5 == 0:
+                    try:
+                        await msg.edit(
+                            f"🧪 Testing... {i}/{min(20, len(bots))}\n\n"
+                            + "\n".join(results[-5:]))
+                    except Exception:
+                        pass
+            final = (f"🧪 **TEST RESULTS**\n"
+                     f"{DIV}\n\n" + "\n".join(results))
+            try:
+                await msg.edit(final[:4000],
+                               buttons=kb_server_panel(server))
+            except Exception:
+                pass
+            return
+
+        if data.startswith("bot:info:"):
+            parts = data.split(":", 3)
+            if len(parts) < 4:
+                return
+            server = parts[2]
+            tok_prefix = parts[3]
+            # Find bot by prefix
+            bots = db_list_bots(server=server)
+            found = None
+            for b in bots:
+                if b[0].startswith(tok_prefix):
+                    found = b
+                    break
+            if not found:
+                await safe_answer(event, "❌ Not found", alert=True)
+                return
+            tok, uname, bid, added = found[0], found[1], found[2], found[3]
+            now = datetime.now()
+            flood_map = get_flood_map(server)
+            pool = get_pool(server)
+            if tok in flood_map and flood_map[tok] > now:
+                st = "🌊 Flooded"
+            else:
+                info = pool.get(tok)
+                if (isinstance(info, dict) and info.get("busy_until")
+                        and info["busy_until"] > now):
+                    st = "🔴 Busy"
+                else:
+                    st = "🟢 Active"
+            other = "paid" if server == "free" else "free"
+            await safe_edit(
+                event,
+                f"🤖 **BOT INFO**\n"
+                f"{DIV}\n\n"
+                f"👤 @{uname}\n"
+                f"🆔 `{bid}`\n"
+                f"🖥️ Server: **{get_server_label(server)}**\n"
+                f"📊 Status: **{st}**\n"
+                f"📅 Added: **{added[:16] if added else '—'}**\n\n"
+                f"🔑 `{tok[:25]}...`",
+                buttons=[
+                    [btn(f"🔀 Move to {get_server_label(other)}",
+                         data=f"bot:move:{server}:{uname}".encode(),
+                         style="primary")],
+                    [btn("🌊 Reset Flood",
+                         data=f"bot:reset:{server}:{uname}".encode(),
+                         style="success")],
+                    [btn("🗑️ Remove",
+                         data=f"bot:del:{server}:{uname}".encode(),
+                         style="danger")],
+                    [btn("🔙 Back",
+                         data=f"srv:list:{server}".encode(),
+                         style="primary")],
+                ])
+            return
+
+        if data.startswith("bot:move:"):
+            parts = data.split(":")
+            server = parts[2]
+            uname = parts[3]
+            other = "paid" if server == "free" else "free"
+            bots = db_list_bots(server=server)
+            for b in bots:
+                if b[1] == uname:
+                    db_move_bot_server(b[0], other)
+                    await safe_answer(event, f"✅ → {other}", alert=True)
+                    await safe_edit(
+                        event,
+                        f"✅ @{uname} moved to "
+                        f"{get_server_label(other)}",
+                        buttons=kb_server_panel(server))
+                    return
+            return
+
+        if data.startswith("bot:reset:"):
+            parts = data.split(":")
+            server = parts[2]
+            uname = parts[3]
+            bots = db_list_bots(server=server)
+            for b in bots:
+                if b[1] == uname:
+                    flood_map = get_flood_map(server)
+                    flood_map.pop(b[0], None)
+                    await safe_answer(event, "🌊 Reset", alert=True)
+                    await safe_edit(
+                        event,
+                        f"✅ @{uname} flood reset",
+                        buttons=kb_server_panel(server))
+                    return
+            return
+
+        if data.startswith("bot:del:"):
+            parts = data.split(":")
+            server = parts[2]
+            uname = parts[3]
+            bots = db_list_bots(server=server)
+            for b in bots:
+                if b[1] == uname:
+                    db_remove_bot(b[0])
+                    await safe_answer(event, "🗑️", alert=True)
+                    await safe_edit(
+                        event,
+                        f"✅ @{uname} removed",
+                        buttons=kb_server_panel(server))
+                    return
+            return
+
+        # ══════════════════════════════════════════
+        # ═════ USER SERVER ASSIGNMENT 🔥 ═════
+        # ══════════════════════════════════════════
+        if data.startswith("usrv:panel:"):
+            tuid = int(data.split(":")[2])
+            u = db_get_user_full(tuid)
+            if not u:
+                await safe_answer(event, "❌ User not found", alert=True)
+                return
+            current = get_user_server(tuid)
+            plan = u[15] or "free"
+            override = u[27] if len(u) > 27 else None
+            server_label = get_server_label(current)
+            await safe_edit(
+                event,
+                f"🖥️ **USER SERVER**\n"
+                f"{STAR_LINE}\n\n"
+                f"👤 `{tuid}`\n"
+                f"💰 Plan: **{plan}**\n"
+                f"🖥️ Current: **{server_label}**\n"
+                f"📝 Override: **{override or 'None'}**\n\n"
+                f"{DIV}\n"
+                f"Force user to specific server:",
+                buttons=kb_user_server(tuid))
+            return
+
+        if data.startswith("usrv:refresh:"):
+            tuid = int(data.split(":")[2])
+            await safe_answer(event, "🔄", alert=True)
+            await safe_edit(
+                event,
+                f"🖥️ **USER SERVER**",
+                buttons=kb_user_server(tuid))
+            return
+
+        if data.startswith("usrv:set:"):
+            parts = data.split(":")
+            server = parts[2]
+            tuid = int(parts[3])
+            set_user_server_override(tuid, server)
+            await safe_answer(event, f"✅ → {server}", alert=True)
+            # Notify user
+            try:
+                await bot.send_message(
+                    tuid,
+                    f"🖥️ **Server Updated**\n\n"
+                    f"Your server: **{get_server_label(server)}**")
+            except Exception:
+                pass
+            await safe_edit(
+                event,
+                f"✅ User `{tuid}` → {get_server_label(server)}",
+                buttons=kb_user_server(tuid))
+            return
+
+        if data.startswith("usrv:reset:"):
+            tuid = int(data.split(":")[2])
+            set_user_server_override(tuid, None)
+            await safe_answer(event, "🔄 Reset", alert=True)
+            await safe_edit(
+                event,
+                f"✅ Override removed — using plan default",
+                buttons=kb_user_server(tuid))
             return
 
         # ══════════════════════════════════════════
@@ -7857,7 +9421,8 @@ async def on_cb_owner(event):
                         f"🎉 **PLAN ACTIVATED!**\n"
                         f"{DIV}\n\n"
                         f"💰 {PLAN_NAMES.get(pk, pk)}\n"
-                        f"📅 {DURATIONS.get(ds, ds)}\n\n"
+                        f"📅 {DURATIONS.get(ds, ds)}\n"
+                        f"🖥️ Server: 💎 PAID\n\n"
                         f"🚀 Enjoy!")
                 except Exception:
                     pass
@@ -7878,7 +9443,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ 🔥 REAL ACCOUNTS (FIXED) ═════
+        # ═════ RA PANELS ═════
         # ══════════════════════════════════════════
         if data == "op:ra":
             status = real_get_status()
@@ -7891,10 +9456,7 @@ async def on_cb_owner(event):
                 f"✅ Available: **{status['available']}**\n"
                 f"🌊 Flooded: **{status['flooded']}**\n"
                 f"💾 Loaded: **{status['loaded']}/"
-                f"{status['max_clients']}**\n\n"
-                f"{DIV}\n"
-                f"🔓 Enabled: **{'✅' if feat_realaccounts() else '❌'}**\n"
-                f"⚙️ Sessions dir: `{SESSIONS_DIR}`",
+                f"{status['max_clients']}**",
                 buttons=kb_ra_panel())
             return
 
@@ -7905,8 +9467,7 @@ async def on_cb_owner(event):
                 lim = plan_ra_limit(plan)
                 enabled = plan_has_realaccounts(plan)
                 st = "✅" if enabled else "❌"
-                rows.append(
-                    f"{st} **{PLAN_NAMES[plan]}** — {lim} sessions")
+                rows.append(f"{st} **{PLAN_NAMES[plan]}** — {lim} sessions")
             await safe_edit(
                 event,
                 f"⚙️ **RA PLANS**\n"
@@ -7934,13 +9495,7 @@ async def on_cb_owner(event):
                 event,
                 f"📁 **SESSION INFO**\n"
                 f"{DIV}\n\n"
-                f"📄 File: `{sf}`\n"
-                f"🌊 Flooded: "
-                f"{'✅ YES' if is_real_flooded(sf) else '❌ NO'}\n"
-                f"💾 Loaded: "
-                f"{'✅ YES' if sf in REAL_CLIENTS else '❌ NO'}\n"
-                f"📊 Total sessions: "
-                f"**{len(discover_session_files())}**",
+                f"📄 File: `{sf}`",
                 buttons=kb_session_info(sf))
             return
 
@@ -7965,7 +9520,7 @@ async def on_cb_owner(event):
                 else:
                     await safe_edit(
                         event,
-                        f"❌ **FAILED**\n\n`{sf}`\nNot authorized or invalid",
+                        f"❌ **FAILED**\n\n`{sf}`",
                         buttons=kb_session_info(sf))
             except Exception as e:
                 await safe_edit(
@@ -7986,8 +9541,10 @@ async def on_cb_owner(event):
             sf = data.split(":", 2)[2]
             client = REAL_CLIENTS.pop(sf, None)
             if client:
-                try: await client.disconnect()
-                except Exception: pass
+                try:
+                    await client.disconnect()
+                except Exception:
+                    pass
             await safe_answer(event, "🔌", alert=True)
             await safe_edit(event, f"✅ Disconnected `{sf}`",
                             buttons=kb_session_info(sf))
@@ -7996,7 +9553,7 @@ async def on_cb_owner(event):
         if data == "ra:clear_floods":
             n = len(REAL_FLOOD_UNTIL)
             REAL_FLOOD_UNTIL.clear()
-            await safe_answer(event, f"🌊 Cleared {n}", alert=True)
+            await safe_answer(event, f"🌊 {n}", alert=True)
             await safe_edit(event, f"✅ Cleared {n} floods",
                             buttons=kb_ra_panel())
             return
@@ -8004,7 +9561,7 @@ async def on_cb_owner(event):
         if data == "ra:disconnect_all":
             n = len(REAL_CLIENTS)
             await close_all_real_clients()
-            await safe_answer(event, f"🔌 {n} disconnected", alert=True)
+            await safe_answer(event, f"🔌 {n}", alert=True)
             await safe_edit(event,
                             f"✅ Disconnected {n} clients",
                             buttons=kb_ra_panel())
@@ -8055,16 +9612,13 @@ async def on_cb_owner(event):
                 f"📤 **HOW TO ADD SESSIONS**\n"
                 f"{STAR_LINE}\n\n"
                 f"**Method 1: Manual Upload**\n"
-                f"1️⃣ Use Telethon to create `.session` files\n"
-                f"2️⃣ Place them in: `{SESSIONS_DIR}`\n"
-                f"3️⃣ They auto-load on next use\n\n"
+                f"1️⃣ Create `.session` files\n"
+                f"2️⃣ Place in: `{SESSIONS_DIR}`\n"
+                f"3️⃣ Auto-load on next use\n\n"
                 f"{DIV}\n"
                 f"**Method 2: StringSession**\n"
-                f"Save as `.session` file using:\n"
-                f"`TelegramClient(StringSession('...'), API_ID, API_HASH)`\n\n"
-                f"{DIV}\n"
-                f"💡 Sessions are stored as `.session` files in "
-                f"`{SESSIONS_DIR}/` directory",
+                f"Save as `.session` using:\n"
+                f"`TelegramClient(StringSession('...'), API_ID, API_HASH)`",
                 buttons=kb_ra_panel())
             return
 
@@ -8134,7 +9688,7 @@ async def on_cb_owner(event):
                 event,
                 f"✏️ **EDIT OWNER ID**\n\n"
                 f"Current: `{get_owner_id()}`\n\n"
-                f"Send new Telegram ID (numeric):",
+                f"Send new Telegram ID:",
                 buttons=[[btn("🔙 Cancel", data=b"op:owner_info",
                               style="danger")]])
             return
@@ -8218,7 +9772,7 @@ async def on_cb_owner(event):
                 event,
                 f"🏪 **EMOJI STORE**\n"
                 f"{DIV}\n\n"
-                f"Total packs: **{len(store_list(active_only=False))}**\n"
+                f"Total: **{len(store_list(active_only=False))}**\n"
                 f"Active: **{store_count_active()}**",
                 buttons=kb_store_manage())
             return
@@ -8252,7 +9806,7 @@ async def on_cb_owner(event):
                 f"{DIV}\n\n"
                 f"💰 Price: **{price}rs**\n"
                 f"📝 {desc or '—'}\n\n"
-                f"🎨 Emojis:\n{emojis[:250]}\n\n"
+                f"🎨 {emojis[:250]}\n\n"
                 f"Status: **{'🟢 Active' if act else '🔴 Disabled'}**",
                 buttons=[
                     [btn("🔄 Toggle",
@@ -8317,8 +9871,8 @@ async def on_cb_owner(event):
 
         if data == "retry:clear":
             retry_clear_all()
-            await safe_answer(event, "🧹 Cleared", alert=True)
-            await safe_edit(event, "✅ Cleared all pending retries",
+            await safe_answer(event, "🧹", alert=True)
+            await safe_edit(event, "✅ Cleared",
                             buttons=kb_retry_menu())
             return
 
@@ -8495,8 +10049,7 @@ async def on_cb_owner(event):
                 event,
                 f"💎 **PAID FEATURES**\n"
                 f"{STAR_LINE}\n\n"
-                f"Toggle which features require paid plan:\n\n"
-                f"💎 = Paid | 🆓 = Free for all",
+                f"Toggle which features require paid plan:",
                 buttons=kb_paid_features())
             return
 
@@ -8512,7 +10065,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ FORCE CHANNELS ═════
+        # ═════ FORCE / TEAM / PACKS ═════
         # ══════════════════════════════════════════
         if data == "op:force_channels":
             await safe_answer(event, "📢")
@@ -8552,9 +10105,6 @@ async def on_cb_owner(event):
                               style="danger")]])
             return
 
-        # ══════════════════════════════════════════
-        # ═════ TEAM ═════
-        # ══════════════════════════════════════════
         if data == "op:team":
             await safe_answer(event, "👥")
             await safe_edit(
@@ -8585,9 +10135,7 @@ async def on_cb_owner(event):
                 f"{DIV}\n\n"
                 f"🆔 `{m[0]}`\n"
                 f"👑 Role: **{m[1]}**\n"
-                f"💰 Commission: **{m[3]}%**\n"
-                f"📊 Sales: **{m[4]}**\n"
-                f"💎 Total commission: **{m[5]}**",
+                f"💰 Commission: **{m[3]}%**",
                 buttons=[
                     [btn("🗑️ Remove",
                          data=f"team:del:{target}".encode(),
@@ -8604,9 +10152,6 @@ async def on_cb_owner(event):
             await safe_edit(event, "Removed", buttons=kb_team())
             return
 
-        # ══════════════════════════════════════════
-        # ═════ CUSTOM PACKS ═════
-        # ══════════════════════════════════════════
         if data == "op:emoji_packs":
             await safe_answer(event, "🎨")
             await safe_edit(
@@ -8646,7 +10191,7 @@ async def on_cb_owner(event):
                 f"{DIV}\n\n"
                 f"💰 Price: **{price}rs**\n"
                 f"💎 Paid: **{'✅' if is_paid else '❌'}**\n\n"
-                f"Emojis:\n{emojis[:250]}",
+                f"{emojis[:250]}",
                 buttons=[
                     [btn("🗑️ Delete",
                          data=f"cp:del:{cpid}".encode(),
@@ -8667,8 +10212,7 @@ async def on_cb_owner(event):
             for w in ws[:15]:
                 st = "🟢" if w[10] else "🔴"
                 txt += f"{st} **#{w[0]}** {w[3][:25]} • {w[6]}x\n"
-            await safe_edit(event, txt[:4000],
-                            buttons=kb_owner())
+            await safe_edit(event, txt[:4000], buttons=kb_owner())
             return
 
         if data == "op:referrals":
@@ -8690,48 +10234,30 @@ async def on_cb_owner(event):
                 txt += "_None_"
             for j in pend[:10]:
                 txt += f"⏳ **#{j[0]}** `{j[1]}` — {j[4]}x\n"
-            await safe_edit(event, txt[:4000],
-                            buttons=kb_owner())
+            await safe_edit(event, txt[:4000], buttons=kb_owner())
             return
 
         # ══════════════════════════════════════════
         # ═════ POOL STATUS / RESET ═════
         # ══════════════════════════════════════════
         if data == "op:pool_status":
-            pool = get_pool_status()
-            real_status = real_get_status()
             await safe_edit(
                 event,
-                f"📊 **POOL STATUS**\n"
-                f"{STAR_LINE}\n\n"
-                f"🤖 Bots:\n"
-                f"   Total: **{pool['total']}**\n"
-                f"   🔒 Permanent: **{pool['permanent']}**\n"
-                f"   🟢 Free: **{pool['free']}**\n"
-                f"   🔴 Busy: **{pool['busy']}**\n"
-                f"   🌊 Flooded: **{pool['flooded']}**\n\n"
-                f"👤 Sessions:\n"
-                f"   Total: **{real_status['total']}**\n"
-                f"   ✅ Available: **{real_status['available']}**\n"
-                f"   🌊 Flooded: **{real_status['flooded']}**\n"
-                f"   💾 Loaded: **{real_status['loaded']}/"
-                f"{real_status['max_clients']}**\n\n"
-                f"⏱️ Task: "
-                f"**{'🔴 RUNNING' if TASK_RUNNING else '🟢 IDLE'}**",
+                get_dual_server_status_text(),
                 buttons=kb_owner())
             return
 
         if data == "op:reset_pool":
             op, of = reset_bot_pool()
+            global TASK_RUNNING, TASK_OWNER_UID
             TASK_RUNNING = False
             TASK_OWNER_UID = None
             await safe_answer(event, "🧹 Reset", alert=True)
             await safe_edit(
                 event,
                 f"🧹 **POOL RESET**\n\n"
-                f"Cleared {op} busy bots\n"
-                f"Cleared {of} floods\n"
-                f"Task flag reset",
+                f"Cleared {op} busy bots (both)\n"
+                f"Cleared {of} floods",
                 buttons=kb_owner())
             return
 
@@ -8763,32 +10289,30 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ BOTS LIST ═════
+        # ═════ BOTS LIST / USERS ═════
         # ══════════════════════════════════════════
         if data == "op:bots":
-            bs = db_list_visible_bots()
-            txt = f"🤖 **BOTS ({len(bs)})**\n\n"
-            now = datetime.now()
-            for i, r in enumerate(bs[:30], 1):
-                tok = r[0]
-                info = BOT_POOL.get(tok)
-                st = "🟢"
-                if is_bot_flooded(tok):
-                    st = "🌊"
-                elif (isinstance(info, dict)
-                      and info.get("busy_until")
-                      and info["busy_until"] > now):
-                    st = "🔴"
-                txt += f"{st} **{i}.** @{r[1]}\n"
-            if len(bs) > 30:
-                txt += f"\n... +{len(bs) - 30} more"
-            await safe_edit(event, txt[:4000],
-                            buttons=kb_owner())
+            stats = db_bot_stats()
+            await safe_edit(
+                event,
+                f"🤖 **BOTS**\n"
+                f"{DIV}\n\n"
+                f"📊 Total: **{stats['total']}**\n"
+                f"🆓 Free: **{stats['free']}**\n"
+                f"💎 Paid: **{stats['paid']}**\n"
+                f"🔒 Permanent: **{stats['permanent']}**\n\n"
+                f"{DIV}\n"
+                f"Choose server to manage:",
+                buttons=[
+                    [btn(f"🆓 Free Server ({stats['free']})",
+                         data=b"srv:panel:free", style="success")],
+                    [btn(f"💎 Paid Server ({stats['paid']})",
+                         data=b"srv:panel:paid", style="primary")],
+                    [btn("🔙 Back", data=b"owner_panel",
+                         style="primary")],
+                ])
             return
 
-        # ══════════════════════════════════════════
-        # ═════ USERS MANAGEMENT ═════
-        # ══════════════════════════════════════════
         if data == "op:users":
             rows = db_all_users(10, 0)
             txt = f"👥 **USERS**\n{DIV}\n\n"
@@ -8796,7 +10320,9 @@ async def on_cb_owner(event):
             for r in rows:
                 ic = "🚫" if r[5] else "✅"
                 lim = get_user_limit(r[0])
-                txt += (f"{ic} **{r[1] or '—'}** "
+                server = get_user_server(r[0])
+                srv_icon = "🆓" if server == "free" else "💎"
+                txt += (f"{ic}{srv_icon} **{r[1] or '—'}** "
                         f"`{r[0]}` 🎁 {lim}\n")
                 br.append([
                     btn(f"⚙️ {r[1] or 'User'}",
@@ -8818,16 +10344,17 @@ async def on_cb_owner(event):
             plan = u[15] or "free"
             fb = u[17] or 0
             ban_st = "🚫 BANNED" if u[5] else "✅ Active"
+            server = get_user_server(target)
             await safe_edit(
                 event,
                 f"⚙️ **USER PANEL**\n"
                 f"{DIV}\n\n"
                 f"👤 **{u[1] or '—'}**\n"
                 f"🆔 `{u[0]}`\n"
-                f"📛 @{u[2] or 'no_username'}\n"
                 f"Status: **{ban_st}**\n"
                 f"💰 Plan: **{plan}**\n"
-                f"💎 Balance: **{fb}**",
+                f"💎 Balance: **{fb}**\n"
+                f"🖥️ Server: **{get_server_label(server)}**",
                 buttons=kb_user_manage(target))
             return
 
@@ -8993,7 +10520,7 @@ async def on_cb_owner(event):
                             buttons=kb_user_manage(target))
             return
 
-        # ═════ User permissions toggles ═════
+        # User permissions
         for fk in ["channel", "group", "manual", "autowatch", "custom"]:
             prefix = f"um:{fk}:"
             if data.startswith(prefix):
@@ -9020,7 +10547,7 @@ async def on_cb_owner(event):
             return
 
         # ══════════════════════════════════════════
-        # ═════ BROADCAST ═════
+        # ═════ BROADCAST / ADD USER / PENDING ═════
         # ══════════════════════════════════════════
         if data == "op:broadcast":
             ch = await get_admin_chats()
@@ -9046,9 +10573,6 @@ async def on_cb_owner(event):
                               style="danger")]])
             return
 
-        # ══════════════════════════════════════════
-        # ═════ ADD USER / PENDING / APPROVED / RECENT ═════
-        # ══════════════════════════════════════════
         if data == "op:adduser":
             USER_STATES[uid] = {"step": "wait_add_user_id"}
             await safe_edit(
@@ -9065,8 +10589,9 @@ async def on_cb_owner(event):
             for r in rows:
                 ic = "✅" if r[6] == "ok" else "❌"
                 m = r[8] if len(r) > 8 else "bot"
-                txt += (f"{ic} {r[4]} @{r[5]} "
-                        f"[{m}] {r[7][:16]}\n")
+                sv = r[9] if len(r) > 9 else "free"
+                txt += (f"{ic} {r[4]} @{r[5]} [{m}/{sv}] "
+                        f"{r[7][:16]}\n")
             await safe_edit(event, txt[:4000],
                             buttons=kb_owner())
             return
@@ -9081,7 +10606,7 @@ async def on_cb_owner(event):
                 try:
                     await bot.send_message(
                         get_owner_id(),
-                        f"🔔 **APPROVAL REQUEST**\n"
+                        f"🔔 **APPROVAL**\n"
                         f"👤 {r[1]}\n"
                         f"🆔 `{r[0]}`\n"
                         f"📛 @{r[2] or 'no_username'}\n"
@@ -9159,7 +10684,7 @@ async def on_cb_owner(event):
                               style="primary")]])
             return
 
-        # ═════ Unknown owner callback ═════
+        # ═════ Unknown ═════
         await safe_answer(event, "⚠️ Not implemented", alert=True)
 
     except Exception as e:
@@ -9170,17 +10695,19 @@ async def on_cb_owner(event):
             pass
 
 
-# ══════════════════════ END OF PART 12 ══════════════════════
-D("✅ Part 12 loaded — Owner Callbacks (RA/Session FIXED)", "ok")
-           # ══════════════════════ HTTP HEALTH SERVER ══════════════════════
+# ══════════════════════ END OF PART 14 ══════════════════════
+D("✅ Part 14 loaded — Owner Callbacks + Server Management", "ok")
+# ══════════════════════ HTTP HEALTH SERVER ══════════════════════
 async def start_health_server():
-    """Start aiohttp health server for uptime monitoring"""
+    """aiohttp health server for uptime monitoring"""
     async def health_handler(request):
         return web.Response(text="OK", status=200)
 
     async def status_handler(request):
-        pool = get_pool_status()
+        fs = get_pool_status("free")
+        ps = get_pool_status("paid")
         real_status = real_get_status()
+        stats = db_bot_stats()
         return web.json_response({
             "status": "online",
             "uptime_sec": int(time.time() - _start_time),
@@ -9190,11 +10717,22 @@ async def start_health_server():
             "reactions_total": db_total_reactions(),
             "reactions_today": db_reactions_today(),
             "bots": {
-                "total": pool["total"],
-                "visible": pool["visible"],
-                "free": pool["free"],
-                "busy": pool["busy"],
-                "flooded": pool["flooded"],
+                "total": stats["total"],
+                "free": stats["free"],
+                "paid": stats["paid"],
+                "permanent": stats["permanent"],
+            },
+            "free_server": {
+                "total": fs["total"],
+                "free": fs["free"],
+                "busy": fs["busy"],
+                "flooded": fs["flooded"],
+            },
+            "paid_server": {
+                "total": ps["total"],
+                "free": ps["free"],
+                "busy": ps["busy"],
+                "flooded": ps["flooded"],
             },
             "sessions": {
                 "total": real_status["total"],
@@ -9220,7 +10758,7 @@ async def start_health_server():
     D(f"HTTP health server → port {port}", "ok")
 
 
-# ══════════════════════ PING / STATS COMMAND ══════════════════════
+# ══════════════════════ /ping COMMAND ══════════════════════
 @bot.on(events.NewMessage(pattern="/ping"))
 async def on_ping(event):
     try:
@@ -9230,7 +10768,9 @@ async def on_ping(event):
         hrs = uptime // 3600
         mins = (uptime % 3600) // 60
         secs = uptime % 60
-        pool = get_pool_status()
+        stats = db_bot_stats()
+        fs = get_pool_status("free")
+        ps = get_pool_status("paid")
         real_status = real_get_status()
         await event.reply(
             f"🏓 **PONG!**\n"
@@ -9238,9 +10778,12 @@ async def on_ping(event):
             f"⏱️ Uptime: **{hrs}h {mins}m {secs}s**\n"
             f"👥 Users: **{db_total_users()}**\n"
             f"💫 Reactions: **{db_total_reactions()}**\n"
-            f"📅 Today: **{db_reactions_today()}**\n"
-            f"🤖 Bots: **{pool['visible']}** "
-            f"(🟢 {pool['free']} / 🔴 {pool['busy']} / 🌊 {pool['flooded']})\n"
+            f"📅 Today: **{db_reactions_today()}**\n\n"
+            f"🤖 **BOTS: {stats['total']}**\n"
+            f"   🆓 Free: **{stats['free']}**\n"
+            f"      🟢{fs['free']} 🔴{fs['busy']} 🌊{fs['flooded']}\n"
+            f"   💎 Paid: **{stats['paid']}**\n"
+            f"      🟢{ps['free']} 🔴{ps['busy']} 🌊{ps['flooded']}\n\n"
             f"👤 Sessions: **{real_status['available']}/"
             f"{real_status['total']}**\n"
             f"📡 Watchers: **{len(db_list_watchers())}**\n"
@@ -9251,7 +10794,7 @@ async def on_ping(event):
         D_err(e, "on_ping")
 
 
-# ══════════════════════ PING FOR NON-TEXT (OPTIONAL) ══════════════════════
+# ══════════════════════ /status COMMAND (OWNER) ══════════════════════
 @bot.on(events.NewMessage(pattern="/status"))
 async def on_status(event):
     try:
@@ -9259,17 +10802,27 @@ async def on_status(event):
             return
         if not OWNER_IS(event.sender_id):
             return
-        pool = get_pool_status()
+        stats = db_bot_stats()
+        fs = get_pool_status("free")
+        ps = get_pool_status("paid")
         real_status = real_get_status()
         await event.reply(
             f"📊 **SYSTEM STATUS**\n"
             f"{STAR_LINE}\n\n"
-            f"**Bot Pool:**\n"
-            f"   🤖 Total: **{pool['total']}**\n"
-            f"   🟢 Free: **{pool['free']}**\n"
-            f"   🔴 Busy: **{pool['busy']}**\n"
-            f"   🌊 Flooded: **{pool['flooded']}**\n\n"
-            f"**Real Accounts:**\n"
+            f"**🆓 FREE SERVER:**\n"
+            f"   🤖 Total: **{fs['total']}**\n"
+            f"   🟢 Free: **{fs['free']}**\n"
+            f"   🔴 Busy: **{fs['busy']}**\n"
+            f"   🌊 Flooded: **{fs['flooded']}**\n\n"
+            f"**💎 PAID SERVER:**\n"
+            f"   🤖 Total: **{ps['total']}**\n"
+            f"   🟢 Free: **{ps['free']}**\n"
+            f"   🔴 Busy: **{ps['busy']}**\n"
+            f"   🌊 Flooded: **{ps['flooded']}**\n\n"
+            f"**📊 TOTAL:**\n"
+            f"   🤖 Bots: **{stats['total']}**\n"
+            f"   🔒 Permanent: **{stats['permanent']}**\n\n"
+            f"**👤 Real Accounts:**\n"
             f"   📁 Total: **{real_status['total']}**\n"
             f"   ✅ Available: **{real_status['available']}**\n"
             f"   🌊 Flooded: **{real_status['flooded']}**\n"
@@ -9296,13 +10849,16 @@ async def main():
     except Exception:
         pass
 
-    # ─── DB init ───
+    # ═════ DB init (creates ALL tables) ═════
     db_init()
 
-    # ─── Clear stale in-memory state ───
-    BOT_POOL.clear()
+    # ═════ Clear stale in-memory state ═════
+    FREE_POOL.clear()
+    PAID_POOL.clear()
+    FREE_FLOOD_UNTIL.clear()
+    PAID_FLOOD_UNTIL.clear()
     FLOOD_UNTIL.clear()
-    REAL_FLOOD_UNTIL.clear()
+    BOT_POOL.clear()
     ADMIN_CACHE.clear()
     ENTITY_CACHE.clear()
     BOT_ENTITY_CACHE.clear()
@@ -9311,9 +10867,9 @@ async def main():
     FAILED_BOTS_TRACKER.clear()
     TASK_RUNNING = False
     TASK_OWNER_UID = None
-    D("Cleared stale state", "pool")
+    D("Cleared stale state (dual pools)", "pool")
 
-    # ─── Admin client ───
+    # ═════ Admin client ═════
     D("Starting admin client...", "step")
     admin_client = TelegramClient(StringSession(ADMIN_SESSION),
                                    API_ID, API_HASH)
@@ -9322,7 +10878,7 @@ async def main():
         print("❌ Primary session invalid. Exiting.")
         return
 
-    # ─── Backup client (optional) ───
+    # ═════ Backup client (optional) ═════
     if BACKUP_SESSION_1 and len(BACKUP_SESSION_1) > 250:
         try:
             backup_client = TelegramClient(
@@ -9333,23 +10889,30 @@ async def main():
             else:
                 await backup_client.disconnect()
                 backup_client = None
-                D("⚠️ Backup session not authorized", "warn")
+                D("⚠️ Backup not authorized", "warn")
         except Exception as e:
             backup_client = None
             D(f"⚠️ Backup failed: {str(e)[:80]}", "warn")
 
-    # ─── Admin info ───
+    # ═════ Admin info ═════
     me = await admin_client.get_me()
 
-    # ─── Sync bots from BOT_TOKENS → DB ───
-    bots, added = sync_bots()
+    # ═════ Sync bots to DB (with server split) ═════
+    D(f"Bot tokens loaded: {len(BOT_TOKENS)} (deduped)", "ok")
+    D(f"  → Free server: {len(FREE_SERVER_TOKENS)}", "free")
+    D(f"  → Paid server: {len(PAID_SERVER_TOKENS)}", "paid")
+    added = sync_bots()
 
-    # ─── Startup banner ───
-    D_sep("👻 GHOST REACTION BOT v72 — SMART BATCH EDITION")
+    # ═════ Startup banner ═════
+    D_sep("👻 GHOST REACTION BOT v73 — DUAL SERVER EDITION")
     D(f"Admin: {me.first_name} (@{me.username or 'no_username'})", "ok")
     D(f"Owner: @{get_owner_username()} (ID {get_owner_id()})", "ok")
-    D(f"Bots loaded: {db_count_visible_bots()} / {db_count_bots()}", "ok")
+
+    stats = db_bot_stats()
+    D(f"Bots in DB: {stats['total']} "
+      f"(F:{stats['free']} P:{stats['paid']} 🔒{stats['permanent']})", "ok")
     D(f"New bots added: {added}", "ok")
+
     D(f"Sessions: {real_count_available()}/"
       f"{len(discover_session_files())}", "real")
     D(f"MAX_CLIENTS: {MAX_CLIENTS}", "pool")
@@ -9363,14 +10926,14 @@ async def main():
     D(f"Auto-Retry: {'ON' if feat_auto_retry() else 'OFF'}", "rot")
     D(f"Smart Reaction: {'ON' if feat_smart_reaction() else 'OFF'}",
       "smart")
-    D(f"Fallback Reactions: {'ON' if feat_fallback() else 'OFF'}",
-      "fallback")
+    D(f"Fallback: {'ON' if feat_fallback() else 'OFF'}", "fallback")
+    D(f"Dual Server: {'ON' if feat_dual_server() else 'OFF'}", "server")
     D(f"GitHub sync: {'ON' if (HAS_GH_SYNC and github_sync.is_enabled())
                     else 'OFF'}", "gh")
     D("Bot online ✨", "ok")
     D_sep("READY — Listening for messages")
 
-    # ─── Background tasks ───
+    # ═════ Background tasks ═════
     asyncio.create_task(start_health_server())
     asyncio.create_task(watcher_loop())
     asyncio.create_task(pool_cleaner_loop())
@@ -9378,9 +10941,10 @@ async def main():
     asyncio.create_task(queue_loop())
     asyncio.create_task(retry_loop())
     asyncio.create_task(daily_summary_loop())
-    D("Background tasks started (7 loops)", "ok")
+    asyncio.create_task(startup_bot_sync())
+    D("Background tasks started (8 loops)", "ok")
 
-    # ─── Bot client start (with retry) ───
+    # ═════ Bot client start (with retry) ═════
     while True:
         try:
             await bot.start(bot_token=BOT_TOKEN)
@@ -9395,7 +10959,7 @@ async def main():
             D(f"⚠️ Bot start error: {str(e)[:100]}", "fail")
             await asyncio.sleep(30)
 
-    # ─── Run until disconnect ───
+    # ═════ Run until disconnect ═════
     try:
         await bot.run_until_disconnected()
     finally:
@@ -9436,4 +11000,3 @@ if __name__ == "__main__":
         print(f"\n❌ FATAL: {e}", flush=True)
         traceback.print_exc()
         sys.exit(1)
-   
